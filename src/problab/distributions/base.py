@@ -213,17 +213,16 @@ class Distribution(ABC):
 
         def monte_carlo() -> float | np.ndarray:
 
-            operation = (
-                lambda samples: (
+            if isinstance(x, np.ndarray): # if statement instead
+                operation =  lambda samples: (
                         np.searchsorted(
                             np.sort(samples),
                             x,
                             side="right",
                         ) / len(samples)
                 )
-                if isinstance(x, np.ndarray)
-                else lambda samples: np.mean(samples <= x)
-            )
+            else:
+                operation = lambda samples: np.mean(samples <= x)
 
             return self._monte_carlo(
                 operation=operation,
