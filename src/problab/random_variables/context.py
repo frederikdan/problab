@@ -13,7 +13,7 @@ class RealizationContext:
 
     def __init__(
         self,
-        root_node: Node[Any],
+        root_node: Node,
         num_samples: int = 1,
         rng: np.random.Generator | None = None,
     ) -> None:
@@ -34,7 +34,7 @@ class RealizationContext:
 
         self._num_samples = num_samples
         self._rng = np.random.default_rng() if rng is None else rng
-        self._realizations: dict[Node[Any], np.ndarray] = {}
+        self._realizations: dict[Node, np.ndarray] = {}
 
     def __contains__(self, item):
         return item in self._realizations
@@ -47,7 +47,7 @@ class RealizationContext:
     def rng(self) -> np.random.Generator:
         return self._rng
 
-    def evaluate(self, node: Node[T]) -> np.ndarray:
+    def evaluate(self, node: Node) -> np.ndarray:
 
         if node not in self._realizations:
             self._realizations[node] = node._evaluate(self)

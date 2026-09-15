@@ -54,7 +54,7 @@ class Distribution(ABC):
 
 
     def __init__(self,
-                 parameters: tuple[Node[Any], ...] | None = None,
+                 parameters: tuple[Node, ...] | None = None,
                  symbol: str = DEF_DISTRIBUTION_SYMBOL_NAME
                  ) -> None:
         self._parameters = parameters if parameters is not None else ()
@@ -72,12 +72,12 @@ class Distribution(ABC):
 
 
     @property
-    def parameters(self) -> tuple[Node[Any], ...]:
+    def parameters(self) -> tuple[Node, ...]:
         return self._parameters
 
 
     @property
-    def node_dependencies(self) -> set[Node[Any]]:
+    def node_dependencies(self) -> set[Node]:
         dependencies = set(
             x for x in self.parameters
             if not isinstance(x, ConstantNode)

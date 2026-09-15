@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class Node(ABC, Generic[T]):
+class Node(ABC):
 
     def __init__(self):
         self._name = None
@@ -38,7 +38,7 @@ class Node(ABC, Generic[T]):
 
     @property
     @abstractmethod
-    def dependencies(self) -> set[Node[Any]]:
+    def dependencies(self) -> set[Node]:
         # Only top level of dependencies not a graph of dependencies of dependencies.
         ...
 
@@ -59,7 +59,7 @@ class Node(ABC, Generic[T]):
         return bool(self.dependencies)
 
 
-class ConstantNode(Node[T]):
+class ConstantNode(Node, Generic[T]):
 
     def __init__(self, value: T) -> None:
 
@@ -80,17 +80,17 @@ class ConstantNode(Node[T]):
         return sp.FiniteSet(self._value)
 
     @property
-    def dependencies(self) -> set[Node[Any]]:
+    def dependencies(self) -> set[Node]:
         return set()
 
     def _evaluate(self, context: RealizationContext) -> np.ndarray:
         return np.asarray(self._value)
 
 
-class DistributionNode(Node[T]):
+class DistributionNode(Node):
 
     def __init__(self,
-                 distribution: Distribution[T],
+                 distribution: Distribution,
                  rv_name: str
                  ) -> None:
 
@@ -104,7 +104,7 @@ class DistributionNode(Node[T]):
         return f"DistributionNode({self.name})"
 
     @property
-    def distribution(self) -> Distribution[T]:
+    def distribution(self) -> Distribution:
         return self._distribution
 
     @property
@@ -112,18 +112,18 @@ class DistributionNode(Node[T]):
         return self._distribution.value_set
 
     @property
-    def dependencies(self) -> set[Node[Any]]:
+    def dependencies(self) -> set[Node]:
         return self._distribution.node_dependencies
 
     def _evaluate(self, context: RealizationContext) -> np.ndarray:
         return self._distribution.sample(context)
 
 
-class OperationNode(Node[T]):
+class OperationNode(Node):
 
     def __init__(self,
-                 operation: Callable[..., T],
-                 inputs: tuple[Node[Any], ...],
+                 operation: Callable[..., np.ndarray],
+                 inputs: tuple[Node, ...],
                  name: str,
                  value_set: ValueSet = UNKNOWN_VALUE_SET
                  ) -> None:
@@ -143,7 +143,7 @@ class OperationNode(Node[T]):
         return self._value_set
 
     @property
-    def dependencies(self) -> set[Node[Any]]:
+    def dependencies(self) -> set[Node]:
         return set(self._inputs)
 
     def _evaluate(self, context: RealizationContext) -> np.ndarray:

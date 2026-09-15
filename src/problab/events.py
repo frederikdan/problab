@@ -8,8 +8,8 @@ from src.problab.random_variables.nodes import Node, OperationNode
 
 class Event:
 
-    def __init__(self, node: Node[bool]):
-        self._node: Node[bool] = node
+    def __init__(self, node: Node):
+        self._node: Node = node
 
     @property
     def name(self) -> str:

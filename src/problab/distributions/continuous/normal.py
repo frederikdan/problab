@@ -1,6 +1,8 @@
 from numbers import Real
+from typing import Any
 
 import numpy as np
+from numpy._typing import NDArray
 from scipy.stats import norm
 
 from src.problab.distributions.base import Distribution
@@ -54,7 +56,7 @@ class NormalDistribution(Distribution):
                 *parameters: np.ndarray,
                 num_samples: int,
                 rng: np.random.Generator,
-                ) -> np.ndarray:
+                ) -> NDArray[np.floating[Any]]:
 
         mean, std = parameters
 

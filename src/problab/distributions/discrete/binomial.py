@@ -1,7 +1,9 @@
 from numbers import Real
+from typing import Any
 
 import numpy as np
 import sympy as sp
+from numpy._typing import NDArray
 from scipy.stats import binom
 
 from src.problab.distributions.base import Distribution
@@ -61,7 +63,7 @@ class BinomialDistribution(Distribution):
                 *parameters: np.ndarray,
                 num_samples: int,
                 rng: np.random.Generator,
-                ) -> np.ndarray:
+                ) -> NDArray[np.integer[Any]]:
 
         n, p = parameters
 
