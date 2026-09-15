@@ -3,7 +3,7 @@ from __future__ import annotations
 import sympy as sp
 
 from problab._operations import _AND, _INVERT, _OR
-from problab.random_variables._nodes import _Node, _OperationNode
+from problab.random_variables.nodes import _Node, _OperationNode
 from problab.value_sets._utils import is_known_subset
 from problab.value_sets.sets import BOOLEANS
 

@@ -1,6 +1,6 @@
 from numbers import Real
 
-from problab.random_variables._nodes import _ConstantNode
+from problab.random_variables.nodes import _ConstantNode
 from problab.value_sets._utils import is_known_subset
 from problab.value_sets.sets import POSITIVE_REALS, REALS
 

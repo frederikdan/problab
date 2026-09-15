@@ -4,7 +4,7 @@ import numpy as np
 
 from problab.random_variables._config import DEF_MAX_GRAPH_SIZE
 from problab.random_variables.graph import NodeGraph
-from problab.random_variables._nodes import _Node
+from problab.random_variables.nodes import _Node
 from problab.value_sets._utils import validate_as_subset
 
 T = TypeVar('T')

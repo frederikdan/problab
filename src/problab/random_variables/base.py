@@ -15,7 +15,7 @@ from problab.probability.intervals import ProbabilityInterval, ConfidenceInterva
 from problab.random_variables._config import DEF_MAX_GRAPH_SIZE
 from problab.random_variables._context import _RealizationContext
 from problab.random_variables.graph import NodeGraph
-from problab.random_variables._nodes import _DistributionNode, _Node, _ConstantNode, _OperationNode
+from problab.random_variables.nodes import _DistributionNode, _Node, _ConstantNode, _OperationNode
 from problab.statistics._quantiles import _quantile_confidence_interval
 from problab.validation._common import _validate_num_samples, _validate_rng, _validate_alpha, _validate_q, \
     _validate_max_size, _validate_validate
