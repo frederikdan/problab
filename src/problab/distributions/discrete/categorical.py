@@ -1,8 +1,9 @@
-from numbers import Real
+from numbers import Real, Number
 from typing import Iterable, Any
 
 import numpy as np
 import sympy as sp
+from numpy._typing import NDArray
 
 from src.problab.distributions.base import Distribution
 from src.problab.random_variables.context import RealizationContext
@@ -11,18 +12,34 @@ from src.problab.value_sets.base import ValueSet
 
 class CategoricalDistribution(Distribution):
 
+    @staticmethod
+    def _prepare_category_values(categories: tuple[Any, ...]) -> NDArray[Any]:
+
+        first_category = categories[0]
+        first_category_is_numeric = isinstance(first_category, Number)
+        all_categories_are_same_type = all(type(c) is type(first_category) for c in categories)
+
+        if first_category_is_numeric and all_categories_are_same_type:
+            category_values = np.asarray(categories)
+        else:
+            category_values = np.empty(len(categories), dtype=object)
+            category_values[:] = categories
+
+        category_values.flags.writeable = False
+        return category_values
+
     def __init__(self,
                  categories: Iterable[Any],
                  probabilities: Iterable[float],
                  ) -> None:
 
-        self._categories = tuple(categories)
+        categories = tuple(categories)
         self._probabilities = tuple(probabilities)
 
-        if len(self._categories) == 0:
+        if len(categories) == 0:
             raise ValueError("'categories' must contain at least one value.")
 
-        if len(self._categories) != len(self._probabilities):
+        if len(categories) != len(self._probabilities):
             raise ValueError("'categories' and 'probabilities' must have the same length.")
 
         if not all(isinstance(p, Real) for p in self._probabilities):
@@ -37,7 +54,11 @@ class CategoricalDistribution(Distribution):
         if not np.isclose(sum(self._probabilities), 1.0):
             raise ValueError("'probabilities' must sum to 1.")
 
-        self._value_set = sp.FiniteSet(*self._categories)
+        sympy_set = sp.FiniteSet(*categories)
+
+        self._categories = self._prepare_category_values(categories)
+
+        self._value_set = sympy_set
 
         super().__init__(parameters=None)
 
@@ -49,15 +70,14 @@ class CategoricalDistribution(Distribution):
                 *parameters: np.ndarray,
                 num_samples: int,
                 rng: np.random.Generator
-                ) -> np.ndarray:
+                ) -> NDArray[Any]:
 
-        return np.array([
-            self._categories[i]
-            for i in rng.choice(
-                len(self._categories),
-                size=num_samples,
-                p=self._probabilities,
-            )
-        ])
+        indices = rng.choice(
+            len(self._categories),
+            size=num_samples,
+            p=self._probabilities,
+        )
+
+        return self._categories[indices]
 
 
