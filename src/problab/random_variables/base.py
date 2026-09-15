@@ -136,11 +136,15 @@ class RandomVariable:
             right_node.value_set,
         )
 
+        operation_function = operation.operation
+        if operation is _POWER and is_known_subset(value_set, REALS):
+            operation_function = np.power
+
         node_name = operation.name_func(left_node.name, right_node.name)
 
         return RandomVariable._from_node(
             _OperationNode(
-                operation=operation.operation,
+                operation=operation_function,
                 inputs=(left_node, right_node),
                 name=node_name,
                 value_set=value_set,
