@@ -58,7 +58,10 @@ class CategoricalDistribution(Distribution):
 
         self._categories = self._prepare_category_values(categories)
 
-        self._value_set = sympy_set
+        self._value_set = ValueSet(
+            sympy_set=sympy_set,
+            dtype_types=(self._categories.dtype.type,),
+        )
 
         super().__init__(parameters=None)
 

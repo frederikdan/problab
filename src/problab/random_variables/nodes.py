@@ -67,6 +67,10 @@ class ConstantNode(Node, Generic[T]):
 
         self._value = value
         self._name = str(value)
+        self._value_set = ValueSet(
+            sympy_set=sp.FiniteSet(value),
+            dtype_types=(np.asarray(value).dtype.type,),
+        )
 
     def __repr__(self) -> str:
         return f"ConstantNode({self.name})"
@@ -77,7 +81,7 @@ class ConstantNode(Node, Generic[T]):
 
     @property
     def value_set(self) -> ValueSet:
-        return sp.FiniteSet(self._value)
+        return self._value_set
 
     @property
     def dependencies(self) -> set[Node]:

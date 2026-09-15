@@ -4,12 +4,19 @@ import sympy as sp
 
 from src.problab.operations import AND, INVERT, OR
 from src.problab.random_variables.nodes import Node, OperationNode
+from src.problab.value_sets._utils import is_known_subset
+from src.problab.value_sets.sets import BOOLEANS
 
 
 class Event:
 
     def __init__(self, node: Node):
+
+        if not is_known_subset(node.value_set, BOOLEANS):
+            raise ValueError("The value set of 'node' must be a subset of {False, True}.")
+
         self._node: Node = node
+
 
     @property
     def name(self) -> str:
@@ -32,7 +39,7 @@ class Event:
             operation=AND.operation,
             inputs=(self._node, other._node),
             name=node_name,
-            value_set=sp.FiniteSet(False, True),
+            value_set=BOOLEANS,
         ))
 
     def __or__(self, other: Event) -> Event:
@@ -46,7 +53,7 @@ class Event:
             operation=OR.operation,
             inputs=(self._node, other._node),
             name=node_name,
-            value_set=sp.FiniteSet(False, True),
+            value_set=BOOLEANS,
         ))
 
     def __invert__(self) -> Event:
@@ -57,7 +64,7 @@ class Event:
             operation=INVERT.operation,
             inputs=(self._node,),
             name=node_name,
-            value_set=sp.FiniteSet(False, True),
+            value_set=BOOLEANS,
         ))
 
     def __bool__(self) -> bool:

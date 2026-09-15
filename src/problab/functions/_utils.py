@@ -6,7 +6,10 @@ import sympy as sp
 from src.problab.random_variables.base import (
     RandomVariable,
     is_known_subset,
+    ValueSet,
 )
+
+
 
 def _require_real_valued(x: RandomVariable | Real) -> None:
 
@@ -36,7 +39,7 @@ def _require_domain(
 def _apply_scalar_or_rv(
         x: RandomVariable | Real,
         function: Callable,
-        value_set: sp.Set,
+        value_set: ValueSet,
 ) -> RandomVariable | Real:
 
     if isinstance(x, RandomVariable):
@@ -52,7 +55,7 @@ def _apply_scalar_or_rv(
 def _apply(
         x: RandomVariable | Real,
         function,
-        value_set: sp.Set,
+        value_set: ValueSet,
 ) -> RandomVariable | float:
 
     if isinstance(x, RandomVariable):

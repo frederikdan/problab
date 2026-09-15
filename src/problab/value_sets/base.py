@@ -1,7 +1,8 @@
+import dataclasses
 from typing import TypeAlias
-import sympy as sp
 
-n = sp.Symbol("n", integer=True)
+import numpy as np
+import sympy as sp
 
 class _UnknownValueSet:
 
@@ -10,5 +11,7 @@ class _UnknownValueSet:
     def __repr__(self) -> str:
         return "UNKNOWN_VALUE_SET"
 
-ValueSet: TypeAlias = sp.Set | _UnknownValueSet
-
+@dataclasses.dataclass(frozen=True)
+class ValueSet:
+    sympy_set: sp.Set | _UnknownValueSet
+    dtype_types: tuple[type[np.generic], ...] | None

@@ -3,8 +3,6 @@ from __future__ import annotations
 from itertools import count
 from numbers import Real, Complex
 from typing import Callable
-
-import networkx as nx
 import numpy as np
 import sympy as sp
 
@@ -21,8 +19,8 @@ from src.problab.random_variables.nodes import DistributionNode, Node, ConstantN
 from src.problab.statistics.quantiles import quantile_confidence_interval
 from src.problab.value_sets._utils import is_known_subset
 from src.problab.value_sets.base import ValueSet
+from src.problab.value_sets.sets import COMPLEXES, REALS, BOOLEANS
 
-from src.problab.value_sets.sets import COMPLEXES, REALS
 
 class RandomVariable:
 
@@ -211,6 +209,7 @@ class RandomVariable:
 
         raise ValueError("closed must be one of 'both', 'left', 'right', or 'none'.")
 
+
     def apply(self,
               function: Callable,
               *others: RandomVariable,
@@ -315,7 +314,7 @@ class RandomVariable:
                 operation=operator.operation,
                 inputs=(self._node, other_node),
                 name=node_name,
-                value_set=sp.FiniteSet(False, True),
+                value_set=BOOLEANS,
             )
         )
 
@@ -332,7 +331,7 @@ class RandomVariable:
                 operation=operator.operation,
                 inputs=(self._node, other_node),
                 name=node_name,
-                value_set=sp.FiniteSet(False, True),
+                value_set=BOOLEANS,
             )
         )
 

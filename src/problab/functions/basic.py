@@ -9,18 +9,21 @@ from src.problab.functions._utils import (
     _require_domain,
     _require_real_valued,
 )
+from src.problab.value_sets.base import ValueSet
+
+from src.problab.value_sets.sets import NON_NEGATIVE_REALS, INTEGERS
 
 
 def sqrt(x: RandomVariable | Real) -> RandomVariable | Real:
     _require_domain(
         x=x,
-        domain=sp.Interval(0, sp.oo),
+        domain=NON_NEGATIVE_REALS.sympy_set,
     )
 
     return _apply_scalar_or_rv(
         x=x,
         function=np.sqrt,
-        value_set=sp.Interval(0, sp.oo),
+        value_set=NON_NEGATIVE_REALS,
     )
 
 
@@ -30,7 +33,7 @@ def absolute(x: RandomVariable | Real) -> RandomVariable | Real:
     return _apply_scalar_or_rv(
         x=x,
         function=np.abs,
-        value_set=sp.Interval(0, sp.oo),
+        value_set=NON_NEGATIVE_REALS,
     )
 
 
@@ -40,7 +43,7 @@ def floor(x: RandomVariable | Real) -> RandomVariable | Real:
     return _apply_scalar_or_rv(
         x=x,
         function=np.floor,
-        value_set=sp.S.Integers,
+        value_set=INTEGERS,
     )
 
 
@@ -50,7 +53,7 @@ def ceil(x: RandomVariable | Real) -> RandomVariable | Real:
     return _apply_scalar_or_rv(
         x=x,
         function=np.ceil,
-        value_set=sp.S.Integers,
+        value_set=INTEGERS,
     )
 
 
@@ -60,5 +63,8 @@ def sign(x: RandomVariable | Real) -> RandomVariable | Real:
     return _apply_scalar_or_rv(
         x=x,
         function=np.sign,
-        value_set=sp.FiniteSet(-1, 0, 1),
+        value_set=ValueSet(
+            sympy_set=sp.FiniteSet(-1, 0, 1),
+            dtype_types=(np.integer, np.floating),
+        ),
     )

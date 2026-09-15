@@ -34,12 +34,15 @@ class BinomialDistribution(Distribution):
 
         self._n = n_node
 
-        n_max = n_node.value_set.sup
+        n_max = n_node.value_set.sympy_set.sup
 
         if n_max == sp.oo:
             self._value_set = NATURALS_0
         else:
-            self._value_set = sp.FiniteSet(*range(int(n_max) + 1))
+            self._value_set = ValueSet(
+                sympy_set=sp.FiniteSet(*range(int(n_max) + 1)),
+                dtype_types=(np.integer,),
+            )
 
         if isinstance(p, RandomVariable):
             p_node = p._node

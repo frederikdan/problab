@@ -1,12 +1,37 @@
+import numpy as np
 import sympy as sp
 
-from src.problab.value_sets.base import ValueSet
+from src.problab.value_sets.base import ValueSet, _UnknownValueSet
 from src.problab.value_sets.sets import UNKNOWN_VALUE_SET
 
-def is_known_subset(subset: ValueSet, superset: sp.Set) -> bool:
-    if subset is UNKNOWN_VALUE_SET:
+
+def is_known_subset(subset: ValueSet | sp.Set, superset: ValueSet | sp.Set) -> bool:
+
+    subset_set = subset.sympy_set if isinstance(subset, ValueSet) else subset
+    superset_set = superset.sympy_set if isinstance(superset, ValueSet) else superset
+
+    if isinstance(subset_set, _UnknownValueSet) or isinstance(superset_set, _UnknownValueSet):
         return False
 
-    return subset.is_subset(superset) is True
+    return subset_set.is_subset(superset_set) is True
 
+
+def validate_as_subset(values: np.ndarray,
+                       target_set: ValueSet
+                       ) -> None:
+
+    if target_set is UNKNOWN_VALUE_SET:
+        raise ValueError("Cannot validate membership: the target set is unknown.")
+
+    for index, value in enumerate(values):
+        try:
+            result = target_set.sympy_set.contains(sp.sympify(value))
+        except (TypeError, ValueError, NotImplementedError) as error:
+            raise ValueError(f"Could not validate value at index {index}: {value!r} against {target_set}.") from error
+
+        if result is sp.false:
+            raise ValueError(f"Value at index {index}, {value!r}, is outside the target set {target_set}.")
+
+        if result is not sp.true:
+            raise ValueError(f"Could not determine membership for value at index {index}: {value!r} in {target_set}.")
 

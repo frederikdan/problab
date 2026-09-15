@@ -60,7 +60,7 @@ SUBTRACT    = ArithmeticOperation(operation=operator.sub, name_func=lambda a, b:
 MULTIPLY    = ArithmeticOperation(operation=operator.mul, name_func=lambda a, b: f"({a} * {b})",        valid_value_set=COMPLEXES, infer_value_set=_infer_multiply_value_set)
 DIVIDE      = ArithmeticOperation(operation=_DIVIDE,      name_func=lambda a, b: f"({a} / {b})",        valid_value_set=COMPLEXES, infer_value_set=_infer_divide_value_set)
 MODULO      = ArithmeticOperation(operation=_MODULO,      name_func=lambda a, b: f"({a} mod {b})",      valid_value_set=REALS,     infer_value_set=_infer_modulo_value_set)
-POWER       = ArithmeticOperation(operation=operator.pow, name_func=lambda a, b: f"({a} ** {b})",       valid_value_set=COMPLEXES, infer_value_set=_infer_power_value_set)
+POWER       = ArithmeticOperation(operation=_POWER,       name_func=lambda a, b: f"({a} ** {b})",       valid_value_set=COMPLEXES, infer_value_set=_infer_power_value_set)
 NEGATIVE    = ArithmeticOperation(operation=operator.neg, name_func=lambda x: f"(-{x})",                valid_value_set=COMPLEXES, infer_value_set=_infer_negative_value_set)
 ABS         = ArithmeticOperation(operation=operator.abs, name_func=lambda x: f"abs({x})",              valid_value_set=COMPLEXES, infer_value_set=_infer_absolute_value_set)
 
