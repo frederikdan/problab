@@ -5,7 +5,7 @@ from numbers import Real
 
 from problab.random_variables.base import RandomVariable
 from problab.functions._utils import _apply_scalar_or_rv
-from problab.value_sets.base import ValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
 from problab.validation.functions._common import _validate_domain, _validate_real_valued
 
 from problab.value_sets.sets import NON_NEGATIVE_REALS, INTEGERS
@@ -60,7 +60,7 @@ def sign(x: RandomVariable | Real) -> RandomVariable | Real:
     return _apply_scalar_or_rv(
         x=x,
         function=np.sign,
-        value_set=ValueSet(
+        value_set=NumericValueSet(
             sympy_set=sp.FiniteSet(-1, 0, 1),
             dtype_types=(np.integer, np.floating),
         ),

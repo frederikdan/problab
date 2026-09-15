@@ -27,9 +27,9 @@ Status: `[ ]` pending, `[x]` completed.
 
 - [x] Fix `ProbabilityResult.confidence_interval()`: it imports `_clopper_pearson` but calls `clopper_pearson`.
 - [x] Standardize package imports. Internal modules now use `problab`, and package metadata defines the `src` layout for installation.
-- [ ] Make real-valued expressions keep a compatible real representation. For example, `sqrt(X ** 2)` can fail because `np.emath.power` returns complex samples even when the inferred support is real.
-- [ ] Preserve compound categorical values as single values. Tuple-valued categories currently produce incorrect equality results or sample-shape errors.
-- [ ] Define safe categorical support handling for ordinary labels. Categories such as `"red apple"` fail in `sp.FiniteSet`, and string categories such as `"1"` are represented as numeric SymPy values.
+- [x] Make real-valued expressions keep a compatible real representation. Power nodes now use `np.power` when inference proves a real result and retain `_power_values` for complex-capable cases.
+- [x] Treat each categorical item as one atomic opaque object, even if it is numeric, a tuple, list-like object, or another compound object. Numeric categories use `NumericValueSet`; other categories use `ObjectValueSet`, preserving category identity for sampling, equality, membership, and `validate=True` realization validation.
+- [x] Define safe categorical support handling for ordinary labels. Object categories such as `"red apple"`, lists, tuples, and mappings no longer require a SymPy representation.
 - [ ] Make set membership use the same numeric conversion as realization validation. Integer-valued floating samples such as `-2.0` should be recognized as members of `Integers`.
 
 ### Remaining necessary changes
@@ -56,6 +56,6 @@ Status: `[ ]` pending, `[x]` completed.
 
 ## Verification baseline
 
-- Existing suite: 21 tests pass.
+- Existing suite: 27 tests pass.
 - The audit found failures that are not covered by the current tests.
 - `docs/mathematics/tmp.png` is unrelated and should remain untouched.

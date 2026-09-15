@@ -7,6 +7,8 @@ import sympy as sp
 
 from problab.value_sets._unknown import _UnknownValueSet
 from problab.value_sets.base import ValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.object_value_set import ObjectValueSet
 
 
 def _sympy_constant_value(value: Any) -> sp.Basic:
@@ -37,7 +39,10 @@ def _constant_value_set(value: Any, array: np.ndarray) -> ValueSet:
     except (AttributeError, TypeError, ValueError, sp.SympifyError):
         sympy_set = _UnknownValueSet()
 
-    return ValueSet(
+    if isinstance(sympy_set, _UnknownValueSet):
+        return ObjectValueSet(objects=(value,))
+
+    return NumericValueSet(
         sympy_set=sympy_set,
         dtype_types=(array.dtype.type,),
     )

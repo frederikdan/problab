@@ -7,7 +7,7 @@ from problab.distributions.base import Distribution
 from problab.random_variables.base import RandomVariable
 from problab.validation._decorator import _validate_parameters
 from problab.validation.distributions.discrete._poisson import _validate_poisson_mu
-from problab.value_sets.base import ValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
 from problab.value_sets.sets import NATURALS_0
 
 class PoissonDistribution(Distribution):
@@ -25,7 +25,7 @@ class PoissonDistribution(Distribution):
         super().__init__(parameters=(mu,))
 
     @property
-    def value_set(self) -> ValueSet:
+    def value_set(self) -> NumericValueSet:
         return self._value_set
 
     def _sample(self,

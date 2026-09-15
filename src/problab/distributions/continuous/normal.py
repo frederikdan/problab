@@ -9,7 +9,7 @@ from problab.distributions.base import Distribution
 from problab.random_variables.base import RandomVariable
 from problab.validation._decorator import _validate_parameters
 from problab.validation.distributions.continuous._normal import _validate_normal_mean, _validate_normal_std
-from problab.value_sets.base import ValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
 from problab.value_sets.sets import REALS
 
 class NormalDistribution(Distribution):
@@ -28,7 +28,7 @@ class NormalDistribution(Distribution):
         super().__init__(parameters=(mean, std), symbol="N")
 
     @property
-    def value_set(self) -> ValueSet:
+    def value_set(self) -> NumericValueSet:
         return self._value_set
 
     def _sample(self,

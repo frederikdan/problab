@@ -3,13 +3,13 @@ from typing import Callable
 from numbers import Real
 
 from problab.random_variables.base import RandomVariable
-from problab.value_sets.base import ValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
 
 
 def _apply_scalar_or_rv(
         x: RandomVariable | Real,
         function: Callable,
-        value_set: ValueSet,
+        value_set: NumericValueSet,
 ) -> RandomVariable | Real:
 
     if isinstance(x, RandomVariable):
@@ -25,7 +25,7 @@ def _apply_scalar_or_rv(
 def _apply(
         x: RandomVariable | Real,
         function,
-        value_set: ValueSet,
+        value_set: NumericValueSet,
 ) -> RandomVariable | float:
 
     if isinstance(x, RandomVariable):

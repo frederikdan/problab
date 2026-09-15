@@ -4,7 +4,7 @@ from typing import Callable
 
 import numpy as np
 
-from problab.value_sets.base import ValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
 from problab.value_sets._inference import (_infer_add_value_set,
                                                _infer_subtract_value_set,
                                                _infer_multiply_value_set,
@@ -24,8 +24,8 @@ class _Operation:
 
 @dataclasses.dataclass(frozen=True)
 class _ArithmeticOperation(_Operation):
-    infer_output_value_set: Callable[..., ValueSet]
-    valid_input_value_set: ValueSet
+    infer_output_value_set: Callable[..., NumericValueSet]
+    valid_input_value_set: NumericValueSet
 
 @dataclasses.dataclass(frozen=True)
 class _LogicalOperation(_Operation):

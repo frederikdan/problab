@@ -10,7 +10,7 @@ from .distributions import (
 )
 from .probability import ConfidenceInterval, P, ProbabilityInterval, ProbabilityResult
 from .random_variables import NodeGraph, RandomVariable
-from .value_sets import ValueSet
+from .value_sets import ObjectValueSet, NumericValueSet, ValueSet
 
 __all__ = [
     "RandomVariable",
@@ -26,4 +26,6 @@ __all__ = [
     "ProbabilityInterval",
     "Mode",
     "ValueSet",
+    "NumericValueSet",
+    "ObjectValueSet",
 ]

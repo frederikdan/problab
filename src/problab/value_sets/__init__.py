@@ -1,6 +1,8 @@
 """Value sets for declaring and inspecting possible random-variable values."""
 
 from .base import ValueSet
+from .numeric_value_set import NumericValueSet
+from .object_value_set import ObjectValueSet
 from .sets import (
     BOOLEANS, COMPLEXES, EVEN_INTEGERS, INTEGERS, NATURALS, NATURALS_0,
     NEGATIVE_EVEN_INTEGERS, NEGATIVE_INTEGERS, NEGATIVE_ODD_INTEGERS,
@@ -12,7 +14,7 @@ from .sets import (
 )
 
 __all__ = [
-    "ValueSet", "UNKNOWN_VALUE_SET", "BOOLEANS", "REALS", "POSITIVE_REALS",
+    "ValueSet", "NumericValueSet", "ObjectValueSet", "UNKNOWN_VALUE_SET", "BOOLEANS", "REALS", "POSITIVE_REALS",
     "NEGATIVE_REALS", "NON_NEGATIVE_REALS", "NON_POSITIVE_REALS", "INTEGERS",
     "POSITIVE_INTEGERS", "NEGATIVE_INTEGERS", "NATURALS_0", "NATURALS",
     "COMPLEXES", "UNIT_INTERVAL", "ZERO", "ONE", "NON_ZERO_REALS",

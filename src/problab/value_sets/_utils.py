@@ -1,13 +1,19 @@
 import numpy as np
 import sympy as sp
 
-from problab.value_sets.base import ValueSet, _UnknownValueSet
+from problab.value_sets.base import ValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.object_value_set import ObjectValueSet
+from problab.value_sets._unknown import _UnknownValueSet
 
 
 def is_known_subset(subset: ValueSet | sp.Set, superset: ValueSet | sp.Set) -> bool:
 
-    subset_set = subset.sympy_set if isinstance(subset, ValueSet) else subset
-    superset_set = superset.sympy_set if isinstance(superset, ValueSet) else superset
+    if isinstance(subset, ObjectValueSet) or isinstance(superset, ObjectValueSet):
+        return False
+
+    subset_set = subset.sympy_set if isinstance(subset, NumericValueSet) else subset
+    superset_set = superset.sympy_set if isinstance(superset, NumericValueSet) else superset
 
     if isinstance(subset_set, _UnknownValueSet) or isinstance(superset_set, _UnknownValueSet):
         return False
@@ -18,6 +24,19 @@ def is_known_subset(subset: ValueSet | sp.Set, superset: ValueSet | sp.Set) -> b
 def validate_as_subset(values: np.ndarray,
                        target_set: ValueSet
                        ) -> None:
+
+    if isinstance(target_set, ObjectValueSet):
+        flat_values = np.asarray(values, dtype=object).reshape(-1)
+        membership = np.asarray(target_set.contains(flat_values), dtype=bool).reshape(-1)
+        for index, (value, is_member) in enumerate(zip(flat_values, membership)):
+            if not is_member:
+                raise ValueError(
+                    f"Value at index {index}, {value!r}, is outside the target set {target_set}."
+                )
+        return
+
+    if not isinstance(target_set, NumericValueSet):
+        raise TypeError("'target_set' must be a ValueSet.")
 
     if isinstance(target_set.sympy_set, _UnknownValueSet):
         raise ValueError("Cannot validate membership: the target set is unknown.")

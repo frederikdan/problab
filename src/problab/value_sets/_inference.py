@@ -6,7 +6,8 @@ import numpy as np
 import sympy as sp
 
 from problab.value_sets._utils import is_known_subset
-from problab.value_sets.base import ValueSet, _UnknownValueSet
+from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets._unknown import _UnknownValueSet
 from problab.value_sets.sets import UNKNOWN_VALUE_SET, ZERO, ONE, POSITIVE_REALS, REALS, NON_NEGATIVE_REALS, \
     POSITIVE_EVEN_INTEGERS, NON_ZERO_REALS, NEGATIVE_EVEN_INTEGERS, POSITIVE_ODD_INTEGERS, NEGATIVE_ODD_INTEGERS, \
     NEGATIVE_REALS, NON_INTEGER_REALS, COMPLEXES, NON_ZERO_COMPLEXES, NON_POSITIVE_REALS, INTEGERS, NATURALS_0, \
@@ -15,7 +16,7 @@ from problab.value_sets.sets import UNKNOWN_VALUE_SET, ZERO, ONE, POSITIVE_REALS
 _BUILTIN_DTYPES = tuple(np.dtype(code) for code in np.typecodes["All"])
 
 
-def _infer_dtype_types(operation: np.ufunc | None, inputs: tuple[ValueSet, ...]) -> tuple[type[np.generic], ...] | None:
+def _infer_dtype_types(operation: np.ufunc | None, inputs: tuple[NumericValueSet, ...]) -> tuple[type[np.generic], ...] | None:
     if operation is None:
         return None
 
@@ -47,9 +48,9 @@ def _infer_dtype_types(operation: np.ufunc | None, inputs: tuple[ValueSet, ...])
 
 
 def _arithmetic_inference(*, dtype_operation: np.ufunc | None = None, preserves_integers: bool = False):
-    def decorate(infer: Callable[..., ValueSet]) -> Callable[..., ValueSet]:
+    def decorate(infer: Callable[..., NumericValueSet]) -> Callable[..., NumericValueSet]:
         @wraps(infer)
-        def wrapped(*operands: ValueSet, **named_operands: ValueSet) -> ValueSet:
+        def wrapped(*operands: NumericValueSet, **named_operands: NumericValueSet) -> NumericValueSet:
             inputs = (*operands, *named_operands.values())
 
             if not all(is_known_subset(value_set, COMPLEXES) for value_set in inputs):
@@ -64,7 +65,7 @@ def _arithmetic_inference(*, dtype_operation: np.ufunc | None = None, preserves_
                 sympy_set = sp.Intersection(sympy_set, INTEGERS.sympy_set)
 
             dtype_types = _infer_dtype_types(dtype_operation, inputs)
-            return ValueSet(sympy_set=sympy_set, dtype_types=dtype_types)
+            return NumericValueSet(sympy_set=sympy_set, dtype_types=dtype_types)
 
         return wrapped
 
@@ -74,7 +75,7 @@ def _arithmetic_inference(*, dtype_operation: np.ufunc | None = None, preserves_
 # Binary operations
 
 @_arithmetic_inference(dtype_operation=np.add, preserves_integers=True)
-def _infer_add_value_set(left_set: ValueSet, right_set: ValueSet) -> ValueSet:
+def _infer_add_value_set(left_set: NumericValueSet, right_set: NumericValueSet) -> NumericValueSet:
 
     if left_set.sympy_set == ZERO.sympy_set:
         return right_set
@@ -128,7 +129,7 @@ def _infer_add_value_set(left_set: ValueSet, right_set: ValueSet) -> ValueSet:
 
 
 @_arithmetic_inference(dtype_operation=np.subtract, preserves_integers=True)
-def _infer_subtract_value_set(left_set: ValueSet, right_set: ValueSet) -> ValueSet:
+def _infer_subtract_value_set(left_set: NumericValueSet, right_set: NumericValueSet) -> NumericValueSet:
 
     if right_set.sympy_set == ZERO.sympy_set:
         return left_set
@@ -179,7 +180,7 @@ def _infer_subtract_value_set(left_set: ValueSet, right_set: ValueSet) -> ValueS
 
 
 @_arithmetic_inference(dtype_operation=np.multiply, preserves_integers=True)
-def _infer_multiply_value_set(left_set: ValueSet, right_set: ValueSet) -> ValueSet:
+def _infer_multiply_value_set(left_set: NumericValueSet, right_set: NumericValueSet) -> NumericValueSet:
 
     if left_set.sympy_set == ZERO.sympy_set or right_set.sympy_set == ZERO.sympy_set:
         return ZERO
@@ -256,7 +257,7 @@ def _infer_multiply_value_set(left_set: ValueSet, right_set: ValueSet) -> ValueS
 
 
 @_arithmetic_inference(dtype_operation=np.divide)
-def _infer_divide_value_set(numerator_set: ValueSet, denominator_set: ValueSet) -> ValueSet:
+def _infer_divide_value_set(numerator_set: NumericValueSet, denominator_set: NumericValueSet) -> NumericValueSet:
 
     if not is_known_subset(denominator_set, NON_ZERO_COMPLEXES):
         return UNKNOWN_VALUE_SET
@@ -315,7 +316,7 @@ def _infer_divide_value_set(numerator_set: ValueSet, denominator_set: ValueSet) 
 
 
 @_arithmetic_inference(dtype_operation=np.floor_divide)
-def _infer_floor_divide_value_set(numerator_set: ValueSet, denominator_set: ValueSet) -> ValueSet:
+def _infer_floor_divide_value_set(numerator_set: NumericValueSet, denominator_set: NumericValueSet) -> NumericValueSet:
 
     if not is_known_subset(numerator_set, REALS) or not is_known_subset(denominator_set, NON_ZERO_REALS):
         return UNKNOWN_VALUE_SET
@@ -358,7 +359,7 @@ def _infer_floor_divide_value_set(numerator_set: ValueSet, denominator_set: Valu
 
 # _MODULO also applies np.where with a NaN branch, which can change dtype.
 @_arithmetic_inference()
-def _infer_modulo_value_set(dividend_set: ValueSet, divisor_set: ValueSet) -> ValueSet:
+def _infer_modulo_value_set(dividend_set: NumericValueSet, divisor_set: NumericValueSet) -> NumericValueSet:
 
     if not is_known_subset(dividend_set, REALS) or not is_known_subset(divisor_set, NON_ZERO_REALS):
         return UNKNOWN_VALUE_SET
@@ -395,7 +396,7 @@ def _infer_modulo_value_set(dividend_set: ValueSet, divisor_set: ValueSet) -> Va
 
 # _POWER/scimath performs casts depending on the realized signs of its inputs.
 @_arithmetic_inference()
-def _infer_power_value_set(base_set: ValueSet, exponent_set: ValueSet) -> ValueSet:
+def _infer_power_value_set(base_set: NumericValueSet, exponent_set: NumericValueSet) -> NumericValueSet:
 
     # Match NumPy's convention, including 0 ** 0 == 1.
     if exponent_set.sympy_set == ZERO.sympy_set:
@@ -466,7 +467,7 @@ def _infer_power_value_set(base_set: ValueSet, exponent_set: ValueSet) -> ValueS
         is_known_subset(base_set, NEGATIVE_REALS)
         and is_known_subset(exponent_set, NON_INTEGER_REALS)
     ):
-        return ValueSet(sympy_set=COMPLEXES.sympy_set - REALS.sympy_set, dtype_types=(np.complexfloating,))
+        return NumericValueSet(sympy_set=COMPLEXES.sympy_set - REALS.sympy_set, dtype_types=(np.complexfloating,))
 
     if base_is_nonzero:
         return NON_ZERO_COMPLEXES
@@ -477,7 +478,7 @@ def _infer_power_value_set(base_set: ValueSet, exponent_set: ValueSet) -> ValueS
 # Unary operations
 
 @_arithmetic_inference(dtype_operation=np.negative, preserves_integers=True)
-def _infer_negative_value_set(value_set: ValueSet) -> ValueSet:
+def _infer_negative_value_set(value_set: NumericValueSet) -> NumericValueSet:
 
     if value_set.sympy_set == ZERO.sympy_set:
         return ZERO
@@ -507,7 +508,7 @@ def _infer_negative_value_set(value_set: ValueSet) -> ValueSet:
 
 
 @_arithmetic_inference(dtype_operation=np.absolute, preserves_integers=True)
-def _infer_absolute_value_set(value_set: ValueSet) -> ValueSet:
+def _infer_absolute_value_set(value_set: NumericValueSet) -> NumericValueSet:
 
     if value_set.sympy_set == ZERO.sympy_set:
         return ZERO
