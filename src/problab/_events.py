@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import sympy as sp
 
-from src.problab.operations import AND, INVERT, OR
-from src.problab.random_variables.nodes import Node, OperationNode
+from src.problab._operations import _AND, _INVERT, _OR
+from src.problab.random_variables._nodes import _Node, _OperationNode
 from src.problab.value_sets._utils import is_known_subset
 from src.problab.value_sets.sets import BOOLEANS
 
@@ -11,10 +11,10 @@ from src.problab.value_sets.sets import BOOLEANS
 class _Event:
 
     @classmethod
-    def _from_node(cls, node: Node) -> _Event:
+    def _from_node(cls, node: _Node) -> _Event:
         return cls(node)
 
-    def __init__(self, node: Node) -> None:
+    def __init__(self, node: _Node) -> None:
         if not is_known_subset(node.value_set, BOOLEANS):
             raise ValueError("The value set of 'node' must be a subset of {False, True}.")
 
@@ -35,10 +35,10 @@ class _Event:
         if not isinstance(other, _Event):
             return NotImplemented
 
-        node_name = AND.name_func(self._node.name, other.name)
+        node_name = _AND.name_func(self._node.name, other.name)
 
-        return _Event._from_node(OperationNode(
-            operation=AND.operation,
+        return _Event._from_node(_OperationNode(
+            operation=_AND.operation,
             inputs=(self._node, other._node),
             name=node_name,
             value_set=BOOLEANS,
@@ -49,10 +49,10 @@ class _Event:
         if not isinstance(other, _Event):
             return NotImplemented
 
-        node_name = OR.name_func(self._node.name, other.name)
+        node_name = _OR.name_func(self._node.name, other.name)
 
-        return _Event._from_node(OperationNode(
-            operation=OR.operation,
+        return _Event._from_node(_OperationNode(
+            operation=_OR.operation,
             inputs=(self._node, other._node),
             name=node_name,
             value_set=BOOLEANS,
@@ -60,10 +60,10 @@ class _Event:
 
     def __invert__(self) -> _Event:
 
-        node_name = INVERT.name_func(self._node.name)
+        node_name = _INVERT.name_func(self._node.name)
 
-        return _Event._from_node(OperationNode(
-            operation=INVERT.operation,
+        return _Event._from_node(_OperationNode(
+            operation=_INVERT.operation,
             inputs=(self._node,),
             name=node_name,
             value_set=BOOLEANS,

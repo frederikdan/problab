@@ -3,7 +3,7 @@ from typing import get_args
 import numpy as np
 from numbers import Real
 
-from src.problab.statistics.quantiles import QuantileMethod
+from src.problab.statistics._quantiles import QuantileMethod
 
 
 def _validate_real_input(value: Real | np.ndarray, name: str) -> None:

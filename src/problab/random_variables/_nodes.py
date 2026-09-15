@@ -12,13 +12,13 @@ from src.problab.value_sets.sets import UNKNOWN_VALUE_SET
 
 if TYPE_CHECKING:
     from src.problab.distributions.base import Distribution
-    from src.problab.random_variables.context import RealizationContext
+    from src.problab.random_variables._context import _RealizationContext
 
 
 T = TypeVar('T')
 
 
-class Node(ABC):
+class _Node(ABC):
 
     def __init__(self):
         self._name = None
@@ -38,12 +38,12 @@ class Node(ABC):
 
     @property
     @abstractmethod
-    def dependencies(self) -> set[Node]:
+    def dependencies(self) -> set[_Node]:
         # Only top level of dependencies not a graph of dependencies of dependencies.
         ...
 
     @abstractmethod
-    def _evaluate(self, context: RealizationContext) -> np.ndarray:
+    def _evaluate(self, context: _RealizationContext) -> np.ndarray:
         ...
 
     @property
@@ -59,7 +59,7 @@ class Node(ABC):
         return bool(self.dependencies)
 
 
-class ConstantNode(Node, Generic[T]):
+class _ConstantNode(_Node, Generic[T]):
 
     def __init__(self, value: T) -> None:
 
@@ -84,14 +84,14 @@ class ConstantNode(Node, Generic[T]):
         return self._value_set
 
     @property
-    def dependencies(self) -> set[Node]:
+    def dependencies(self) -> set[_Node]:
         return set()
 
-    def _evaluate(self, context: RealizationContext) -> np.ndarray:
+    def _evaluate(self, context: _RealizationContext) -> np.ndarray:
         return np.asarray(self._value)
 
 
-class DistributionNode(Node):
+class _DistributionNode(_Node):
 
     def __init__(self,
                  distribution: Distribution,
@@ -116,18 +116,18 @@ class DistributionNode(Node):
         return self._distribution.value_set
 
     @property
-    def dependencies(self) -> set[Node]:
-        return self._distribution.node_dependencies
+    def dependencies(self) -> set[_Node]:
+        return self._distribution._node_dependencies
 
-    def _evaluate(self, context: RealizationContext) -> np.ndarray:
-        return self._distribution.sample(context)
+    def _evaluate(self, context: _RealizationContext) -> np.ndarray:
+        return self._distribution._evaluate(context)
 
 
-class OperationNode(Node):
+class _OperationNode(_Node):
 
     def __init__(self,
                  operation: Callable[..., np.ndarray],
-                 inputs: tuple[Node, ...],
+                 inputs: tuple[_Node, ...],
                  name: str,
                  value_set: ValueSet = UNKNOWN_VALUE_SET
                  ) -> None:
@@ -147,10 +147,10 @@ class OperationNode(Node):
         return self._value_set
 
     @property
-    def dependencies(self) -> set[Node]:
+    def dependencies(self) -> set[_Node]:
         return set(self._inputs)
 
-    def _evaluate(self, context: RealizationContext) -> np.ndarray:
+    def _evaluate(self, context: _RealizationContext) -> np.ndarray:
 
         values = tuple(
             context.evaluate(node)

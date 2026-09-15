@@ -13,7 +13,7 @@ from src.problab.validation.statistics._clopper_pearson import _validate_confide
     num_successes=_validate_num_successes,
     alpha=_validate_alpha,
 )
-def confidence_interval(
+def _confidence_interval(
         num_samples: int,
         num_successes: int,
         alpha: float,

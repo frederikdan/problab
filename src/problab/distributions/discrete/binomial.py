@@ -8,7 +8,6 @@ from scipy.stats import binom
 
 from src.problab.distributions.base import Distribution
 from src.problab.random_variables.base import RandomVariable
-from src.problab.random_variables.nodes import ConstantNode
 from src.problab.validation._decorator import _validate_parameters
 from src.problab.validation.distributions.discrete._binomial import _validate_binomial_n, _validate_binomial_p
 from src.problab.value_sets.base import ValueSet
@@ -26,12 +25,9 @@ class BinomialDistribution(Distribution):
             p: RandomVariable | Real
         ) -> None:
 
-        if isinstance(n, RandomVariable):
-            n_node = n._node
-        else:  # n is an integer
-            n_node = ConstantNode(n)
+        super().__init__(parameters=(n, p), symbol="Bin")
 
-        self._n = n_node
+        n_node, _ = self._parameter_nodes
 
         n_max = n_node.value_set.sympy_set.sup
 
@@ -42,15 +38,6 @@ class BinomialDistribution(Distribution):
                 sympy_set=sp.FiniteSet(*range(int(n_max) + 1)),
                 dtype_types=(np.integer,),
             )
-
-        if isinstance(p, RandomVariable):
-            p_node = p._node
-        else:  # p is a real number
-            p_node = ConstantNode(p)
-
-        self._p = p_node
-
-        super().__init__(parameters=(self._n, self._p), symbol="Bin")
 
     @property
     def value_set(self) -> ValueSet:

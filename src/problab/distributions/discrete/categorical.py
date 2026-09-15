@@ -6,7 +6,7 @@ import sympy as sp
 from numpy._typing import NDArray
 
 from src.problab.distributions.base import Distribution
-from src.problab.random_variables.context import RealizationContext
+from src.problab.random_variables._context import _RealizationContext
 from src.problab.validation._decorator import _validate_parameters
 from src.problab.validation.distributions.discrete._categorical import _validate_categories, _validate_probabilities, \
     _validate_categorical_configuration

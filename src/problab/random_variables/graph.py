@@ -2,13 +2,13 @@ from typing import Any
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from src.problab.random_variables.nodes import Node
+from src.problab.random_variables._nodes import _Node
 
 
 class NodeGraph:
 
     def __init__(self,
-                 root_node: Node,
+                 root_node: _Node,
                  max_size: int
                  ) -> None:
 
@@ -32,17 +32,17 @@ class NodeGraph:
         return self._is_complete
 
     @property
-    def nodes(self) -> set[Node]:
+    def nodes(self) -> set[_Node]:
         return set(self._graph.nodes)
 
     @property
     def nx_graph(self) -> nx.DiGraph:
         return self._graph
 
-    def num_dependents(self, node: Node) -> int:
+    def num_dependents(self, node: _Node) -> int:
         return self._graph.in_degree(node)  # for one input node this always returns an int
 
-    def num_dependencies(self, node: Node) -> int:
+    def num_dependencies(self, node: _Node) -> int:
         return self._graph.out_degree(node)  # for one input node this always returns an int
 
     def plot(self, use_extended_names: bool = False) -> None:
@@ -63,7 +63,7 @@ class NodeGraph:
     def _build_graph(self) -> None:
         self._add_node_recursive(self._root_node)
 
-    def _add_node_recursive(self, node: Node) -> None:
+    def _add_node_recursive(self, node: _Node) -> None:
 
         if node in self._graph:
             return

@@ -1,6 +1,6 @@
 from numbers import Real
 
-from src.problab.random_variables.nodes import ConstantNode
+from src.problab.random_variables._nodes import _ConstantNode
 from src.problab.value_sets._utils import is_known_subset
 from src.problab.value_sets.sets import NATURALS_0, UNIT_INTERVAL
 
@@ -11,7 +11,7 @@ def _validate_binomial_n(value) -> None:
     if isinstance(value, RandomVariable):
         n_node = value._node
     elif isinstance(value, int):
-        n_node = ConstantNode(value)
+        n_node = _ConstantNode(value)
     else:
         raise TypeError("'n' must be a RandomVariable or an integer.")
 
@@ -25,7 +25,7 @@ def _validate_binomial_p(value) -> None:
     if isinstance(value, RandomVariable):
         p_node = value._node
     elif isinstance(value, Real):
-        p_node = ConstantNode(value)
+        p_node = _ConstantNode(value)
     else:
         raise TypeError("'p' must be a RandomVariable or a real number.")
 

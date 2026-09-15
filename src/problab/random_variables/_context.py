@@ -4,16 +4,16 @@ import numpy as np
 
 from src.problab.random_variables._config import DEF_MAX_GRAPH_SIZE
 from src.problab.random_variables.graph import NodeGraph
-from src.problab.random_variables.nodes import Node
+from src.problab.random_variables._nodes import _Node
 from src.problab.value_sets._utils import validate_as_subset
 
 T = TypeVar('T')
 
 
-class RealizationContext:
+class _RealizationContext:
 
     def __init__(self,
-                 root_node: Node,
+                 root_node: _Node,
                  num_samples: int = 1,
                  rng: np.random.Generator | None = None,
                  validate: bool = False,
@@ -40,7 +40,7 @@ class RealizationContext:
 
         self._num_samples = num_samples
         self._rng = np.random.default_rng() if rng is None else rng
-        self._realizations: dict[Node, np.ndarray] = {}
+        self._realizations: dict[_Node, np.ndarray] = {}
         self._validate = validate
 
 
@@ -55,7 +55,7 @@ class RealizationContext:
     def rng(self) -> np.random.Generator:
         return self._rng
 
-    def evaluate(self, node: Node) -> np.ndarray:
+    def evaluate(self, node: _Node) -> np.ndarray:
 
         if node not in self._realizations:
 

@@ -22,10 +22,10 @@ QuantileMethod: TypeAlias = Literal[
 ]
 
 
-def quantile_confidence_interval(samples: np.ndarray,
-                                 q: float,
-                                 alpha: float = DEF_ALPHA
-                                 ) -> ConfidenceInterval:
+def _quantile_confidence_interval(samples: np.ndarray,
+                                  q: float,
+                                  alpha: float = DEF_ALPHA
+                                  ) -> ConfidenceInterval:
 
     if not 0 < q < 1:
         raise ValueError("'q' must be between 0 and 1.")

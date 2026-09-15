@@ -8,9 +8,9 @@ from functools import partial
 
 from src.problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA, DEF_DISTRIBUTION_SYMBOL_NAME
 from src.problab.probability.intervals import ConfidenceInterval
-from src.problab.random_variables.context import RealizationContext
-from src.problab.random_variables.nodes import Node, ConstantNode, DistributionNode
-from src.problab.statistics.quantiles import quantile_confidence_interval, QuantileMethod
+from src.problab.random_variables._context import _RealizationContext
+from src.problab.random_variables._nodes import _Node, _ConstantNode, _DistributionNode
+from src.problab.statistics._quantiles import _quantile_confidence_interval, QuantileMethod
 from src.problab.validation._common import _validate_q, _validate_alpha, _validate_num_samples, _validate_rng, \
     _validate_enum
 from src.problab.validation._decorator import _validate_parameters
@@ -36,14 +36,13 @@ class Distribution(ABC):
     def value_set(self) -> ValueSet:
         ...
 
-    def sample(self, context: RealizationContext | None = None) -> np.ndarray:
+    def sample(self) -> np.ndarray:
+        root = _DistributionNode(self, rv_name=self.name)
+        context = _RealizationContext(root_node=root)
+        return context.evaluate(root)
 
-        if context is None:
-            root = DistributionNode(self, rv_name=self.name)
-            context = RealizationContext(root_node=root)
-            return context.evaluate(root)
-
-        parameter_values = tuple(context.evaluate(parameter) for parameter in self.parameters)
+    def _evaluate(self, context: _RealizationContext) -> np.ndarray:
+        parameter_values = tuple(context.evaluate(parameter) for parameter in self._parameter_nodes)
 
         return self._sample(
             *parameter_values,
@@ -61,33 +60,47 @@ class Distribution(ABC):
 
 
     def __init__(self,
-                 parameters: tuple[Node, ...] | None = None,
+                 parameters: tuple[Any, ...] | None = None,
                  symbol: str = DEF_DISTRIBUTION_SYMBOL_NAME
                  ) -> None:
-        self._parameters = parameters if parameters is not None else ()
+        self._parameter_inputs: tuple[Any, ...] = parameters if parameters is not None else ()
+        self._parameter_nodes: tuple[_Node, ...] = tuple(
+            self._parameter_to_node(parameter)
+            for parameter in self._parameter_inputs
+        )
         self._symbol = symbol
+
+    @staticmethod
+    def _parameter_to_node(parameter: Any) -> _Node:
+        if isinstance(parameter, _Node):
+            return parameter
+
+        from src.problab.random_variables.base import RandomVariable
+
+        if isinstance(parameter, RandomVariable):
+            return parameter._node
+
+        return _ConstantNode(parameter)
 
 
     @property
     def symbol(self) -> str:
         return self._symbol
 
+    @property
+    def parameters(self) -> tuple[Any, ...]:
+        return self._parameter_inputs
 
     @property
     def name(self) -> str:
-        return f"{self.symbol}({", ".join(parameter.name for parameter in self.parameters)})"
+        return f"{self.symbol}({", ".join(parameter.name for parameter in self._parameter_nodes)})"
 
 
     @property
-    def parameters(self) -> tuple[Node, ...]:
-        return self._parameters
-
-
-    @property
-    def node_dependencies(self) -> set[Node]:
+    def _node_dependencies(self) -> set[_Node]:
         dependencies = set(
-            x for x in self.parameters
-            if not isinstance(x, ConstantNode)
+            x for x in self._parameter_nodes
+            if not isinstance(x, _ConstantNode)
         )
 
         return dependencies
@@ -108,15 +121,15 @@ class Distribution(ABC):
         if not is_known_subset(self.value_set, REALS):
             raise TypeError("Quantile confidence intervals require a real-valued distribution.")
 
-        root_node = DistributionNode(self, rv_name=self.name)
-        context = RealizationContext(
+        root_node = _DistributionNode(self, rv_name=self.name)
+        context = _RealizationContext(
             root_node=root_node,
             num_samples=num_samples,
             rng=rng,
         )
         samples = context.evaluate(root_node)
 
-        return quantile_confidence_interval(
+        return _quantile_confidence_interval(
             samples=samples,
             q=q,
             alpha=alpha,
@@ -129,8 +142,8 @@ class Distribution(ABC):
                      rng: np.random.Generator | None = None
                      ) -> float | complex | np.ndarray:
 
-        root_node = DistributionNode(self, rv_name=self.name)
-        context = RealizationContext(
+        root_node = _DistributionNode(self, rv_name=self.name)
+        context = _RealizationContext(
             root_node=root_node,
             num_samples=num_samples,
             rng=rng,
@@ -333,7 +346,7 @@ class Distribution(ABC):
         return None
 
 
-class ContinuousDistribution(Distribution):
+class _ContinuousDistribution(Distribution):
 
 
     @abstractmethod
@@ -341,7 +354,7 @@ class ContinuousDistribution(Distribution):
         ...
 
 
-class DiscreteDistribution(Distribution):
+class _DiscreteDistribution(Distribution):
 
     @abstractmethod
     def pmf(self, x: Real | np.ndarray) -> float | np.ndarray:

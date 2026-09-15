@@ -6,7 +6,7 @@ import numpy as np
 from src.problab._events import _Event
 from src.problab.probability._config import DEFAULT_PROB_NUM_SAMPLES
 from src.problab.probability.results import ProbabilityResult
-from src.problab.random_variables.context import RealizationContext
+from src.problab.random_variables._context import _RealizationContext
 from src.problab.validation._common import _validate_num_samples, _validate_rng, _validate_validate
 from src.problab.validation._decorator import _validate_parameters
 from src.problab.validation.probability._probability import _validate_event, _validate_given
@@ -29,7 +29,7 @@ def P(event: _Event,
     num_samples = int(num_samples)
 
     if given is None:
-        event_values = RealizationContext(
+        event_values = _RealizationContext(
             root_node=event._node,
             num_samples=num_samples,
             rng=rng,
@@ -44,7 +44,7 @@ def P(event: _Event,
 
     joint_event = event & given
 
-    context = RealizationContext(
+    context = _RealizationContext(
         root_node=joint_event._node,
         num_samples=num_samples,
         rng=rng,

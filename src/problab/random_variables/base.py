@@ -9,14 +9,14 @@ import sympy as sp
 from src.problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA
 from src.problab.distributions.base import Distribution
 from src.problab._events import _Event
-from src.problab.operations import ADD, SUBTRACT, MULTIPLY, MODULO, LT, LTE, GT, GTE, EQ, NEQ, POWER, \
-    ArithmeticOperation, NEGATIVE, ABS, DIVIDE, ComparisonOperation
+from src.problab._operations import _ADD, _SUBTRACT, _MULTIPLY, _MODULO, _LT, _LTE, _GT, _GTE, _EQ, _NEQ, _POWER, \
+    _ArithmeticOperation, _NEGATIVE, _ABS, _DIVIDE, _ComparisonOperation
 from src.problab.probability.intervals import ProbabilityInterval, ConfidenceInterval
 from src.problab.random_variables._config import DEF_MAX_GRAPH_SIZE
-from src.problab.random_variables.context import RealizationContext
+from src.problab.random_variables._context import _RealizationContext
 from src.problab.random_variables.graph import NodeGraph
-from src.problab.random_variables.nodes import DistributionNode, Node, ConstantNode, OperationNode
-from src.problab.statistics.quantiles import quantile_confidence_interval
+from src.problab.random_variables._nodes import _DistributionNode, _Node, _ConstantNode, _OperationNode
+from src.problab.statistics._quantiles import _quantile_confidence_interval
 from src.problab.validation._common import _validate_num_samples, _validate_rng, _validate_alpha, _validate_q, \
     _validate_max_size, _validate_validate
 from src.problab.validation._decorator import _validate_parameters
@@ -46,11 +46,11 @@ class RandomVariable:
         if name is None: self._name = "RV_" + str(next(RandomVariable._count) + 1)
         else: self._name = name
 
-        self._node = DistributionNode(distribution, rv_name=self._name)
+        self._node = _DistributionNode(distribution, rv_name=self._name)
 
     @classmethod
     def _from_node(cls,
-                   node: Node,
+                   node: _Node,
                    name: str | None = None
                    ) -> RandomVariable:
 
@@ -89,7 +89,7 @@ class RandomVariable:
 
         num_samples = int(num_samples)
 
-        return RealizationContext(
+        return _RealizationContext(
             root_node=self._node,
             num_samples=num_samples,
             rng=rng,
@@ -101,7 +101,7 @@ class RandomVariable:
 
     def _binary_operation(self,
                           other: RandomVariable | Complex,
-                          operation: ArithmeticOperation,
+                          operation: _ArithmeticOperation,
                           reverse: bool = False
                           ) -> RandomVariable:
 
@@ -122,7 +122,7 @@ class RandomVariable:
                 return NotImplemented
         else:
             other = RandomVariable._from_node(
-                ConstantNode(other)
+                _ConstantNode(other)
             )
 
         left_node, right_node = (
@@ -139,7 +139,7 @@ class RandomVariable:
         node_name = operation.name_func(left_node.name, right_node.name)
 
         return RandomVariable._from_node(
-            OperationNode(
+            _OperationNode(
                 operation=operation.operation,
                 inputs=(left_node, right_node),
                 name=node_name,
@@ -148,7 +148,7 @@ class RandomVariable:
         )
 
     def _unary_operation(self,
-                         operation: ArithmeticOperation
+                         operation: _ArithmeticOperation
                          ) -> RandomVariable:
 
         if not is_known_subset(
@@ -165,7 +165,7 @@ class RandomVariable:
         node_name = operation.name_func(self._node.name)
 
         return RandomVariable._from_node(
-            OperationNode(
+            _OperationNode(
                 operation=operation.operation,
                 inputs=(self._node,),
                 name=node_name,
@@ -271,7 +271,7 @@ class RandomVariable:
             )
 
         return _Event(
-            OperationNode(
+            _OperationNode(
                 operation=operation,
                 inputs=(self._node,),
                 name=f"{{{self._node.name} in {target_set}}}",
@@ -310,7 +310,7 @@ class RandomVariable:
         node_name = f"{function_name}({', '.join(map(str, inputs))})"
 
         return RandomVariable._from_node(
-            OperationNode(
+            _OperationNode(
                 operation=operation,
                 inputs=inputs,
                 name=node_name,
@@ -319,54 +319,54 @@ class RandomVariable:
         )
 
     def __add__(self, other):
-        return self._binary_operation(other, ADD)
+        return self._binary_operation(other, _ADD)
 
     def __radd__(self, other):
-        return self._binary_operation(other, ADD)
+        return self._binary_operation(other, _ADD)
 
     def __sub__(self, other):
-        return self._binary_operation(other, SUBTRACT)
+        return self._binary_operation(other, _SUBTRACT)
 
     def __rsub__(self, other):
-        return self._binary_operation(other, SUBTRACT, reverse=True)
+        return self._binary_operation(other, _SUBTRACT, reverse=True)
 
     def __mul__(self, other):
-        return self._binary_operation(other, MULTIPLY)
+        return self._binary_operation(other, _MULTIPLY)
 
     def __rmul__(self, other):
-        return self._binary_operation(other, MULTIPLY)
+        return self._binary_operation(other, _MULTIPLY)
 
     def __truediv__(self, other):
-        return self._binary_operation(other, DIVIDE)
+        return self._binary_operation(other, _DIVIDE)
 
     def __rtruediv__(self, other):
-        return self._binary_operation(other, DIVIDE, reverse=True)
+        return self._binary_operation(other, _DIVIDE, reverse=True)
 
     def __mod__(self, other: RandomVariable | Real) -> RandomVariable:
-        return self._binary_operation(other, MODULO)
+        return self._binary_operation(other, _MODULO)
 
     def __rmod__(self, other: RandomVariable | Real) -> RandomVariable:
-        return self._binary_operation(other, MODULO, reverse=True)
+        return self._binary_operation(other, _MODULO, reverse=True)
 
     def __pow__(self, other: RandomVariable | Complex) -> RandomVariable:
-        return self._binary_operation(other, POWER)
+        return self._binary_operation(other, _POWER)
 
     def __rpow__(self, other: RandomVariable | Complex) -> RandomVariable:
-        return self._binary_operation(other, POWER, reverse=True)
+        return self._binary_operation(other, _POWER, reverse=True)
 
     def __neg__(self) -> RandomVariable:
-        return self._unary_operation(NEGATIVE)
+        return self._unary_operation(_NEGATIVE)
 
     def __abs__(self) -> RandomVariable:
-        return self._unary_operation(ABS)
+        return self._unary_operation(_ABS)
 
-    def _inequality_comparison(self, operator: ComparisonOperation, other: RandomVariable | Real) -> _Event:
+    def _inequality_comparison(self, operator: _ComparisonOperation, other: RandomVariable | Real) -> _Event:
 
         if not is_known_subset(self._node.value_set, REALS):
             return NotImplemented
 
         if isinstance(other, Real):
-            other_node = ConstantNode(other)
+            other_node = _ConstantNode(other)
 
         elif isinstance(other, RandomVariable):
             if not is_known_subset(other._node.value_set, REALS):
@@ -380,7 +380,7 @@ class RandomVariable:
         node_name = operator.name_func(self._node.name, other_node.name)
 
         return _Event(
-            OperationNode(
+            _OperationNode(
                 operation=operator.operation,
                 inputs=(self._node, other_node),
                 name=node_name,
@@ -388,16 +388,16 @@ class RandomVariable:
             )
         )
 
-    def _equality_comparison(self, operator: ComparisonOperation, other: RandomVariable | Real) -> _Event:
+    def _equality_comparison(self, operator: _ComparisonOperation, other: RandomVariable | Real) -> _Event:
         if isinstance(other, RandomVariable):
             other_node = other._node
         else:
-            other_node = ConstantNode(other)
+            other_node = _ConstantNode(other)
 
         node_name = operator.name_func(self._node.name, other_node.name)
 
         return _Event(
-            OperationNode(
+            _OperationNode(
                 operation=operator.operation,
                 inputs=(self._node, other_node),
                 name=node_name,
@@ -406,22 +406,22 @@ class RandomVariable:
         )
 
     def __lt__(self, other: RandomVariable | Real) -> _Event:
-        return self._inequality_comparison(LT, other)
+        return self._inequality_comparison(_LT, other)
 
     def __le__(self, other: RandomVariable | Real) -> _Event:
-        return self._inequality_comparison(LTE, other)
+        return self._inequality_comparison(_LTE, other)
 
     def __gt__(self, other: RandomVariable | Real) -> _Event:
-        return self._inequality_comparison(GT, other)
+        return self._inequality_comparison(_GT, other)
 
     def __ge__(self, other: RandomVariable | Real) -> _Event:
-        return self._inequality_comparison(GTE, other)
+        return self._inequality_comparison(_GTE, other)
 
     def __eq__(self, other: RandomVariable | Real) -> _Event:
-        return self._equality_comparison(EQ, other)
+        return self._equality_comparison(_EQ, other)
 
     def __ne__(self, other: RandomVariable | Real) -> _Event:
-        return self._equality_comparison(NEQ, other)
+        return self._equality_comparison(_NEQ, other)
 
     def __repr__(self):
         return (
@@ -455,7 +455,7 @@ class RandomVariable:
             rng=rng,
         )
 
-        return quantile_confidence_interval(
+        return _quantile_confidence_interval(
             samples=samples,
             q=q,
             alpha=alpha,
