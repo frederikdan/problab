@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="An interactive, source-derived map of the ProbLab Python library.">
+  <title>ProbLab — Library explorer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23282826'/%3E%3Ctext x='10' y='29' font-size='27' fill='%23e6e5df'%3EP%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="graph-data.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar" aria-label="Library navigation">
+    <a href="#" class="brand" id="home-link"><span class="brand-mark">P<span>·</span></span><span>ProbLab<span class="brand-sub">LIBRARY EXPLORER</span></span></a>
+    <button id="search-open" class="search-trigger"><span data-icon="search"></span><span>Find anything</span><kbd>/</kbd></button>
+    <div class="nav-label">WORKSPACE</div>
+    <nav class="views"><button id="architecture" class="nav-item active"><span data-icon="map"></span>Architecture<span class="nav-trailing">↗</span></button><button id="public-api" class="nav-item"><span data-icon="box"></span>Public API<span id="api-count" class="counter"></span></button></nav>
+    <div class="nav-label section-label">LIBRARY<span id="module-count"></span></div>
+    <nav id="package-nav" class="package-nav" aria-label="Packages"></nav>
+    <div class="sidebar-bottom"><button id="help-open" class="nav-item"><span data-icon="help"></span>How to explore</button><div class="snapshot"><span class="status-dot"></span><span id="snapshot-status">Source snapshot</span><button id="refresh" class="icon-button" aria-label="Refresh from Python source" title="Refresh from Python source"><span data-icon="refresh"></span></button></div><span id="snapshot-hash" class="snapshot-hash"></span></div>
+  </aside>
+  <main>
+    <header class="topbar"><div class="workspace-name"><span data-icon="branch"></span>problab<span class="slash">/</span><span>Source explorer</span></div><div class="top-actions"><span class="local-badge"><span class="status-dot"></span>LOCAL</span><button id="theme-toggle" class="icon-button" aria-label="Switch color theme" title="Switch color theme"><span data-icon="sun"></span></button><button id="inspector-toggle" class="icon-button" aria-label="Toggle details panel" title="Toggle details panel"><span data-icon="panel"></span></button></div></header>
+    <section class="heading"><div><div class="eyebrow"><span class="tiny-dot"></span>EXPLORE THE CODEBASE</div><h1 id="page-title">A map of ProbLab<span>.</span></h1><p id="page-description">Start with the big picture. Follow a connection. Open up the details.</p></div><div id="summary-stats" class="summary-stats"></div></section>
+    <section class="explorer" aria-label="Interactive library map">
+      <div class="map-toolbar"><nav id="breadcrumbs" class="breadcrumbs" aria-label="Current location"></nav><div class="map-tools"><label class="internal-toggle"><input type="checkbox" id="internal-toggle" checked>Internals</label><div class="segmented"><button id="graph-view" class="active" aria-label="Graph view" title="Graph view"><span data-icon="map"></span></button><button id="list-view" aria-label="List view" title="List view"><span data-icon="list"></span></button></div></div></div>
+      <div class="workarea">
+        <div class="canvas-shell"><div class="canvas-top"><span id="scope-label">PACKAGE OVERVIEW</span><span id="visible-count"></span></div><div id="graph-canvas" class="graph-canvas" aria-label="Dependency graph. Select a card to inspect it; use its expand button to explore its contents."><div id="graph-stage" class="graph-stage"><svg id="edges" aria-hidden="true"></svg><div id="cards"></div></div><div id="empty-state" class="empty-state" hidden></div></div><div id="list-canvas" class="list-canvas" hidden></div><div class="canvas-bottom"><div class="edge-legend"><span class="legend-line"></span><span>uses → dependency</span></div><div class="zoom-controls"><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit-view" title="Fit map (F)">Fit</button><button id="zoom-in" aria-label="Zoom in">+</button></div></div><div class="canvas-hint" id="canvas-hint">Select to inspect <span>·</span> Double-click to explore <span>·</span> Drag to pan</div></div>
+        <aside id="inspector" class="inspector" aria-label="Selected component details"><div class="inspector-heading"><span>INSPECTOR</span><span data-icon="focus"></span></div><div id="inspector-content"></div></aside>
+      </div>
+      <footer class="map-footer"><div id="relation-filters" class="relation-filters" aria-label="Visible connection types"></div><button id="about-map" class="text-button">How this map is built <span>↗</span></button></footer>
+    </section>
+    <footer class="page-footer"><span>Made with Codex <span class="footer-dot">·</span> Built from Python source</span><span id="source-version"></span></footer>
+  </main>
+  <dialog id="search-dialog" class="search-dialog"><div class="search-input-row"><span data-icon="search"></span><input id="search-input" aria-label="Search definitions" placeholder="Search classes, methods, functions…" autocomplete="off"><button id="search-close" class="key-button">Esc</button></div><div class="search-note">Jump to any definition in the library</div><div id="search-results" class="search-results"></div></dialog>
+  <dialog id="help-dialog" class="help-dialog"><button id="help-close" class="icon-button dialog-close" aria-label="Close help">×</button><div class="eyebrow">A LITTLE ORIENTATION</div><h2>From the whole<br>to the how.</h2><p>This map is generated from ProbLab’s Python files. Nothing in the library is executed to build it.</p><div class="help-step"><span>01</span><div><h3>Start with a package</h3><p>Select a card for its purpose and relationships. Double-click it, or use Explore, to reveal its contents.</p></div></div><div class="help-step"><span>02</span><div><h3>Follow what matters</h3><p>Public entry points carry an API badge. The dependency count and bar show how often other definitions reference a component.</p></div></div><div class="help-step"><span>03</span><div><h3>Read the actual source</h3><p>Select a class, method or function and switch to Source in the inspector. Connections lead to other definitions.</p></div></div><div class="help-note" id="analysis-note"></div><div class="shortcuts"><span><kbd>/</kbd> Search</span><span><kbd>F</kbd> Fit graph</span><span><kbd>Esc</kbd> Close</span></div></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <noscript>This explorer needs JavaScript to display the generated source map.</noscript>
+</body>
+</html>
