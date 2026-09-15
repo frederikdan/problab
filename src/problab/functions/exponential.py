@@ -2,10 +2,10 @@ from numbers import Real
 
 import numpy as np
 
-from src.problab.random_variables.base import RandomVariable
-from src.problab.functions._utils import _apply_scalar_or_rv
-from src.problab.value_sets.sets import POSITIVE_REALS, REALS
-from src.problab.validation.functions._common import _validate_domain, _validate_real_valued
+from problab.random_variables.base import RandomVariable
+from problab.functions._utils import _apply_scalar_or_rv
+from problab.value_sets.sets import POSITIVE_REALS, REALS
+from problab.validation.functions._common import _validate_domain, _validate_real_valued
 
 
 def exp(x: RandomVariable | Real) -> RandomVariable | Real:

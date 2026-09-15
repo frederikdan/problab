@@ -3,13 +3,13 @@
 #P(event, method="monte_carlo")
 import numpy as np
 
-from src.problab._events import _Event
-from src.problab.probability._config import DEFAULT_PROB_NUM_SAMPLES
-from src.problab.probability.results import ProbabilityResult
-from src.problab.random_variables._context import _RealizationContext
-from src.problab.validation._common import _validate_num_samples, _validate_rng, _validate_validate
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.probability._probability import _validate_event, _validate_given
+from problab._events import _Event
+from problab.probability._config import DEFAULT_PROB_NUM_SAMPLES
+from problab.probability.results import ProbabilityResult
+from problab.random_variables._context import _RealizationContext
+from problab.validation._common import _validate_num_samples, _validate_rng, _validate_validate
+from problab.validation._decorator import _validate_parameters
+from problab.validation.probability._probability import _validate_event, _validate_given
 
 
 @_validate_parameters(

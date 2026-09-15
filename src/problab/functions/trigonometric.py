@@ -3,11 +3,11 @@ from numbers import Real
 import numpy as np
 import sympy as sp
 
-from src.problab.functions._utils import _apply
-from src.problab.random_variables.base import RandomVariable
-from src.problab.validation.functions._common import _validate_domain, _validate_real_valued
-from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import REALS, NON_NEGATIVE_REALS
+from problab.functions._utils import _apply
+from problab.random_variables.base import RandomVariable
+from problab.validation.functions._common import _validate_domain, _validate_real_valued
+from problab.value_sets.base import ValueSet
+from problab.value_sets.sets import REALS, NON_NEGATIVE_REALS
 
 
 def sin(x: RandomVariable | Real) -> RandomVariable | float:

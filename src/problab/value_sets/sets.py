@@ -1,7 +1,7 @@
 import numpy as np
 import sympy as sp
 
-from src.problab.value_sets.base import _UnknownValueSet, ValueSet
+from problab.value_sets.base import _UnknownValueSet, ValueSet
 
 n = sp.Symbol("n", integer=True)
 

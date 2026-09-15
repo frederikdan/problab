@@ -1,4 +1,4 @@
-from src.problab._events import _Event
+from problab._events import _Event
 
 
 def _validate_event(value: _Event) -> None:

@@ -1,12 +1,12 @@
 from numbers import Real
 
-from src.problab.random_variables._nodes import _ConstantNode
-from src.problab.value_sets._utils import is_known_subset
-from src.problab.value_sets.sets import NON_NEGATIVE_REALS
+from problab.random_variables._nodes import _ConstantNode
+from problab.value_sets._utils import is_known_subset
+from problab.value_sets.sets import NON_NEGATIVE_REALS
 
 
 def _validate_poisson_mu(value) -> None:
-    from src.problab.random_variables.base import RandomVariable
+    from problab.random_variables.base import RandomVariable
 
     if isinstance(value, RandomVariable):
         mu_node = value._node

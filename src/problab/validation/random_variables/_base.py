@@ -3,8 +3,8 @@ from numbers import Real
 
 import sympy as sp
 
-from src.problab.distributions.base import Distribution
-from src.problab.value_sets.base import ValueSet
+from problab.distributions.base import Distribution
+from problab.value_sets.base import ValueSet
 
 
 def _validate_distribution(value: Distribution) -> None:
@@ -61,7 +61,7 @@ def _validate_vectorized(value: bool) -> None:
 
 
 def _validate_others(value: tuple) -> None:
-    from src.problab.random_variables.base import RandomVariable
+    from problab.random_variables.base import RandomVariable
 
     if not all(isinstance(other, RandomVariable) for other in value):
         raise TypeError("'others' must contain only RandomVariable instances.")

@@ -4,8 +4,8 @@ from typing import Callable
 
 import numpy as np
 
-from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets._inference import (_infer_add_value_set,
+from problab.value_sets.base import ValueSet
+from problab.value_sets._inference import (_infer_add_value_set,
                                                _infer_subtract_value_set,
                                                _infer_multiply_value_set,
                                                _infer_divide_value_set,
@@ -14,7 +14,7 @@ from src.problab.value_sets._inference import (_infer_add_value_set,
                                                _infer_power_value_set,
                                                _infer_negative_value_set,
                                                _infer_absolute_value_set)
-from src.problab.value_sets.sets import COMPLEXES, REALS
+from problab.value_sets.sets import COMPLEXES, REALS
 
 
 @dataclasses.dataclass(frozen=True)

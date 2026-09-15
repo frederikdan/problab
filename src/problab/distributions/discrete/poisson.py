@@ -3,12 +3,12 @@ from numbers import Real
 import numpy as np
 from scipy.stats import poisson
 
-from src.problab.distributions.base import Distribution
-from src.problab.random_variables.base import RandomVariable
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.distributions.discrete._poisson import _validate_poisson_mu
-from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import NATURALS_0
+from problab.distributions.base import Distribution
+from problab.random_variables.base import RandomVariable
+from problab.validation._decorator import _validate_parameters
+from problab.validation.distributions.discrete._poisson import _validate_poisson_mu
+from problab.value_sets.base import ValueSet
+from problab.value_sets.sets import NATURALS_0
 
 class PoissonDistribution(Distribution):
 

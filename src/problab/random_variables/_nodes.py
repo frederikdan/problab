@@ -7,12 +7,12 @@ from typing import Generic, TypeVar, Callable, Any
 import numpy as np
 import sympy as sp
 
-from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import UNKNOWN_VALUE_SET
+from problab.value_sets.base import ValueSet
+from problab.value_sets.sets import UNKNOWN_VALUE_SET
 
 if TYPE_CHECKING:
-    from src.problab.distributions.base import Distribution
-    from src.problab.random_variables._context import _RealizationContext
+    from problab.distributions.base import Distribution
+    from problab.random_variables._context import _RealizationContext
 
 
 T = TypeVar('T')

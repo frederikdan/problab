@@ -1,12 +1,12 @@
 from numbers import Real
 
-from src.problab.random_variables._nodes import _ConstantNode
-from src.problab.value_sets._utils import is_known_subset
-from src.problab.value_sets.sets import POSITIVE_REALS, REALS
+from problab.random_variables._nodes import _ConstantNode
+from problab.value_sets._utils import is_known_subset
+from problab.value_sets.sets import POSITIVE_REALS, REALS
 
 
 def _validate_normal_mean(value) -> None:
-    from src.problab.random_variables.base import RandomVariable
+    from problab.random_variables.base import RandomVariable
 
     if isinstance(value, RandomVariable):
         mean_node = value._node
@@ -20,7 +20,7 @@ def _validate_normal_mean(value) -> None:
 
 
 def _validate_normal_std(value) -> None:
-    from src.problab.random_variables.base import RandomVariable
+    from problab.random_variables.base import RandomVariable
 
     if isinstance(value, RandomVariable):
         std_node = value._node

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "problab"
+version = "0.1.0"
+description = "A practical Python library for modelling and evaluating random variables."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "scipy",
+    "sympy",
+    "networkx",
+    "matplotlib",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -3,12 +3,12 @@ import sympy as sp
 
 from numbers import Real
 
-from src.problab.random_variables.base import RandomVariable
-from src.problab.functions._utils import _apply_scalar_or_rv
-from src.problab.value_sets.base import ValueSet
-from src.problab.validation.functions._common import _validate_domain, _validate_real_valued
+from problab.random_variables.base import RandomVariable
+from problab.functions._utils import _apply_scalar_or_rv
+from problab.value_sets.base import ValueSet
+from problab.validation.functions._common import _validate_domain, _validate_real_valued
 
-from src.problab.value_sets.sets import NON_NEGATIVE_REALS, INTEGERS
+from problab.value_sets.sets import NON_NEGATIVE_REALS, INTEGERS
 
 
 def sqrt(x: RandomVariable | Real) -> RandomVariable | Real:

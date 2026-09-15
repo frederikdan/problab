@@ -2,8 +2,8 @@ from typing import Callable
 
 from numbers import Real
 
-from src.problab.random_variables.base import RandomVariable
-from src.problab.value_sets.base import ValueSet
+from problab.random_variables.base import RandomVariable
+from problab.value_sets.base import ValueSet
 
 
 def _apply_scalar_or_rv(

@@ -4,13 +4,13 @@ from itertools import product
 import numpy as np
 import sympy as sp
 
-from src.problab._operations import _ADD, _SUBTRACT, _MULTIPLY, _DIVIDE, _MODULO, _POWER, _NEGATIVE, _ABS
-from src.problab.random_variables._context import _RealizationContext
-from src.problab.random_variables._nodes import _ConstantNode, _OperationNode
-from src.problab.value_sets import _inference as inference
-from src.problab.value_sets import sets as sets
-from src.problab.value_sets._utils import is_known_subset
-from src.problab.value_sets.base import ValueSet, _UnknownValueSet
+from problab._operations import _ADD, _SUBTRACT, _MULTIPLY, _DIVIDE, _MODULO, _POWER, _NEGATIVE, _ABS
+from problab.random_variables._context import _RealizationContext
+from problab.random_variables._nodes import _ConstantNode, _OperationNode
+from problab.value_sets import _inference as inference
+from problab.value_sets import sets as sets
+from problab.value_sets._utils import is_known_subset
+from problab.value_sets.base import ValueSet, _UnknownValueSet
 
 
 class ValueSetInferenceTests(unittest.TestCase):

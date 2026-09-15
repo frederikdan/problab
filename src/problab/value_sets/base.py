@@ -3,8 +3,8 @@ import dataclasses
 import numpy as np
 import sympy as sp
 
-from src.problab.validation.value_sets._base import _validate_value_set_configuration
-from src.problab.value_sets._unknown import _UnknownValueSet
+from problab.validation.value_sets._base import _validate_value_set_configuration
+from problab.value_sets._unknown import _UnknownValueSet
 
 @dataclasses.dataclass(frozen=True)
 class ValueSet:

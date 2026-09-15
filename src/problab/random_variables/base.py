@@ -6,26 +6,26 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 
-from src.problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA
-from src.problab.distributions.base import Distribution
-from src.problab._events import _Event
-from src.problab._operations import _ADD, _SUBTRACT, _MULTIPLY, _MODULO, _LT, _LTE, _GT, _GTE, _EQ, _NEQ, _POWER, \
+from problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA
+from problab.distributions.base import Distribution
+from problab._events import _Event
+from problab._operations import _ADD, _SUBTRACT, _MULTIPLY, _MODULO, _LT, _LTE, _GT, _GTE, _EQ, _NEQ, _POWER, \
     _ArithmeticOperation, _NEGATIVE, _ABS, _DIVIDE, _ComparisonOperation
-from src.problab.probability.intervals import ProbabilityInterval, ConfidenceInterval
-from src.problab.random_variables._config import DEF_MAX_GRAPH_SIZE
-from src.problab.random_variables._context import _RealizationContext
-from src.problab.random_variables.graph import NodeGraph
-from src.problab.random_variables._nodes import _DistributionNode, _Node, _ConstantNode, _OperationNode
-from src.problab.statistics._quantiles import _quantile_confidence_interval
-from src.problab.validation._common import _validate_num_samples, _validate_rng, _validate_alpha, _validate_q, \
+from problab.probability.intervals import ProbabilityInterval, ConfidenceInterval
+from problab.random_variables._config import DEF_MAX_GRAPH_SIZE
+from problab.random_variables._context import _RealizationContext
+from problab.random_variables.graph import NodeGraph
+from problab.random_variables._nodes import _DistributionNode, _Node, _ConstantNode, _OperationNode
+from problab.statistics._quantiles import _quantile_confidence_interval
+from problab.validation._common import _validate_num_samples, _validate_rng, _validate_alpha, _validate_q, \
     _validate_max_size, _validate_validate
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.random_variables._base import _validate_distribution, _validate_name, \
+from problab.validation._decorator import _validate_parameters
+from problab.validation.random_variables._base import _validate_distribution, _validate_name, \
     _validate_interval_bound, _validate_closed, _validate_target_set, _validate_function, _validate_others, \
     _validate_value_set, _validate_function_name, _validate_vectorized
-from src.problab.value_sets._utils import is_known_subset
-from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import COMPLEXES, REALS, BOOLEANS
+from problab.value_sets._utils import is_known_subset
+from problab.value_sets.base import ValueSet
+from problab.value_sets.sets import COMPLEXES, REALS, BOOLEANS
 
 
 class RandomVariable:

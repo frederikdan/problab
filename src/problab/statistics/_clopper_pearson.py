@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.stats import beta
 
-from src.problab.probability.intervals import ConfidenceInterval
-from src.problab.validation._common import _validate_alpha
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.statistics._clopper_pearson import _validate_confidence_interval_num_samples, \
+from problab.probability.intervals import ConfidenceInterval
+from problab.validation._common import _validate_alpha
+from problab.validation._decorator import _validate_parameters
+from problab.validation.statistics._clopper_pearson import _validate_confidence_interval_num_samples, \
     _validate_num_successes, _validate_confidence_interval_configuration
 
 

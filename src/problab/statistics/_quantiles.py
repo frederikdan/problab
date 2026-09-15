@@ -2,8 +2,8 @@ import numpy as np
 from scipy.stats import binom
 from typing import Literal, TypeAlias
 
-from src.problab.distributions._config import DEF_ALPHA
-from src.problab.probability.intervals import ConfidenceInterval
+from problab.distributions._config import DEF_ALPHA
+from problab.probability.intervals import ConfidenceInterval
 
 QuantileMethod: TypeAlias = Literal[
     "inverted_cdf",

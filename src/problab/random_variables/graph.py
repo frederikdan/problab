@@ -2,7 +2,7 @@ from typing import Any
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from src.problab.random_variables._nodes import _Node
+from problab.random_variables._nodes import _Node
 
 
 class NodeGraph:

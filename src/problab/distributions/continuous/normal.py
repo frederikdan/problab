@@ -5,12 +5,12 @@ import numpy as np
 from numpy._typing import NDArray
 from scipy.stats import norm
 
-from src.problab.distributions.base import Distribution
-from src.problab.random_variables.base import RandomVariable
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.distributions.continuous._normal import _validate_normal_mean, _validate_normal_std
-from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import REALS
+from problab.distributions.base import Distribution
+from problab.random_variables.base import RandomVariable
+from problab.validation._decorator import _validate_parameters
+from problab.validation.distributions.continuous._normal import _validate_normal_mean, _validate_normal_std
+from problab.value_sets.base import ValueSet
+from problab.value_sets.sets import REALS
 
 class NormalDistribution(Distribution):
 

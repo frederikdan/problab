@@ -2,10 +2,10 @@ from typing import TypeVar
 
 import numpy as np
 
-from src.problab.random_variables._config import DEF_MAX_GRAPH_SIZE
-from src.problab.random_variables.graph import NodeGraph
-from src.problab.random_variables._nodes import _Node
-from src.problab.value_sets._utils import validate_as_subset
+from problab.random_variables._config import DEF_MAX_GRAPH_SIZE
+from problab.random_variables.graph import NodeGraph
+from problab.random_variables._nodes import _Node
+from problab.value_sets._utils import validate_as_subset
 
 T = TypeVar('T')
 

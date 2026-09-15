@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from src.problab.validation.probability._intervals import _validate_confidence_interval_configuration, \
+from problab.validation.probability._intervals import _validate_confidence_interval_configuration, \
     _validate_probability_interval_configuration
 
 

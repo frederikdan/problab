@@ -1,20 +1,18 @@
-from numbers import Real, Number
+from numbers import Number
 from typing import Iterable, Any
 
 import numpy as np
 import sympy as sp
 from numpy._typing import NDArray
 
-from src.problab.distributions.base import Distribution
-from src.problab.random_variables._context import _RealizationContext
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.distributions.discrete._categorical import _validate_categories, _validate_probabilities, \
+from problab.distributions.base import Distribution
+from problab.validation._decorator import _validate_parameters
+from problab.validation.distributions.discrete._categorical import _validate_categories, _validate_probabilities, \
     _validate_categorical_configuration
-from src.problab.value_sets.base import ValueSet
+from problab.value_sets.base import ValueSet
 
 
 class CategoricalDistribution(Distribution):
-
     @staticmethod
     def _prepare_category_values(categories: tuple[Any, ...]) -> NDArray[Any]:
 
@@ -53,6 +51,7 @@ class CategoricalDistribution(Distribution):
 
         sympy_set = sp.FiniteSet(*categories)
 
+        self._category_inputs = categories
         self._categories = self._prepare_category_values(categories)
 
         self._value_set = ValueSet(
@@ -61,6 +60,14 @@ class CategoricalDistribution(Distribution):
         )
 
         super().__init__(parameters=None)
+
+    @property
+    def categories(self) -> tuple[Any, ...]:
+        return self._category_inputs
+
+    @property
+    def probabilities(self) -> tuple[float, ...]:
+        return self._probabilities
 
     @property
     def value_set(self) -> ValueSet:

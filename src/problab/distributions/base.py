@@ -6,18 +6,18 @@ from collections.abc import Callable
 from numbers import Real, Complex
 from functools import partial
 
-from src.problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA, DEF_DISTRIBUTION_SYMBOL_NAME
-from src.problab.probability.intervals import ConfidenceInterval
-from src.problab.random_variables._context import _RealizationContext
-from src.problab.random_variables._nodes import _Node, _ConstantNode, _DistributionNode
-from src.problab.statistics._quantiles import _quantile_confidence_interval, QuantileMethod
-from src.problab.validation._common import _validate_q, _validate_alpha, _validate_num_samples, _validate_rng, \
+from problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA, DEF_DISTRIBUTION_SYMBOL_NAME
+from problab.probability.intervals import ConfidenceInterval
+from problab.random_variables._context import _RealizationContext
+from problab.random_variables._nodes import _Node, _ConstantNode, _DistributionNode
+from problab.statistics._quantiles import _quantile_confidence_interval, QuantileMethod
+from problab.validation._common import _validate_q, _validate_alpha, _validate_num_samples, _validate_rng, \
     _validate_enum
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.distributions._base import _validate_cdf_input, _validate_ppf_input, _validate_quantile_method
-from src.problab.value_sets._utils import is_known_subset
-from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import REALS
+from problab.validation._decorator import _validate_parameters
+from problab.validation.distributions._base import _validate_cdf_input, _validate_ppf_input, _validate_quantile_method
+from problab.value_sets._utils import is_known_subset
+from problab.value_sets.base import ValueSet
+from problab.value_sets.sets import REALS
 
 T = TypeVar('T')
 
@@ -75,7 +75,7 @@ class Distribution(ABC):
         if isinstance(parameter, _Node):
             return parameter
 
-        from src.problab.random_variables.base import RandomVariable
+        from problab.random_variables.base import RandomVariable
 
         if isinstance(parameter, RandomVariable):
             return parameter._node

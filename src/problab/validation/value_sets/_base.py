@@ -1,7 +1,7 @@
 import numpy as np
 import sympy as sp
 
-from src.problab.value_sets._unknown import _UnknownValueSet
+from problab.value_sets._unknown import _UnknownValueSet
 
 
 def _validate_value_set_configuration(

@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from src.problab.distributions._config import DEF_ALPHA
-from src.problab.probability.intervals import ConfidenceInterval
-from src.problab.statistics import _clopper_pearson
-from src.problab.validation._common import _validate_alpha
-from src.problab.validation._decorator import _validate_parameters
-from src.problab.validation.probability._results import _validate_probability_result_configuration
+from problab.distributions._config import DEF_ALPHA
+from problab.probability.intervals import ConfidenceInterval
+from problab.statistics import _clopper_pearson
+from problab.validation._common import _validate_alpha
+from problab.validation._decorator import _validate_parameters
+from problab.validation.probability._results import _validate_probability_result_configuration
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ class ProbabilityResult:
                             alpha: float = DEF_ALPHA
                             ) -> ConfidenceInterval:
 
-        return clopper_pearson._confidence_interval(
+        return _clopper_pearson._confidence_interval(
             num_samples=self.num_samples,
             num_successes=self.num_successes,
             alpha=alpha,

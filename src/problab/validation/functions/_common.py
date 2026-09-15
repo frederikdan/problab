@@ -3,8 +3,8 @@ from numbers import Real
 import numpy as np
 import sympy as sp
 
-from src.problab.random_variables.base import RandomVariable
-from src.problab.value_sets._utils import is_known_subset
+from problab.random_variables.base import RandomVariable
+from problab.value_sets._utils import is_known_subset
 
 
 def _validate_real_valued(x: RandomVariable | Real) -> None:

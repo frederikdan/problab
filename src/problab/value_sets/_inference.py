@@ -5,9 +5,9 @@ from typing import Callable
 import numpy as np
 import sympy as sp
 
-from src.problab.value_sets._utils import is_known_subset
-from src.problab.value_sets.base import ValueSet, _UnknownValueSet
-from src.problab.value_sets.sets import UNKNOWN_VALUE_SET, ZERO, ONE, POSITIVE_REALS, REALS, NON_NEGATIVE_REALS, \
+from problab.value_sets._utils import is_known_subset
+from problab.value_sets.base import ValueSet, _UnknownValueSet
+from problab.value_sets.sets import UNKNOWN_VALUE_SET, ZERO, ONE, POSITIVE_REALS, REALS, NON_NEGATIVE_REALS, \
     POSITIVE_EVEN_INTEGERS, NON_ZERO_REALS, NEGATIVE_EVEN_INTEGERS, POSITIVE_ODD_INTEGERS, NEGATIVE_ODD_INTEGERS, \
     NEGATIVE_REALS, NON_INTEGER_REALS, COMPLEXES, NON_ZERO_COMPLEXES, NON_POSITIVE_REALS, INTEGERS, NATURALS_0, \
     NEGATIVE_INTEGERS, POSITIVE_INTEGERS, NON_POSITIVE_INTEGERS
