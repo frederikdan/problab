@@ -24,12 +24,17 @@ def validate_as_subset(values: np.ndarray,
                        target_set: ValueSet
                        ) -> None:
 
-    if target_set is UNKNOWN_VALUE_SET:
+    if isinstance(target_set.sympy_set, _UnknownValueSet):
         raise ValueError("Cannot validate membership: the target set is unknown.")
 
     for index, value in enumerate(values):
         try:
-            result = target_set.sympy_set.contains(sp.sympify(value))
+            if isinstance(value, (float, np.floating)) and np.isfinite(value) and value == np.trunc(value):
+                symbolic_value = sp.Integer(int(value))
+            else:
+                symbolic_value = sp.sympify(value)
+
+            result = target_set.sympy_set.contains(symbolic_value)
         except (TypeError, ValueError, NotImplementedError) as error:
             raise ValueError(f"Could not validate value at index {index}: {value!r} against {target_set}.") from error
 

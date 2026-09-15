@@ -8,15 +8,17 @@ from src.problab.value_sets._utils import is_known_subset
 from src.problab.value_sets.sets import BOOLEANS
 
 
-class Event:
+class _Event:
 
-    def __init__(self, node: Node):
+    @classmethod
+    def _from_node(cls, node: Node) -> _Event:
+        return cls(node)
 
+    def __init__(self, node: Node) -> None:
         if not is_known_subset(node.value_set, BOOLEANS):
             raise ValueError("The value set of 'node' must be a subset of {False, True}.")
 
-        self._node: Node = node
-
+        self._node = node
 
     @property
     def name(self) -> str:
@@ -28,39 +30,39 @@ class Event:
     def __repr__(self):
         return f"Event({self._node!r})"
 
-    def __and__(self, other: Event) -> Event:
+    def __and__(self, other: _Event) -> _Event:
 
-        if not isinstance(other, Event):
+        if not isinstance(other, _Event):
             return NotImplemented
 
         node_name = AND.name_func(self._node.name, other.name)
 
-        return Event(OperationNode(
+        return _Event._from_node(OperationNode(
             operation=AND.operation,
             inputs=(self._node, other._node),
             name=node_name,
             value_set=BOOLEANS,
         ))
 
-    def __or__(self, other: Event) -> Event:
+    def __or__(self, other: _Event) -> _Event:
 
-        if not isinstance(other, Event):
+        if not isinstance(other, _Event):
             return NotImplemented
 
         node_name = OR.name_func(self._node.name, other.name)
 
-        return Event(OperationNode(
+        return _Event._from_node(OperationNode(
             operation=OR.operation,
             inputs=(self._node, other._node),
             name=node_name,
             value_set=BOOLEANS,
         ))
 
-    def __invert__(self) -> Event:
+    def __invert__(self) -> _Event:
 
         node_name = INVERT.name_func(self._node.name)
 
-        return Event(OperationNode(
+        return _Event._from_node(OperationNode(
             operation=INVERT.operation,
             inputs=(self._node,),
             name=node_name,

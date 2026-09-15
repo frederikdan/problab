@@ -102,7 +102,7 @@ class ValueSetInferenceTests(unittest.TestCase):
             (DIVIDE, 2, 1), (POWER, 2, 1.0),
         ):
             with self.subTest(operation=operation, left=left, right=right):
-                result = operation.infer_value_set(self.constant_set(left), self.constant_set(right))
+                result = operation.infer_output_value_set(self.constant_set(left), self.constant_set(right))
                 actual = operation.operation(np.array([left]), np.array([right]))
                 self.assert_result_contains(result, actual)
 
@@ -134,30 +134,30 @@ class ValueSetInferenceTests(unittest.TestCase):
             with self.subTest(operation=operation, left=left_dtype, right=right_dtype):
                 left = ValueSet(sp.FiniteSet(2), (left_dtype,))
                 right = ValueSet(sp.FiniteSet(1), (right_dtype,))
-                result = operation.infer_value_set(left, right)
+                result = operation.infer_output_value_set(left, right)
                 self.assertEqual(result.dtype_types, (expected_dtype,))
 
-        result = ABS.infer_value_set(ValueSet(sp.FiniteSet(1j), (np.complex64,)))
+        result = ABS.infer_output_value_set(ValueSet(sp.FiniteSet(1j), (np.complex64,)))
         self.assertEqual(result.dtype_types, (np.float32,))
 
     def test_integer_family_includes_signed_unsigned_promotion(self):
         operand = ValueSet(sp.S.Integers, (np.integer,))
-        result = ADD.infer_value_set(operand, operand)
+        result = ADD.infer_output_value_set(operand, operand)
         self.assertIn(np.float64, result.dtype_types)
         self.assertNotIn(np.complex128, result.dtype_types)
 
     def test_custom_operations_do_not_guess_dtype(self):
         for operation in (MODULO, POWER):
-            result = operation.infer_value_set(self.constant_set(2), self.constant_set(1))
+            result = operation.infer_output_value_set(self.constant_set(2), self.constant_set(1))
             self.assertIsNone(result.dtype_types)
 
     def test_unsupported_representation_leaves_dtype_unknown(self):
         operand = ValueSet(sp.S.Reals, (np.void,))
-        self.assertIsNone(ADD.infer_value_set(operand, operand).dtype_types)
+        self.assertIsNone(ADD.infer_output_value_set(operand, operand).dtype_types)
 
     def test_float_families_include_extended_precision(self):
         operand = ValueSet(sp.S.Reals, (np.floating,))
-        result = ADD.infer_value_set(operand, operand)
+        result = ADD.infer_output_value_set(operand, operand)
         for dtype in (np.float16, np.float32, np.float64, np.longdouble):
             actual = np.add(np.array([1], dtype=dtype), np.array([2], dtype=dtype))
             self.assertTrue(any(np.issubdtype(actual.dtype, allowed) for allowed in result.dtype_types))
@@ -172,11 +172,11 @@ class ValueSetInferenceTests(unittest.TestCase):
             (sets.NEGATIVE_REALS, np.array([-0.5, -1.5, -2.5])),
         )
         operations = (
-            (ADD.infer_value_set, ADD.operation),
-            (SUBTRACT.infer_value_set, SUBTRACT.operation),
-            (MULTIPLY.infer_value_set, MULTIPLY.operation),
-            (DIVIDE.infer_value_set, DIVIDE.operation),
-            (MODULO.infer_value_set, MODULO.operation),
+            (ADD.infer_output_value_set, ADD.operation),
+            (SUBTRACT.infer_output_value_set, SUBTRACT.operation),
+            (MULTIPLY.infer_output_value_set, MULTIPLY.operation),
+            (DIVIDE.infer_output_value_set, DIVIDE.operation),
+            (MODULO.infer_output_value_set, MODULO.operation),
             (inference._infer_floor_divide_value_set, np.floor_divide),
         )
         for (left_set, left), (right_set, right), (infer, operation) in product(domains, domains, operations):
@@ -193,7 +193,7 @@ class ValueSetInferenceTests(unittest.TestCase):
             (sets.COMPLEXES, np.array([3 + 4j, 0, -3 - 4j])),
         ):
             for operation in (NEGATIVE, ABS):
-                self.assert_result_contains(operation.infer_value_set(value_set), operation.operation(values))
+                self.assert_result_contains(operation.infer_output_value_set(value_set), operation.operation(values))
 
     def test_representative_power_results(self):
         cases = (
@@ -211,7 +211,7 @@ class ValueSetInferenceTests(unittest.TestCase):
         )
         for base_set, bases, exponent_set, exponents in cases:
             with self.subTest(base=base_set, exponent=exponent_set):
-                result = POWER.infer_value_set(base_set, exponent_set)
+                result = POWER.infer_output_value_set(base_set, exponent_set)
                 actual = POWER.operation(np.asarray(bases), np.asarray(exponents))
                 self.assert_result_contains(result, actual)
 
@@ -230,7 +230,7 @@ class ValueSetInferenceTests(unittest.TestCase):
                 operation=operation.operation,
                 inputs=(left_node, right_node),
                 name="inference regression",
-                value_set=operation.infer_value_set(left_node.value_set, exponent_set),
+                value_set=operation.infer_output_value_set(left_node.value_set, exponent_set),
             )
             actual = RealizationContext(node, num_samples=3).evaluate(node)
             np.testing.assert_allclose(actual, np.full(3, expected), atol=1e-14)

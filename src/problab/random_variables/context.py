@@ -19,8 +19,13 @@ class RealizationContext:
                  validate: bool = False,
                  ) -> None:
 
+        if isinstance(num_samples, (bool, np.bool_)) or not isinstance(num_samples, (int, np.integer)):
+            raise TypeError("'num_samples' must be an integer.")
+
         if num_samples < 1:
             raise ValueError("'num_samples' must be at least 1.")
+
+        num_samples = int(num_samples)
 
         self._root_node = root_node
         self._graph = NodeGraph(root_node, max_size=DEF_MAX_GRAPH_SIZE)

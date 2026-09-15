@@ -60,7 +60,9 @@ def quantile_confidence_interval(samples: np.ndarray,
 
     while (
             k_U > 1
-            and 1 - binom.cdf(k_U - 1, n, q) <= alpha / 2
+            # When the CDF is very close to 1, subtracting it from 1 can lose precision or produce zero.
+            # Computing the upper tail directly avoids that subtraction and helps prevent choosing an interval that is too narrow.
+            and binom.sf(k_U - 1, n, q) <= alpha / 2  # Mathematically equivalent to: and 1 - binom.cdf(k_U - 1, n, q) <= alpha / 2
     ):
         k_U -= 1
 

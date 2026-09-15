@@ -8,7 +8,7 @@ import sympy as sp
 
 from src.problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA
 from src.problab.distributions.base import Distribution
-from src.problab.events import Event
+from src.problab._events import _Event
 from src.problab.operations import ADD, SUBTRACT, MULTIPLY, MODULO, LT, LTE, GT, GTE, EQ, NEQ, POWER, \
     ArithmeticOperation, NEGATIVE, ABS, DIVIDE, ComparisonOperation
 from src.problab.probability.intervals import ProbabilityInterval, ConfidenceInterval
@@ -17,7 +17,13 @@ from src.problab.random_variables.context import RealizationContext
 from src.problab.random_variables.graph import NodeGraph
 from src.problab.random_variables.nodes import DistributionNode, Node, ConstantNode, OperationNode
 from src.problab.statistics.quantiles import quantile_confidence_interval
-from src.problab.value_sets._utils import is_known_subset, is_in
+from src.problab.validation._common import _validate_num_samples, _validate_rng, _validate_alpha, _validate_q, \
+    _validate_max_size, _validate_validate
+from src.problab.validation._decorator import _validate_parameters
+from src.problab.validation.random_variables._base import _validate_distribution, _validate_name, \
+    _validate_interval_bound, _validate_closed, _validate_target_set, _validate_function, _validate_others, \
+    _validate_value_set, _validate_function_name, _validate_vectorized
+from src.problab.value_sets._utils import is_known_subset
 from src.problab.value_sets.base import ValueSet
 from src.problab.value_sets.sets import COMPLEXES, REALS, BOOLEANS
 
@@ -26,9 +32,13 @@ class RandomVariable:
 
     _count = count()
 
+    @_validate_parameters(
+        distribution=_validate_distribution,
+        name=_validate_name,
+    )
     def __init__(self,
                  distribution: Distribution,
-                 name: str | None = None
+                 name: str | None = None,
                  ) -> None:
 
         self._distribution = distribution
@@ -59,20 +69,32 @@ class RandomVariable:
     def dependency_graph(self) -> NodeGraph:
         return NodeGraph(self._node, max_size=DEF_MAX_GRAPH_SIZE)
 
+    @_validate_parameters(max_size=_validate_max_size)
     def plot_dependencies(self, max_size=DEF_MAX_GRAPH_SIZE) -> None:
         NodeGraph(self._node, max_size=max_size).plot()
 
     def realize(self):
         return self.sample()
 
-    def sample(self, num_samples: int = 1,  rng: np.random.Generator | None = None) -> np.ndarray:
+    @_validate_parameters(
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+        validate=_validate_validate
+    )
+    def sample(self,
+               num_samples: int = 1,
+               rng: np.random.Generator | None = None,
+               validate: bool = False,
+               ) -> np.ndarray:
 
-        if num_samples < 1:
-            raise ValueError("Number of samples must be positive")
+        num_samples = int(num_samples)
 
-        return RealizationContext(root_node=self._node,
-                                  num_samples=num_samples,
-                                  rng=rng).evaluate(self._node)
+        return RealizationContext(
+            root_node=self._node,
+            num_samples=num_samples,
+            rng=rng,
+            validate=validate
+        ).evaluate(self._node)
 
     def _is_real_or_complex(self) -> bool:
         return is_known_subset(self._node.value_set, COMPLEXES)
@@ -88,14 +110,14 @@ class RandomVariable:
 
         if not is_known_subset(
                 self._node.value_set,
-                operation.valid_value_set,
+                operation.valid_input_value_set,
         ):
             return NotImplemented
 
         if isinstance(other, RandomVariable):
             if not is_known_subset(
                     other._node.value_set,
-                    operation.valid_value_set,
+                    operation.valid_input_value_set,
             ):
                 return NotImplemented
         else:
@@ -109,7 +131,7 @@ class RandomVariable:
             else (self._node, other._node)
         )
 
-        value_set = operation.infer_value_set(
+        value_set = operation.infer_output_value_set(
             left_node.value_set,
             right_node.value_set,
         )
@@ -131,11 +153,12 @@ class RandomVariable:
 
         if not is_known_subset(
                 self._node.value_set,
-                operation.valid_value_set,
+                operation.valid_input_value_set,
         ):
-            return NotImplemented
+            raise TypeError(f"The unary operation {operation.name_func('x')} requires a random variable "
+                            f"whose value set is a known subset of {operation.valid_input_value_set.sympy_set}.")
 
-        value_set = operation.infer_value_set(
+        value_set = operation.infer_output_value_set(
             self._node.value_set
         )
 
@@ -150,6 +173,11 @@ class RandomVariable:
             )
         )
 
+    @_validate_parameters(
+        alpha=_validate_alpha,
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+    )
     def interval(self,
                  alpha: float,
                  num_samples: int = DEF_NUM_SAMPLES,
@@ -159,9 +187,6 @@ class RandomVariable:
         if not is_known_subset(self._node.value_set, REALS):
             raise TypeError("Probability intervals are only defined for real-valued random variables." )
 
-        if not 0 < alpha < 1:
-            raise ValueError("'alpha' must be between 0 and 1.")
-
         samples = self.sample(
             num_samples=num_samples,
             rng=rng,
@@ -170,8 +195,8 @@ class RandomVariable:
         lower_quantile = alpha / 2
         upper_quantile = 1 - alpha / 2
 
-        lower = float(np.quantile(samples, lower_quantile))
-        upper = float(np.quantile(samples, upper_quantile))
+        lower = float(np.quantile(samples, lower_quantile, method="inverted_cdf"))
+        upper = float(np.quantile(samples, upper_quantile, method="inverted_cdf"))
 
         return ProbabilityInterval(
             lower=lower,
@@ -180,17 +205,19 @@ class RandomVariable:
             is_estimate=True
         )
 
+    @_validate_parameters(
+        lower_bound=_validate_interval_bound,
+        upper_bound=_validate_interval_bound,
+        closed=_validate_closed,
+    )
     def is_in_interval(self,
               lower_bound: Real,
               upper_bound: Real,
               closed: str = "both"
-              ) -> Event:
+              ) -> _Event:
 
         if not is_known_subset(self._node.value_set, REALS):
-            raise TypeError("is_in() requires a real-valued random variable.")
-
-        if not isinstance(lower_bound, Real) or not isinstance(upper_bound, Real):
-            raise TypeError("Interval bounds must be real numbers.")
+            raise TypeError("is_in_interval() requires a real-valued random variable.")
 
         if not lower_bound <= upper_bound:
             raise ValueError("Lower bound must be less than or equal to upper bound.")
@@ -204,19 +231,17 @@ class RandomVariable:
         if closed == "right":
             return (lower_bound < self) & (self <= upper_bound)
 
-        if closed == "none":
-            return (lower_bound < self) & (self < upper_bound)
+        # closed == "none"
+        return (lower_bound < self) & (self < upper_bound)
 
-        raise ValueError("closed must be one of 'both', 'left', 'right', or 'none'.")
-
-
+    @_validate_parameters(
+        target_set=_validate_target_set,
+    )
     def is_in(self,
               target_set: sp.Set | tuple[Real, Real] | list[Real],
-              ) -> Event:
+              ) -> _Event:
 
         if isinstance(target_set, (tuple, list)):
-            if len(target_set) != 2:
-                raise ValueError("An interval must contain exactly two bounds.")
 
             lower_bound, upper_bound = target_set
             closed = "none" if isinstance(target_set, tuple) else "both"
@@ -225,11 +250,6 @@ class RandomVariable:
                 lower_bound,
                 upper_bound,
                 closed=closed,
-            )
-
-        if not isinstance(target_set, sp.Set):
-            raise TypeError(
-                "'target_set' must be a SymPy set or a tuple/list of two bounds."
             )
 
         def contains(value) -> bool:
@@ -241,9 +261,7 @@ class RandomVariable:
             if result is sp.false:
                 return False
 
-            raise ValueError(
-                f"Could not determine whether {value!r} belongs to {target_set}."
-            )
+            raise ValueError(f"Could not determine whether {value!r} belongs to {target_set}.")
 
         def operation(samples: np.ndarray) -> np.ndarray:
             return np.fromiter(
@@ -252,7 +270,7 @@ class RandomVariable:
                 count=len(samples),
             )
 
-        return Event(
+        return _Event(
             OperationNode(
                 operation=operation,
                 inputs=(self._node,),
@@ -261,6 +279,13 @@ class RandomVariable:
             )
         )
 
+    @_validate_parameters(
+        function=_validate_function,
+        others=_validate_others,
+        value_set=_validate_value_set,
+        function_name=_validate_function_name,
+        vectorized=_validate_vectorized,
+    )
     def apply(self,
               function: Callable,
               *others: RandomVariable,
@@ -268,12 +293,6 @@ class RandomVariable:
               function_name: str = "f",
               vectorized: bool = False
               ) -> RandomVariable:
-
-        if not callable(function):
-            raise TypeError("'function' must be callable.")
-
-        if not all(isinstance(other, RandomVariable) for other in others):
-            raise TypeError("'others' must be RandomVariable instances.")
 
         inputs = (
             self._node,
@@ -341,7 +360,7 @@ class RandomVariable:
     def __abs__(self) -> RandomVariable:
         return self._unary_operation(ABS)
 
-    def _inequality_comparison(self, operator: ComparisonOperation, other: RandomVariable | Real) -> Event:
+    def _inequality_comparison(self, operator: ComparisonOperation, other: RandomVariable | Real) -> _Event:
 
         if not is_known_subset(self._node.value_set, REALS):
             return NotImplemented
@@ -360,7 +379,7 @@ class RandomVariable:
 
         node_name = operator.name_func(self._node.name, other_node.name)
 
-        return Event(
+        return _Event(
             OperationNode(
                 operation=operator.operation,
                 inputs=(self._node, other_node),
@@ -369,7 +388,7 @@ class RandomVariable:
             )
         )
 
-    def _equality_comparison(self, operator: ComparisonOperation, other: RandomVariable | Real) -> Event:
+    def _equality_comparison(self, operator: ComparisonOperation, other: RandomVariable | Real) -> _Event:
         if isinstance(other, RandomVariable):
             other_node = other._node
         else:
@@ -377,7 +396,7 @@ class RandomVariable:
 
         node_name = operator.name_func(self._node.name, other_node.name)
 
-        return Event(
+        return _Event(
             OperationNode(
                 operation=operator.operation,
                 inputs=(self._node, other_node),
@@ -386,22 +405,22 @@ class RandomVariable:
             )
         )
 
-    def __lt__(self, other: RandomVariable | Real) -> Event:
+    def __lt__(self, other: RandomVariable | Real) -> _Event:
         return self._inequality_comparison(LT, other)
 
-    def __le__(self, other: RandomVariable | Real) -> Event:
+    def __le__(self, other: RandomVariable | Real) -> _Event:
         return self._inequality_comparison(LTE, other)
 
-    def __gt__(self, other: RandomVariable | Real) -> Event:
+    def __gt__(self, other: RandomVariable | Real) -> _Event:
         return self._inequality_comparison(GT, other)
 
-    def __ge__(self, other: RandomVariable | Real) -> Event:
+    def __ge__(self, other: RandomVariable | Real) -> _Event:
         return self._inequality_comparison(GTE, other)
 
-    def __eq__(self, other: RandomVariable | Real) -> Event:
+    def __eq__(self, other: RandomVariable | Real) -> _Event:
         return self._equality_comparison(EQ, other)
 
-    def __ne__(self, other: RandomVariable | Real) -> Event:
+    def __ne__(self, other: RandomVariable | Real) -> _Event:
         return self._equality_comparison(NEQ, other)
 
     def __repr__(self):
@@ -415,12 +434,21 @@ class RandomVariable:
     def __str__(self):
         return self.name
 
+    @_validate_parameters(
+        q=_validate_q,
+        alpha=_validate_alpha,
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+    )
     def quantile_confidence_interval(self,
                                      q: float,
                                      alpha: float = DEF_ALPHA,
                                      num_samples: int = DEF_NUM_SAMPLES,
                                      rng: np.random.Generator | None = None
                                      ) -> ConfidenceInterval:
+
+        if not is_known_subset(self._node.value_set, REALS):
+            raise TypeError("Quantile confidence intervals require a real-valued random variable.")
 
         samples = self.sample(
             num_samples=num_samples,
