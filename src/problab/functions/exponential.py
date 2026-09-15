@@ -3,16 +3,13 @@ from numbers import Real
 import numpy as np
 
 from src.problab.random_variables.base import RandomVariable
-from src.problab.functions._utils import (
-    _apply_scalar_or_rv,
-    _require_domain,
-    _require_real_valued,
-)
+from src.problab.functions._utils import _apply_scalar_or_rv
 from src.problab.value_sets.sets import POSITIVE_REALS, REALS
+from src.problab.validation.functions._common import _validate_domain, _validate_real_valued
 
 
 def exp(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply_scalar_or_rv(
         x=x,
@@ -22,7 +19,7 @@ def exp(x: RandomVariable | Real) -> RandomVariable | Real:
 
 
 def log(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=POSITIVE_REALS.sympy_set,
     )
@@ -35,7 +32,7 @@ def log(x: RandomVariable | Real) -> RandomVariable | Real:
 
 
 def log2(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=POSITIVE_REALS.sympy_set,
     )
@@ -48,7 +45,7 @@ def log2(x: RandomVariable | Real) -> RandomVariable | Real:
 
 
 def log10(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=POSITIVE_REALS.sympy_set,
     )

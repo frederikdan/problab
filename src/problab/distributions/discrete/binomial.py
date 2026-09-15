@@ -8,14 +8,18 @@ from scipy.stats import binom
 
 from src.problab.distributions.base import Distribution
 from src.problab.random_variables.base import RandomVariable
-from src.problab.random_variables.context import RealizationContext
 from src.problab.random_variables.nodes import ConstantNode
-from src.problab.value_sets._utils import is_known_subset
+from src.problab.validation._decorator import _validate_parameters
+from src.problab.validation.distributions.discrete._binomial import _validate_binomial_n, _validate_binomial_p
 from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import NATURALS_0, UNIT_INTERVAL
+from src.problab.value_sets.sets import NATURALS_0
 
 class BinomialDistribution(Distribution):
 
+    @_validate_parameters(
+        n=_validate_binomial_n,
+        p=_validate_binomial_p,
+    )
     def __init__(
             self,
             n: RandomVariable | int,
@@ -24,13 +28,8 @@ class BinomialDistribution(Distribution):
 
         if isinstance(n, RandomVariable):
             n_node = n._node
-        elif isinstance(n, int):
+        else:  # n is an integer
             n_node = ConstantNode(n)
-        else:
-            raise TypeError("'n' must be a RandomVariable or int.")
-
-        if not is_known_subset(n_node.value_set, NATURALS_0):
-            raise ValueError("'n' must be a positive integer or 0.")
 
         self._n = n_node
 
@@ -46,13 +45,8 @@ class BinomialDistribution(Distribution):
 
         if isinstance(p, RandomVariable):
             p_node = p._node
-        elif isinstance(p, Real):
+        else:  # p is a real number
             p_node = ConstantNode(p)
-        else:
-            raise TypeError("'p' must be a RandomVariable or Real.")
-
-        if not is_known_subset(p_node.value_set, UNIT_INTERVAL):
-            raise ValueError("'p' must be in the interval [0, 1].")
 
         self._p = p_node
 

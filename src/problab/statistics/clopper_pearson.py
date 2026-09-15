@@ -2,23 +2,27 @@ import numpy as np
 from scipy.stats import beta
 
 from src.problab.probability.intervals import ConfidenceInterval
+from src.problab.validation._common import _validate_alpha
+from src.problab.validation._decorator import _validate_parameters
+from src.problab.validation.statistics._clopper_pearson import _validate_confidence_interval_num_samples, \
+    _validate_num_successes, _validate_confidence_interval_configuration
 
+
+@_validate_parameters(
+    num_samples=_validate_confidence_interval_num_samples,
+    num_successes=_validate_num_successes,
+    alpha=_validate_alpha,
+)
 def confidence_interval(
         num_samples: int,
         num_successes: int,
         alpha: float,
 ) -> ConfidenceInterval:
 
-    if not 0 < alpha < 1:
-        raise ValueError("'alpha' must be between 0 and 1.")
-
-    if num_samples < 0:
-        raise ValueError("'num_samples' must be non-negative.")
-
-    if not 0 <= num_successes <= num_samples:
-        raise ValueError(
-            "'num_successes' must be between 0 and 'num_samples'."
-        )
+    _validate_confidence_interval_configuration(
+        num_samples=num_samples,
+        num_successes=num_successes,
+    )
 
     n = num_samples
     k = num_successes

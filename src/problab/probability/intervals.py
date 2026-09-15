@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-import numpy as np
-from scipy.stats import binom
+
+from src.problab.validation.probability._intervals import _validate_confidence_interval_configuration, \
+    _validate_probability_interval_configuration
 
 
 @dataclass(frozen=True)
@@ -8,6 +9,13 @@ class ConfidenceInterval:
     lower: float
     upper: float
     alpha: float
+
+    def __post_init__(self) -> None:
+        _validate_confidence_interval_configuration(
+            lower=self.lower,
+            upper=self.upper,
+            alpha=self.alpha,
+        )
 
 @dataclass(frozen=True)
 class ProbabilityInterval():
@@ -17,11 +25,12 @@ class ProbabilityInterval():
     is_estimate: bool
 
     def __post_init__(self) -> None:
-        if not 0 < self.alpha < 1:
-            raise ValueError("'alpha' must be between 0 and 1.")
-
-        if self.lower > self.upper:
-            raise ValueError("'lower' must be less than 'upper'.")
+        _validate_probability_interval_configuration(
+            lower=self.lower,
+            upper=self.upper,
+            alpha=self.alpha,
+            is_estimate=self.is_estimate,
+        )
 
     @property
     def probability(self) -> float:

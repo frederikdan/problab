@@ -4,18 +4,15 @@ import sympy as sp
 from numbers import Real
 
 from src.problab.random_variables.base import RandomVariable
-from src.problab.functions._utils import (
-    _apply_scalar_or_rv,
-    _require_domain,
-    _require_real_valued,
-)
+from src.problab.functions._utils import _apply_scalar_or_rv
 from src.problab.value_sets.base import ValueSet
+from src.problab.validation.functions._common import _validate_domain, _validate_real_valued
 
 from src.problab.value_sets.sets import NON_NEGATIVE_REALS, INTEGERS
 
 
 def sqrt(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=NON_NEGATIVE_REALS.sympy_set,
     )
@@ -28,7 +25,7 @@ def sqrt(x: RandomVariable | Real) -> RandomVariable | Real:
 
 
 def absolute(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply_scalar_or_rv(
         x=x,
@@ -38,7 +35,7 @@ def absolute(x: RandomVariable | Real) -> RandomVariable | Real:
 
 
 def floor(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply_scalar_or_rv(
         x=x,
@@ -48,7 +45,7 @@ def floor(x: RandomVariable | Real) -> RandomVariable | Real:
 
 
 def ceil(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply_scalar_or_rv(
         x=x,
@@ -58,7 +55,7 @@ def ceil(x: RandomVariable | Real) -> RandomVariable | Real:
 
 
 def sign(x: RandomVariable | Real) -> RandomVariable | Real:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply_scalar_or_rv(
         x=x,

@@ -7,12 +7,16 @@ from src.problab.distributions.base import Distribution
 from src.problab.random_variables.base import RandomVariable
 from src.problab.random_variables.context import RealizationContext
 from src.problab.random_variables.nodes import ConstantNode
-from src.problab.value_sets._utils import is_known_subset
+from src.problab.validation._decorator import _validate_parameters
+from src.problab.validation.distributions.discrete._poisson import _validate_poisson_mu
 from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import NATURALS_0, NON_NEGATIVE_REALS
+from src.problab.value_sets.sets import NATURALS_0
 
 class PoissonDistribution(Distribution):
 
+    @_validate_parameters(
+        mu=_validate_poisson_mu,
+    )
     def __init__(
             self,
             mu: RandomVariable | Real,
@@ -20,13 +24,8 @@ class PoissonDistribution(Distribution):
 
         if isinstance(mu, RandomVariable):
             mu_node = mu._node
-        elif isinstance(mu, Real):
+        else:  # mu is a real number
             mu_node = ConstantNode(mu)
-        else:
-            raise TypeError("'mu' must be a RandomVariable or real.")
-
-        if not is_known_subset(mu_node.value_set, NON_NEGATIVE_REALS):
-            raise ValueError("'mu' must be non-negative.")
 
         self._mu = mu_node
         self._value_set = NATURALS_0

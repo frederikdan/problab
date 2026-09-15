@@ -9,12 +9,17 @@ from src.problab.distributions.base import Distribution
 from src.problab.random_variables.base import RandomVariable
 from src.problab.random_variables.context import RealizationContext
 from src.problab.random_variables.nodes import ConstantNode, DistributionNode
-from src.problab.value_sets._utils import is_known_subset
+from src.problab.validation._decorator import _validate_parameters
+from src.problab.validation.distributions.continuous._normal import _validate_normal_mean, _validate_normal_std
 from src.problab.value_sets.base import ValueSet
-from src.problab.value_sets.sets import REALS, POSITIVE_REALS
+from src.problab.value_sets.sets import REALS
 
 class NormalDistribution(Distribution):
 
+    @_validate_parameters(
+        mean=_validate_normal_mean,
+        std=_validate_normal_std,
+    )
     def __init__(self,
                  mean: RandomVariable | Real,
                  std: RandomVariable | Real
@@ -22,25 +27,15 @@ class NormalDistribution(Distribution):
 
         if isinstance(mean, RandomVariable):
             mean_node = mean._node
-        elif isinstance(mean, Real):
+        else:  # mean is a real number
             mean_node = ConstantNode(mean)
-        else:
-            raise TypeError("'mean' must be a RandomVariable or Real.")
-
-        if not is_known_subset(mean_node.value_set, REALS):
-            raise ValueError("'mean' must contain only real values.")
 
         self._mean = mean_node
 
         if isinstance(std, RandomVariable):
             std_node = std._node
-        elif isinstance(std, Real):
+        else:  # std is a real number
             std_node = ConstantNode(std)
-        else:
-            raise TypeError("'std' must be a RandomVariable or Real.")
-
-        if not is_known_subset(std_node.value_set, POSITIVE_REALS):
-            raise ValueError("'std' must contain only positive real values.")
 
         self._std = std_node
 

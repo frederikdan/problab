@@ -3,14 +3,15 @@ from numbers import Real
 import numpy as np
 import sympy as sp
 
-from src.problab.functions._utils import _require_real_valued, _apply, _require_domain
+from src.problab.functions._utils import _apply
 from src.problab.random_variables.base import RandomVariable
+from src.problab.validation.functions._common import _validate_domain, _validate_real_valued
 from src.problab.value_sets.base import ValueSet
 from src.problab.value_sets.sets import REALS, NON_NEGATIVE_REALS
 
 
 def sin(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -20,7 +21,7 @@ def sin(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def cos(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -30,7 +31,7 @@ def cos(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def tan(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -40,7 +41,7 @@ def tan(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def arcsin(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=sp.Interval(-1, 1),
     )
@@ -53,7 +54,7 @@ def arcsin(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def arccos(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=sp.Interval(-1, 1),
     )
@@ -66,7 +67,7 @@ def arccos(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def arctan(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -76,7 +77,7 @@ def arctan(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def sinh(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -86,7 +87,7 @@ def sinh(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def cosh(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -96,7 +97,7 @@ def cosh(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def tanh(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -106,7 +107,7 @@ def tanh(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def arcsinh(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_real_valued(x)
+    _validate_real_valued(x)
 
     return _apply(
         x=x,
@@ -116,7 +117,7 @@ def arcsinh(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def arccosh(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=sp.Interval(1, sp.oo),
     )
@@ -129,7 +130,7 @@ def arccosh(x: RandomVariable | Real) -> RandomVariable | float:
 
 
 def arctanh(x: RandomVariable | Real) -> RandomVariable | float:
-    _require_domain(
+    _validate_domain(
         x=x,
         domain=sp.Interval.open(-1, 1),
     )

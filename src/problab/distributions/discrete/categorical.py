@@ -7,6 +7,9 @@ from numpy._typing import NDArray
 
 from src.problab.distributions.base import Distribution
 from src.problab.random_variables.context import RealizationContext
+from src.problab.validation._decorator import _validate_parameters
+from src.problab.validation.distributions.discrete._categorical import _validate_categories, _validate_probabilities, \
+    _validate_categorical_configuration
 from src.problab.value_sets.base import ValueSet
 
 
@@ -28,31 +31,25 @@ class CategoricalDistribution(Distribution):
         category_values.flags.writeable = False
         return category_values
 
+    @_validate_parameters(
+        categories=_validate_categories,
+        probabilities=_validate_probabilities,
+    )
     def __init__(self,
                  categories: Iterable[Any],
                  probabilities: Iterable[float],
                  ) -> None:
 
         categories = tuple(categories)
-        self._probabilities = tuple(probabilities)
+        probabilities = tuple(probabilities)
 
-        if len(categories) == 0:
-            raise ValueError("'categories' must contain at least one value.")
+        _validate_categorical_configuration(categories, probabilities)
 
-        if len(categories) != len(self._probabilities):
-            raise ValueError("'categories' and 'probabilities' must have the same length.")
-
-        if not all(isinstance(p, Real) for p in self._probabilities):
-            raise TypeError("'probabilities' must contain only real numbers.")
-
-        if not all(np.isfinite(p) for p in self._probabilities):
-            raise ValueError("'probabilities' must be finite.")
-
-        if any(p < 0 for p in self._probabilities):
-            raise ValueError("'probabilities' cannot contain negative values.")
-
-        if not np.isclose(sum(self._probabilities), 1.0):
-            raise ValueError("'probabilities' must sum to 1.")
+        total_probability = sum(probabilities)
+        self._probabilities = tuple(
+            probability / total_probability
+            for probability in probabilities
+        )
 
         sympy_set = sp.FiniteSet(*categories)
 

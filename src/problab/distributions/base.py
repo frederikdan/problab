@@ -3,14 +3,21 @@ from typing import TypeVar, Any
 import numpy as np
 from enum import Enum
 from collections.abc import Callable
-from numbers import Real
+from numbers import Real, Complex
+from functools import partial
 
 from src.problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA, DEF_DISTRIBUTION_SYMBOL_NAME
 from src.problab.probability.intervals import ConfidenceInterval
 from src.problab.random_variables.context import RealizationContext
 from src.problab.random_variables.nodes import Node, ConstantNode, DistributionNode
 from src.problab.statistics.quantiles import quantile_confidence_interval, QuantileMethod
+from src.problab.validation._common import _validate_q, _validate_alpha, _validate_num_samples, _validate_rng, \
+    _validate_enum
+from src.problab.validation._decorator import _validate_parameters
+from src.problab.validation.distributions._base import _validate_cdf_input, _validate_ppf_input, _validate_quantile_method
+from src.problab.value_sets._utils import is_known_subset
 from src.problab.value_sets.base import ValueSet
+from src.problab.value_sets.sets import REALS
 
 T = TypeVar('T')
 
@@ -85,13 +92,21 @@ class Distribution(ABC):
 
         return dependencies
 
-
+    @_validate_parameters(
+        q=_validate_q,
+        alpha=_validate_alpha,
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+    )
     def quantile_confidence_interval(self,
                                      q: float,
                                      alpha: float = DEF_ALPHA,
                                      num_samples: int = DEF_NUM_SAMPLES,
                                      rng: np.random.Generator | None = None
                                      ) -> ConfidenceInterval:
+
+        if not is_known_subset(self.value_set, REALS):
+            raise TypeError("Quantile confidence intervals require a real-valued distribution.")
 
         root_node = DistributionNode(self, rv_name=self.name)
         context = RealizationContext(
@@ -109,10 +124,10 @@ class Distribution(ABC):
 
 
     def _monte_carlo(self,
-                     operation: Callable[[np.ndarray], Real | np.ndarray],
+                     operation: Callable[[np.ndarray], Complex | np.ndarray],
                      num_samples: int = DEF_NUM_SAMPLES,
                      rng: np.random.Generator | None = None
-                     ) -> float | np.ndarray:
+                     ) -> float | complex | np.ndarray:
 
         root_node = DistributionNode(self, rv_name=self.name)
         context = RealizationContext(
@@ -124,14 +139,21 @@ class Distribution(ABC):
 
         result = operation(samples)
 
-        return float(result) if np.ndim(result) == 0 else result
+        if np.ndim(result) == 0:
+            return complex(result) if np.iscomplexobj(result) else float(result)
 
+        return result
 
+    @_validate_parameters(
+        mode=partial(_validate_enum, enum_type=Mode, name="mode"),
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+    )
     def mean(self,
              mode: Mode = Mode.AUTO,
              num_samples: int = DEF_NUM_SAMPLES,
              rng: np.random.Generator | None = None
-             ) -> float:
+             ) -> float | complex:
 
         if mode == Mode.MONTE_CARLO:
             return self._monte_carlo(operation=np.mean, num_samples=num_samples, rng=rng)
@@ -143,20 +165,23 @@ class Distribution(ABC):
                 raise NotImplementedError("Exact mean is not available for this distribution.")
             return exact_mean
 
-        if mode == Mode.AUTO:
-            if exact_mean is not None:
-                return exact_mean
+        assert mode is Mode.AUTO
+        return exact_mean if exact_mean is not None else self._monte_carlo(
+            operation=np.mean,
+            num_samples=num_samples,
+            rng=rng,
+        )
 
-            return self._monte_carlo(operation=np.mean, num_samples=num_samples, rng=rng)
-
-        raise ValueError(f"Unknown mode: {mode!r}")
-
+    @_validate_parameters(
+        mode=partial(_validate_enum, enum_type=Mode, name="mode"),
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+    )
     def variance(self,
                  mode: Mode = Mode.AUTO,
                  num_samples: int = DEF_NUM_SAMPLES,
                  rng: np.random.Generator | None = None
                  ) -> float:
-
 
         if mode == Mode.MONTE_CARLO:
             return self._monte_carlo(operation=np.var, num_samples=num_samples, rng=rng)
@@ -168,14 +193,18 @@ class Distribution(ABC):
                 raise NotImplementedError("Exact variance is not available for this distribution.")
             return exact_variance
 
-        if mode == Mode.AUTO:
-            if exact_variance is not None:
-                return exact_variance
+        assert mode is Mode.AUTO
+        return exact_variance if exact_variance is not None else self._monte_carlo(
+            operation=np.var,
+            num_samples=num_samples,
+            rng=rng,
+        )
 
-            return self._monte_carlo(operation=np.var, num_samples=num_samples, rng=rng)
-
-        raise ValueError(f"Unknown mode: {mode!r}")
-
+    @_validate_parameters(
+        mode=partial(_validate_enum, enum_type=Mode, name="mode"),
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+    )
     def std(self,
             mode: Mode = Mode.AUTO,
             num_samples: int = DEF_NUM_SAMPLES,
@@ -196,14 +225,19 @@ class Distribution(ABC):
                 raise NotImplementedError("Exact standard deviation is not available for this distribution.")
             return exact_std
 
-        if mode == Mode.AUTO:
-            if exact_std is not None:
-                return exact_std
+        assert mode is Mode.AUTO
+        return exact_std if exact_std is not None else self._monte_carlo(
+            operation=np.std,
+            num_samples=num_samples,
+            rng=rng,
+        )
 
-            return self._monte_carlo(operation=np.std, num_samples=num_samples, rng=rng)
-
-        raise ValueError(f"Unknown mode: {mode!r}")
-
+    @_validate_parameters(
+        x=_validate_cdf_input,
+        mode=partial(_validate_enum, enum_type=Mode, name="mode"),
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+    )
     def cdf(self,
             x: Real | np.ndarray,
             mode: Mode = Mode.AUTO,
@@ -237,16 +271,19 @@ class Distribution(ABC):
 
         if mode == Mode.EXACT:
             if exact_cdf is None:
-                raise NotImplementedError(
-                    "Exact CDF is not available for this distribution."
-                )
+                raise NotImplementedError("Exact CDF is not available for this distribution.")
             return exact_cdf
 
-        if mode == Mode.AUTO:
-            return exact_cdf if exact_cdf is not None else monte_carlo()
+        assert mode is Mode.AUTO
+        return exact_cdf if exact_cdf is not None else monte_carlo()
 
-        raise ValueError(f"Unknown mode: {mode!r}")
-
+    @_validate_parameters(
+        q=_validate_ppf_input,
+        mode=partial(_validate_enum, enum_type=Mode, name="mode"),
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+        quantile_method=_validate_quantile_method
+    )
     def ppf(self,
             q: Real | np.ndarray,
             mode: Mode = Mode.AUTO,
@@ -254,11 +291,6 @@ class Distribution(ABC):
             rng: np.random.Generator | None = None,
             quantile_method: QuantileMethod = "inverted_cdf"
             ) -> float | np.ndarray:
-
-        q_array = np.asarray(q)
-
-        if np.any(np.isnan(q_array)) or np.any((q_array < 0) | (q_array > 1)):
-            raise ValueError("'q' must be between 0 and 1.")
 
         def monte_carlo() -> float | np.ndarray:
             return self._monte_carlo(
@@ -274,9 +306,6 @@ class Distribution(ABC):
         if mode == Mode.MONTE_CARLO:
             return monte_carlo()
 
-        if mode not in (Mode.EXACT, Mode.AUTO):
-            raise ValueError(f"Unknown mode: {mode!r}")
-
         exact_ppf = self._ppf_exact(q)
 
         if mode == Mode.EXACT:
@@ -284,9 +313,10 @@ class Distribution(ABC):
                 raise NotImplementedError("Exact PPF is not available for this distribution.")
             return exact_ppf
 
+        assert mode is Mode.AUTO
         return exact_ppf if exact_ppf is not None else monte_carlo()
 
-    def _mean_exact(self) -> float | None:
+    def _mean_exact(self) -> float | Complex | None:
        return None
 
     def _variance_exact(self) -> float | None:

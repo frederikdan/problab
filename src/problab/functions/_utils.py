@@ -1,39 +1,9 @@
-from numbers import Real
 from typing import Callable
 
-import sympy as sp
+from numbers import Real
 
-from src.problab.random_variables.base import (
-    RandomVariable,
-    is_known_subset,
-    ValueSet,
-)
-
-
-
-def _require_real_valued(x: RandomVariable | Real) -> None:
-
-    if isinstance(x, RandomVariable):
-        if not is_known_subset(x._node.value_set, sp.S.Reals):
-            raise ValueError("'x' must contain only real values.")
-
-    elif not isinstance(x, Real):
-        raise TypeError("'x' must be a RandomVariable or Real.")
-
-
-def _require_domain(
-        x: RandomVariable | Real,
-        domain: sp.Set
-) -> None:
-
-    _require_real_valued(x)
-
-    if isinstance(x, RandomVariable):
-        if not is_known_subset(x._node.value_set, domain):
-            raise ValueError(f"'x' must contain only values in {domain}.")
-
-    elif x not in domain:
-        raise ValueError(f"'x' must be in {domain}.")
+from src.problab.random_variables.base import RandomVariable
+from src.problab.value_sets.base import ValueSet
 
 
 def _apply_scalar_or_rv(
