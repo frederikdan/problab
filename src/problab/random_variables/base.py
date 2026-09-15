@@ -17,7 +17,7 @@ from src.problab.random_variables.context import RealizationContext
 from src.problab.random_variables.graph import NodeGraph
 from src.problab.random_variables.nodes import DistributionNode, Node, ConstantNode, OperationNode
 from src.problab.statistics.quantiles import quantile_confidence_interval
-from src.problab.value_sets._utils import is_known_subset
+from src.problab.value_sets._utils import is_known_subset, is_in
 from src.problab.value_sets.base import ValueSet
 from src.problab.value_sets.sets import COMPLEXES, REALS, BOOLEANS
 
@@ -180,7 +180,7 @@ class RandomVariable:
             is_estimate=True
         )
 
-    def is_in(self,
+    def is_in_interval(self,
               lower_bound: Real,
               upper_bound: Real,
               closed: str = "both"
@@ -209,6 +209,57 @@ class RandomVariable:
 
         raise ValueError("closed must be one of 'both', 'left', 'right', or 'none'.")
 
+
+    def is_in(self,
+              target_set: sp.Set | tuple[Real, Real] | list[Real],
+              ) -> Event:
+
+        if isinstance(target_set, (tuple, list)):
+            if len(target_set) != 2:
+                raise ValueError("An interval must contain exactly two bounds.")
+
+            lower_bound, upper_bound = target_set
+            closed = "none" if isinstance(target_set, tuple) else "both"
+
+            return self.is_in_interval(
+                lower_bound,
+                upper_bound,
+                closed=closed,
+            )
+
+        if not isinstance(target_set, sp.Set):
+            raise TypeError(
+                "'target_set' must be a SymPy set or a tuple/list of two bounds."
+            )
+
+        def contains(value) -> bool:
+            result = target_set.contains(value)
+
+            if result is sp.true:
+                return True
+
+            if result is sp.false:
+                return False
+
+            raise ValueError(
+                f"Could not determine whether {value!r} belongs to {target_set}."
+            )
+
+        def operation(samples: np.ndarray) -> np.ndarray:
+            return np.fromiter(
+                (contains(value) for value in samples),
+                dtype=bool,
+                count=len(samples),
+            )
+
+        return Event(
+            OperationNode(
+                operation=operation,
+                inputs=(self._node,),
+                name=f"{{{self._node.name} in {target_set}}}",
+                value_set=BOOLEANS,
+            )
+        )
 
     def apply(self,
               function: Callable,

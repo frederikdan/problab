@@ -16,6 +16,10 @@ def is_known_subset(subset: ValueSet | sp.Set, superset: ValueSet | sp.Set) -> b
     return subset_set.is_subset(superset_set) is True
 
 
+def is_in(value, set_: sp.Set) -> bool:
+    return set_.contains(value)
+
+
 def validate_as_subset(values: np.ndarray,
                        target_set: ValueSet
                        ) -> None:
