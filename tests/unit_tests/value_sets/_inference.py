@@ -10,15 +10,16 @@ from problab.random_variables.nodes import _ConstantNode, _OperationNode
 from problab.value_sets import _inference as inference
 from problab.value_sets import sets as sets
 from problab.value_sets._utils import is_known_subset
-from problab.value_sets.base import NumericValueSet, _UnknownValueSet
+from problab.value_sets.base import _UnknownValueSet
+from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 
 
 class ValueSetInferenceTests(unittest.TestCase):
     def constant_set(self, value):
-        return NumericValueSet(sp.FiniteSet(value), (np.asarray(value).dtype.type,))
+        return HomogeneousNumericValueSet(sp.FiniteSet(value), (np.asarray(value).dtype.type,))
 
     def assert_result_contains(self, value_set, values):
-        self.assertIsInstance(value_set, NumericValueSet)
+        self.assertIsInstance(value_set, HomogeneousNumericValueSet)
         self.assertNotIsInstance(value_set.sympy_set, _UnknownValueSet)
         if value_set.dtype_types is not None:
             self.assertTrue(any(np.issubdtype(values.dtype, allowed) for allowed in value_set.dtype_types))
@@ -51,7 +52,7 @@ class ValueSetInferenceTests(unittest.TestCase):
 
     def test_nonreal_fractional_power(self):
         result = inference._infer_power_value_set(sets.NEGATIVE_REALS, sets.NON_INTEGER_REALS)
-        self.assertIsInstance(result, NumericValueSet)
+        self.assertIsInstance(result, HomogeneousNumericValueSet)
         self.assertIs(result.sympy_set.contains(sp.I), sp.true)
         self.assertIs(result.sympy_set.contains(1), sp.false)
 
@@ -74,7 +75,7 @@ class ValueSetInferenceTests(unittest.TestCase):
             inference._infer_floor_divide_value_set, inference._infer_modulo_value_set,
             inference._infer_power_value_set,
         )
-        unknown = NumericValueSet(_UnknownValueSet(), (np.floating,))
+        unknown = HomogeneousNumericValueSet(_UnknownValueSet(), (np.floating,))
         for infer in binary:
             self.assertIs(infer(unknown, sets.ONE), sets.UNKNOWN_VALUE_SET)
             self.assertIs(infer(sets.ONE, unknown), sets.UNKNOWN_VALUE_SET)
@@ -112,12 +113,12 @@ class ValueSetInferenceTests(unittest.TestCase):
         self.assertFalse(any(np.issubdtype(np.dtype(complex), allowed) for allowed in result.dtype_types))
 
     def test_object_arithmetic_representation(self):
-        operand = NumericValueSet(sp.FiniteSet(sp.Rational(1, 2)), (np.object_,))
+        operand = HomogeneousNumericValueSet(sp.FiniteSet(sp.Rational(1, 2)), (np.object_,))
         result = inference._infer_add_value_set(operand, operand)
         self.assertIn(np.object_, result.dtype_types)
 
     def test_unknown_dtype_stays_unspecified(self):
-        operand = NumericValueSet(sp.S.Integers, None)
+        operand = HomogeneousNumericValueSet(sp.S.Integers, None)
         result = inference._infer_add_value_set(operand, sets.ONE)
         self.assertIsNone(result.dtype_types)
         self.assertTrue(is_known_subset(result, sets.INTEGERS))
@@ -132,16 +133,16 @@ class ValueSetInferenceTests(unittest.TestCase):
         )
         for operation, left_dtype, right_dtype, expected_dtype in cases:
             with self.subTest(operation=operation, left=left_dtype, right=right_dtype):
-                left = NumericValueSet(sp.FiniteSet(2), (left_dtype,))
-                right = NumericValueSet(sp.FiniteSet(1), (right_dtype,))
+                left = HomogeneousNumericValueSet(sp.FiniteSet(2), (left_dtype,))
+                right = HomogeneousNumericValueSet(sp.FiniteSet(1), (right_dtype,))
                 result = operation.infer_output_value_set(left, right)
                 self.assertEqual(result.dtype_types, (expected_dtype,))
 
-        result = _ABS.infer_output_value_set(NumericValueSet(sp.FiniteSet(1j), (np.complex64,)))
+        result = _ABS.infer_output_value_set(HomogeneousNumericValueSet(sp.FiniteSet(1j), (np.complex64,)))
         self.assertEqual(result.dtype_types, (np.float32,))
 
     def test_integer_family_includes_signed_unsigned_promotion(self):
-        operand = NumericValueSet(sp.S.Integers, (np.integer,))
+        operand = HomogeneousNumericValueSet(sp.S.Integers, (np.integer,))
         result = _ADD.infer_output_value_set(operand, operand)
         self.assertIn(np.float64, result.dtype_types)
         self.assertNotIn(np.complex128, result.dtype_types)
@@ -152,11 +153,11 @@ class ValueSetInferenceTests(unittest.TestCase):
             self.assertIsNone(result.dtype_types)
 
     def test_unsupported_representation_leaves_dtype_unknown(self):
-        operand = NumericValueSet(sp.S.Reals, (np.void,))
+        operand = HomogeneousNumericValueSet(sp.S.Reals, (np.void,))
         self.assertIsNone(_ADD.infer_output_value_set(operand, operand).dtype_types)
 
     def test_float_families_include_extended_precision(self):
-        operand = NumericValueSet(sp.S.Reals, (np.floating,))
+        operand = HomogeneousNumericValueSet(sp.S.Reals, (np.floating,))
         result = _ADD.infer_output_value_set(operand, operand)
         for dtype in (np.float16, np.float32, np.float64, np.longdouble):
             actual = np.add(np.array([1], dtype=dtype), np.array([2], dtype=dtype))
@@ -225,7 +226,7 @@ class ValueSetInferenceTests(unittest.TestCase):
             # Use a float sample for the fractional exponent, with its exact mathematical set.
             left_node = _ConstantNode(left)
             right_node = _ConstantNode(float(right) if isinstance(right, sp.Rational) else right)
-            exponent_set = NumericValueSet(sp.FiniteSet(right), right_node.value_set.dtype_types)
+            exponent_set = HomogeneousNumericValueSet(sp.FiniteSet(right), right_node.value_set.dtype_types)
             node = _OperationNode(
                 operation=operation.operation,
                 inputs=(left_node, right_node),

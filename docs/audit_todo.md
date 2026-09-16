@@ -35,7 +35,7 @@ Status: `[ ]` pending, `[x]` completed.
 ### Remaining necessary changes
 
 - [ ] Define an overflow policy for fixed-width integer arithmetic. Operations such as `np.int8(100) + np.int8(100)` silently wrap around.
-- [ ] Normalize or explicitly support mixed numeric categorical values such as `[1, 4.0]`; object arrays currently break numeric functions.
+- [x] Explicitly support mixed numeric categorical values through `MixedNumericValueSet` while preserving their original types.
 - [ ] Make CDF handling consistent for NaN and invalid domains. Scalar and array NaN inputs currently produce different results.
 - [ ] Reconcile declared value sets with floating-point boundary behavior. Examples include `tanh(20.0) == 1.0` despite an open `(-1, 1)` support and `exp(-1000.0) == 0.0` despite positive support.
 - [ ] Validate `ProbabilityResult` counts and value together; contradictory data such as `value=0.9` with `num_successes=0` is currently accepted.
@@ -54,8 +54,18 @@ Status: `[ ]` pending, `[x]` completed.
 - [ ] Implement exact distribution methods after the parameter and support contracts are stable. Random parameters require separate treatment from fixed scalar parameters.
 - [x] Add package metadata and installation instructions once the import standardization is complete.
 
+## Test organization progress
+
+- [x] Create test-purpose folders for unit, integration, statistical, regression, property-based, and public API tests.
+- [x] Mirror every `src/problab` Python file under `tests/unit_tests`.
+- [x] Move the existing tests into their matching mirrored modules.
+- [ ] Expand unit coverage to every mirrored module.
+- [ ] Add integration, statistical, regression, property-based, and public API tests.
+
+Progress: **3 of 5 setup and coverage phases complete (60%)**. The directory structure and migration are complete; broader test coverage remains.
+
 ## Verification baseline
 
-- Existing suite: 27 tests pass.
+- Existing suite: 28 tests pass.
 - The audit found failures that are not covered by the current tests.
 - `docs/mathematics/tmp.png` is unrelated and should remain untouched.
