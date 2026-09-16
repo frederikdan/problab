@@ -4,7 +4,7 @@ from typing import Callable
 
 import numpy as np
 
-from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.base import NumericValueSet
 from problab.value_sets._inference import (_infer_add_value_set,
                                                _infer_subtract_value_set,
                                                _infer_multiply_value_set,

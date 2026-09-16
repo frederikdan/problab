@@ -3,7 +3,7 @@ from typing import Callable
 from numbers import Real
 
 from problab.random_variables.base import RandomVariable
-from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.base import NumericValueSet
 
 
 def _apply_scalar_or_rv(

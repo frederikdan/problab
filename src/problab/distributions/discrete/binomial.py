@@ -10,7 +10,7 @@ from problab.distributions.base import Distribution
 from problab.random_variables.base import RandomVariable
 from problab.validation._decorator import _validate_parameters
 from problab.validation.distributions.discrete._binomial import _validate_binomial_n, _validate_binomial_p
-from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets.sets import NATURALS_0
 
 class BinomialDistribution(Distribution):
@@ -34,13 +34,13 @@ class BinomialDistribution(Distribution):
         if n_max == sp.oo:
             self._value_set = NATURALS_0
         else:
-            self._value_set = NumericValueSet(
+            self._value_set = HomogeneousNumericValueSet(
                 sympy_set=sp.FiniteSet(*range(int(n_max) + 1)),
                 dtype_types=(np.integer,),
             )
 
     @property
-    def value_set(self) -> NumericValueSet:
+    def value_set(self) -> HomogeneousNumericValueSet:
         return self._value_set
 
     def _sample(self,

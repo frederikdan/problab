@@ -4,7 +4,8 @@ import numpy as np
 from numpy._typing import NDArray
 
 from problab.distributions.base import Distribution
-from problab.distributions.discrete.helpers._categorical import _infer_categorical_configuration
+from problab.distributions.discrete.helpers._categorical import _infer_categorical_configuration, \
+    _merge_equal_categories
 from problab.validation._decorator import _validate_parameters
 from problab.validation.distributions.discrete._categorical import _validate_categories, _validate_probabilities, \
     _validate_categorical_configuration
@@ -25,10 +26,9 @@ class CategoricalDistribution(Distribution):
         categories = tuple(categories)
         probabilities = tuple(probabilities)
 
-        _validate_categorical_configuration(
-            categories,
-            probabilities,
-        )
+        _validate_categorical_configuration(categories, probabilities)
+
+        categories, probabilities = _merge_equal_categories(categories,probabilities)
 
         total_probability = sum(probabilities)
 

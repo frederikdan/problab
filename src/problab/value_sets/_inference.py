@@ -6,7 +6,8 @@ import numpy as np
 import sympy as sp
 
 from problab.value_sets._utils import is_known_subset
-from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.base import NumericValueSet
+from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets._unknown import _UnknownValueSet
 from problab.value_sets.sets import UNKNOWN_VALUE_SET, ZERO, ONE, POSITIVE_REALS, REALS, NON_NEGATIVE_REALS, \
     POSITIVE_EVEN_INTEGERS, NON_ZERO_REALS, NEGATIVE_EVEN_INTEGERS, POSITIVE_ODD_INTEGERS, NEGATIVE_ODD_INTEGERS, \
@@ -65,7 +66,7 @@ def _arithmetic_inference(*, dtype_operation: np.ufunc | None = None, preserves_
                 sympy_set = sp.Intersection(sympy_set, INTEGERS.sympy_set)
 
             dtype_types = _infer_dtype_types(dtype_operation, inputs)
-            return NumericValueSet(sympy_set=sympy_set, dtype_types=dtype_types)
+            return HomogeneousNumericValueSet(sympy_set=sympy_set, dtype_types=dtype_types)
 
         return wrapped
 
@@ -467,7 +468,7 @@ def _infer_power_value_set(base_set: NumericValueSet, exponent_set: NumericValue
         is_known_subset(base_set, NEGATIVE_REALS)
         and is_known_subset(exponent_set, NON_INTEGER_REALS)
     ):
-        return NumericValueSet(sympy_set=COMPLEXES.sympy_set - REALS.sympy_set, dtype_types=(np.complexfloating,))
+        return HomogeneousNumericValueSet(sympy_set=COMPLEXES.sympy_set - REALS.sympy_set, dtype_types=(np.complexfloating,))
 
     if base_is_nonzero:
         return NON_ZERO_COMPLEXES

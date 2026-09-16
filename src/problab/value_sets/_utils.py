@@ -2,7 +2,7 @@ import numpy as np
 import sympy as sp
 
 from problab.value_sets.base import ValueSet
-from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.base import NumericValueSet
 from problab.value_sets.object_value_set import ObjectValueSet
 from problab.value_sets._unknown import _UnknownValueSet
 
@@ -57,4 +57,3 @@ def validate_as_subset(values: np.ndarray,
 
         if result is not sp.true:
             raise ValueError(f"Could not determine membership for value at index {index}: {value!r} in {target_set}.")
-

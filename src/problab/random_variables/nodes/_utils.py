@@ -7,7 +7,7 @@ import sympy as sp
 
 from problab.value_sets._unknown import _UnknownValueSet
 from problab.value_sets.base import ValueSet
-from problab.value_sets.numeric_value_set import NumericValueSet
+from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets.object_value_set import ObjectValueSet
 
 
@@ -42,7 +42,7 @@ def _constant_value_set(value: Any, array: np.ndarray) -> ValueSet:
     if isinstance(sympy_set, _UnknownValueSet):
         return ObjectValueSet(objects=(value,))
 
-    return NumericValueSet(
+    return HomogeneousNumericValueSet(
         sympy_set=sympy_set,
         dtype_types=(array.dtype.type,),
     )
