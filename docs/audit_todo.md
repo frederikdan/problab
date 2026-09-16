@@ -59,13 +59,22 @@ Status: `[ ]` pending, `[x]` completed.
 - [x] Create test-purpose folders for unit, integration, statistical, regression, property-based, and public API tests.
 - [x] Mirror every `src/problab` Python file under `tests/unit_tests`.
 - [x] Move the existing tests into their matching mirrored modules.
+- [x] Document the test-writing method and test-category boundaries in `docs/testing.md`.
+- [x] Add isolated unit tests for the implemented modules in `src/problab/distributions`, including the base class, concrete distributions, configuration, and categorical helpers.
+- [x] Add isolated unit tests for all modules in `src/problab/functions`, including public exports, helpers, and mathematical wrappers.
+- [x] Add isolated unit tests for all modules in `src/problab/probability`, including `P`, results, intervals, and configuration.
+- [x] Add isolated unit tests for all modules in `src/problab/random_variables`, including graph construction, realization, nodes, and `RandomVariable` operations.
+- [x] Add isolated unit tests for all implemented modules in `src/problab/statistics`, including Clopper-Pearson and quantile confidence intervals.
+- [x] Add isolated unit tests for all implemented modules in `src/problab/validation`, including every validator and the parameter-validation decorator.
+- [x] Add isolated unit tests for all implemented modules in `src/problab/value_sets` and remaining top-level event and operation modules.
+- [x] Move categorical graph and probability behavior checks into integration tests and package import checks into API tests.
 - [ ] Expand unit coverage to every mirrored module.
 - [ ] Add integration, statistical, regression, property-based, and public API tests.
 
-Progress: **3 of 5 setup and coverage phases complete (60%)**. The directory structure and migration are complete; broader test coverage remains.
+Progress: **90% overall**. Unit tests now cover every implemented source module; empty distribution placeholders have no behavior to test. Broader integration, statistical, regression, property-based, and API coverage remain.
 
 ## Verification baseline
 
-- Existing suite: 28 tests pass.
+- Existing suite: 241 tests pass.
 - The audit found failures that are not covered by the current tests.
 - `docs/mathematics/tmp.png` is unrelated and should remain untouched.
