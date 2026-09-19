@@ -34,6 +34,32 @@ class EventTests(unittest.TestCase):
         self.assertEqual(inversion.name, "{~True}")
         self.assertIs(conjunction._node.value_set, BOOLEANS)
 
+    def test_logical_operations_evaluate_each_boolean_array(self):
+        left = _Event(_ConstantNode(True))
+        right = _Event(_ConstantNode(False))
+        context = Mock()
+        context.evaluate.side_effect = (
+            np.array([True, False]),
+            np.array([False, False]),
+        )
+
+        np.testing.assert_array_equal((left & right)._node._evaluate(context), [False, False])
+
+        context.evaluate.side_effect = (
+            np.array([True, False]),
+            np.array([False, True]),
+        )
+        np.testing.assert_array_equal((left | right)._node._evaluate(context), [True, True])
+
+        context.evaluate.side_effect = (np.array([True, False]),)
+        np.testing.assert_array_equal((~left)._node._evaluate(context), [False, True])
+
+    def test_logical_operations_reject_non_events(self):
+        event = _Event(_ConstantNode(True))
+
+        self.assertIs(event.__and__(True), NotImplemented)
+        self.assertIs(event.__or__(False), NotImplemented)
+
     def test_event_has_no_single_truth_value(self):
         with self.assertRaises(TypeError):
             bool(_Event(_ConstantNode(True)))

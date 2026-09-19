@@ -5,7 +5,7 @@ import numpy as np
 
 from problab.random_variables._context import _RealizationContext
 from problab.random_variables.nodes.base import _Node
-from problab.value_sets.sets import REALS
+from problab.value_sets.sets import REALS, UNKNOWN_VALUE_SET
 
 
 class _StubNode(_Node):
@@ -42,6 +42,11 @@ class RealizationContextTests(unittest.TestCase):
 
         self.assertEqual(context.num_samples, 3)
         self.assertIs(context.rng, rng)
+
+    def test_constructor_creates_a_generator_when_rng_is_not_supplied(self):
+        context = _RealizationContext(_StubNode("root"))
+
+        self.assertIsInstance(context.rng, np.random.Generator)
 
     def test_constructor_rejects_invalid_sample_count(self):
         root = _StubNode("root")
@@ -84,6 +89,18 @@ class RealizationContextTests(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             context.evaluate(node)
+
+    def test_evaluate_accepts_any_dtype_when_value_set_has_no_dtype_family(self):
+        node = _StubNode(
+            "root",
+            value_set=UNKNOWN_VALUE_SET,
+            evaluator=lambda context: np.array(["label"], dtype=object),
+        )
+        context = _RealizationContext(node, num_samples=1)
+
+        result = context.evaluate(node)
+
+        np.testing.assert_array_equal(result, ["label"])
 
     @patch("problab.random_variables._context.validate_as_subset")
     def test_evaluate_validates_result_when_requested(self, validate_as_subset):

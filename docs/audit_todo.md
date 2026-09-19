@@ -42,7 +42,7 @@ Status: `[ ]` pending, `[x]` completed.
 
 ## Recommended changes
 
-- [ ] Add regression tests for the public API, distributions, random variables, graph dependencies, sampling, events, validation, categorical values, and all findings above.
+- [x] Add regression tests for the public API, distributions, random variables, graph dependencies, sampling, events, validation, categorical values, and all identified findings above.
 - [ ] Rename `tests/tast_random_variables.py` to `tests/test_random_variables.py`; the current name is skipped by standard unittest discovery.
 - [ ] Give `Distribution.sample()` controls matching `RandomVariable.sample()`: sample count, RNG, and optional validation.
 - [ ] Make the graph evaluation limit configurable instead of always using the hard-coded maximum of 100 nodes.
@@ -68,13 +68,19 @@ Status: `[ ]` pending, `[x]` completed.
 - [x] Add isolated unit tests for all implemented modules in `src/problab/validation`, including every validator and the parameter-validation decorator.
 - [x] Add isolated unit tests for all implemented modules in `src/problab/value_sets` and remaining top-level event and operation modules.
 - [x] Move categorical graph and probability behavior checks into integration tests and package import checks into API tests.
-- [ ] Expand unit coverage to every mirrored module.
-- [ ] Add integration, statistical, regression, property-based, and public API tests.
+- [x] Finish detailed unit-test gaps in the distribution base class, random-variable operations and realization, dependency graphs, events, and operation helpers.
+- [x] Add integration tests for composed public workflows: random distribution parameters, shared event realizations, probability results, and derived random variables.
+- [x] Add statistical tests for samplers and complete probabilistic workflows against analytical answers: events, conditions, arithmetic, functions, shared and independent variables, random parameters, distribution statistics, CDF/PPF, and interval coverage.
+- [x] Add regression tests for confidence intervals, real powers, categorical values, duplicate categories, and quantile-confidence sample limits.
+- [x] Add failing regression tests for the five unresolved necessary issues: integer-valued float membership, integer overflow, NaN CDF inputs, floating-point support boundaries, and inconsistent probability-result counts.
+- [x] Add property tests for categorical configuration, arithmetic identities, atomic compound categories, and probability-result rules.
+- [x] Expand public API tests beyond import checks, including deliberate red tests for sampling controls, graph limits, and exact methods.
+- [x] Map every identified unresolved behavior to a failing test in `docs/test_gap_inventory.md`.
 
-Progress: **90% overall**. Unit tests now cover every implemented source module; empty distribution placeholders have no behavior to test. Broader integration, statistical, regression, property-based, and API coverage remain.
+Progress: **100% of the current test-organization checklist**. Unit tests cover every implemented source module; integration, property, regression, API, and analytical statistical tests cover the identified behavior. New bugs and new features still need new tests as they are discovered or specified.
 
 ## Verification baseline
 
-- Existing suite: 241 tests pass.
-- The audit found failures that are not covered by the current tests.
+- Full discovery: 345 test methods; 14 assertion failures and 31 errors from deliberately active gap tests.
+- The 20 exact-method subcases each report an error, so failure and error counts are larger than the number of distinct unfinished behaviors. `docs/test_gap_inventory.md` maps the failures to source behavior.
 - `docs/mathematics/tmp.png` is unrelated and should remain untouched.

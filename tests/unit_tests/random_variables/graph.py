@@ -63,6 +63,17 @@ class NodeGraphTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             NodeGraph(_StubNode("root"), max_size=0)
 
+    def test_graph_handles_cycles_without_duplicate_nodes_or_recursion(self):
+        first = _StubNode("first")
+        second = _StubNode("second", (first,))
+        first._dependencies = {second}
+
+        graph = NodeGraph(first, max_size=2)
+
+        self.assertTrue(graph.is_complete)
+        self.assertEqual(graph.nodes, {first, second})
+        self.assertEqual(set(graph.nx_graph.edges), {(first, second), (second, first)})
+
     @patch("problab.random_variables.graph.plt.show")
     @patch("problab.random_variables.graph.nx.draw")
     def test_plot_uses_selected_node_labels(self, draw, show):

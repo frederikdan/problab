@@ -5,9 +5,15 @@ import numpy as np
 from problab._operations import (
     _ADD,
     _AND,
+    _ABS,
     _DIVIDE,
     _EQ,
+    _GTE,
+    _INVERT,
+    _LT,
     _MODULO,
+    _NEGATIVE,
+    _OR,
     _POWER,
     _Operation,
     _ArithmeticOperation,
@@ -42,6 +48,25 @@ class OperationTests(unittest.TestCase):
 
         np.testing.assert_allclose(reciprocal, [0.5])
         np.testing.assert_allclose(complex_root, [2j])
+
+    def test_logical_and_comparison_operations_apply_elementwise(self):
+        left = np.array([True, False])
+        right = np.array([False, False])
+        values = np.array([1, 3])
+
+        np.testing.assert_array_equal(_AND.operation(left, right), [False, False])
+        np.testing.assert_array_equal(_OR.operation(left, right), [True, False])
+        np.testing.assert_array_equal(_INVERT.operation(left), [False, True])
+        np.testing.assert_array_equal(_LT.operation(values, 2), [True, False])
+        np.testing.assert_array_equal(_GTE.operation(values, 2), [False, True])
+
+    def test_unary_arithmetic_operations_preserve_expected_values_and_names(self):
+        values = np.array([-2.0, 3.0])
+
+        np.testing.assert_array_equal(_NEGATIVE.operation(values), [2.0, -3.0])
+        np.testing.assert_array_equal(_ABS.operation(values), [2.0, 3.0])
+        self.assertEqual(_NEGATIVE.name_func("X"), "(-X)")
+        self.assertEqual(_ABS.name_func("X"), "abs(X)")
 
 
 if __name__ == "__main__":
