@@ -13,6 +13,8 @@ class PoissonDistributionValidationTests(unittest.TestCase):
             _validate_poisson_mu(-0.1)
         with self.assertRaises(TypeError):
             _validate_poisson_mu("rate")
+        with self.assertRaises(TypeError):
+            _validate_poisson_mu(True)
 
 
 if __name__ == "__main__":

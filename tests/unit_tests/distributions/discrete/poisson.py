@@ -12,8 +12,8 @@ class PoissonDistributionTests(unittest.TestCase):
         distribution = PoissonDistribution(mu=3.0)
 
         self.assertEqual(distribution.parameters, (3.0,))
-        self.assertEqual(distribution.symbol, "unnamed_distribution")
-        self.assertEqual(distribution.name, "unnamed_distribution(3.0)")
+        self.assertEqual(distribution.symbol, "Poisson")
+        self.assertEqual(distribution.name, "Poisson(3.0)")
         self.assertIs(distribution.value_set, NATURALS_0)
 
     @patch("problab.distributions.discrete.poisson.poisson.rvs")

@@ -3,6 +3,8 @@ from numbers import Real
 from typing import Any
 import numpy as np
 
+from problab._utils import _is_close
+
 
 def _validate_categories(value) -> None:
     if not isinstance(value, Iterable):
@@ -15,15 +17,20 @@ def _validate_probabilities(value) -> None:
 
 
 def _validate_categorical_configuration(
-        categories: tuple[Any, ...],
-        probabilities: tuple[float, ...],
-        ) -> None:
-
+    categories: tuple[Any, ...],
+    probabilities: tuple[float, ...],
+) -> None:
     if len(categories) == 0:
         raise ValueError("'categories' must contain at least one value.")
 
     if len(categories) != len(probabilities):
         raise ValueError("'categories' and 'probabilities' must have the same length.")
+
+    if any(
+        isinstance(probability, (bool, np.bool_))
+        for probability in probabilities
+    ):
+        raise TypeError("'probabilities' must not contain booleans.")
 
     if not all(isinstance(probability, Real) for probability in probabilities):
         raise TypeError("'probabilities' must contain only real numbers.")
@@ -34,5 +41,5 @@ def _validate_categorical_configuration(
     if any(probability < 0 for probability in probabilities):
         raise ValueError("'probabilities' cannot contain negative values.")
 
-    if not np.isclose(sum(probabilities), 1.0):
+    if not _is_close(sum(probabilities), 1.0):
         raise ValueError("'probabilities' must sum to 1.")

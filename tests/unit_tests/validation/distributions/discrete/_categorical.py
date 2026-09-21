@@ -1,5 +1,6 @@
 import unittest
 
+from problab._config import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE
 from problab.validation.distributions.discrete._categorical import (
     _validate_categorical_configuration,
     _validate_categories,
@@ -34,6 +35,21 @@ class CategoricalDistributionValidationTests(unittest.TestCase):
             _validate_categorical_configuration(("red",), (-0.1,))
         with self.assertRaises(ValueError):
             _validate_categorical_configuration(("red",), (0.5,))
+
+    def test_configuration_uses_configured_probability_tolerance(self):
+        _validate_categorical_configuration(
+            ("red", "blue"),
+            (0.5, 0.5 + RELATIVE_TOLERANCE / 2),
+        )
+
+        with self.assertRaises(ValueError):
+            _validate_categorical_configuration(
+                ("red", "blue"),
+                (
+                    0.5,
+                    0.5 + 2 * RELATIVE_TOLERANCE + ABSOLUTE_TOLERANCE,
+                ),
+            )
 
 
 if __name__ == "__main__":

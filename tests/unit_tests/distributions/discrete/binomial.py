@@ -8,19 +8,19 @@ from problab.distributions.discrete.binomial import BinomialDistribution
 
 
 class BinomialDistributionTests(unittest.TestCase):
-    def test_configuration_and_finite_support(self):
+    def test_configuration_and_symbolic_finite_support(self):
         distribution = BinomialDistribution(n=4, p=0.25)
 
         self.assertEqual(distribution.parameters, (4, 0.25))
         self.assertEqual(distribution.symbol, "Bin")
         self.assertEqual(distribution.name, "Bin(4, 0.25)")
-        self.assertEqual(distribution.value_set.sympy_set, sp.FiniteSet(0, 1, 2, 3, 4))
+        self.assertEqual(distribution.value_set.sympy_set, sp.Range(0, 5))
         self.assertEqual(distribution.value_set.dtype_types, (np.integer,))
 
     def test_zero_n_has_single_value_support(self):
         distribution = BinomialDistribution(n=0, p=0.8)
 
-        self.assertEqual(distribution.value_set.sympy_set, sp.FiniteSet(0))
+        self.assertEqual(distribution.value_set.sympy_set, sp.Range(0, 1))
 
     @patch("problab.distributions.discrete.binomial.binom.rvs")
     def test_sample_delegates_to_scipy_with_parameters(self, rvs):

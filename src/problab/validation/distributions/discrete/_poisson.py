@@ -1,5 +1,7 @@
 from numbers import Real
 
+import numpy as np
+
 from problab.random_variables.nodes import _ConstantNode
 from problab.value_sets._utils import is_known_subset
 from problab.value_sets.sets import NON_NEGATIVE_REALS
@@ -7,6 +9,9 @@ from problab.value_sets.sets import NON_NEGATIVE_REALS
 
 def _validate_poisson_mu(value) -> None:
     from problab.random_variables.base import RandomVariable
+
+    if isinstance(value, (bool, np.bool_)):
+        raise TypeError("'mu' must be a RandomVariable or a real number, not a boolean.")
 
     if isinstance(value, RandomVariable):
         mu_node = value._node

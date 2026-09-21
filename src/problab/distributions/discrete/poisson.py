@@ -20,13 +20,13 @@ class PoissonDistribution(Distribution):
             mu: RandomVariable | Real,
         ) -> None:
 
-        self._value_set = NATURALS_0
+        self._mathematical_value_set = NATURALS_0
 
-        super().__init__(parameters=(mu,))
+        super().__init__(parameters=(mu,), symbol="Poisson")
 
     @property
     def value_set(self) -> HomogeneousNumericValueSet:
-        return self._value_set
+        return self._mathematical_value_set
 
     def _sample(self,
                 *parameters: np.ndarray,

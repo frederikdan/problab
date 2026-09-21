@@ -29,19 +29,19 @@ class BinomialDistribution(Distribution):
 
         n_node, _ = self._parameter_nodes
 
-        n_max = n_node.value_set.sympy_set.sup
+        n_max = n_node.value_set.sympy_set.sup  # validation ensures NumericValueSet
 
         if n_max == sp.oo:
-            self._value_set = NATURALS_0
+            self._mathematical_value_set = NATURALS_0
         else:
-            self._value_set = HomogeneousNumericValueSet(
-                sympy_set=sp.FiniteSet(*range(int(n_max) + 1)),
+            self._mathematical_value_set = HomogeneousNumericValueSet(
+                sympy_set=sp.Range(0, int(n_max) + 1),
                 dtype_types=(np.integer,),
             )
 
     @property
     def value_set(self) -> HomogeneousNumericValueSet:
-        return self._value_set
+        return self._mathematical_value_set
 
     def _sample(self,
                 *parameters: np.ndarray,

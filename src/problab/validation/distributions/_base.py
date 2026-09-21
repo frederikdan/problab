@@ -23,6 +23,10 @@ def _validate_real_input(value: Real | np.ndarray, name: str) -> None:
 def _validate_cdf_input(value: Real | np.ndarray) -> None:
     _validate_real_input(value, "x")
 
+    values = np.asarray(value)
+
+    if np.any(np.isnan(values)):
+        raise ValueError("'x' must not be NaN.")
 
 def _validate_ppf_input(value: Real | np.ndarray) -> None:
     _validate_real_input(value, "q")

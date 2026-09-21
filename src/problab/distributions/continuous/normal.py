@@ -23,13 +23,13 @@ class NormalDistribution(Distribution):
                  std: RandomVariable | Real
                  ) -> None:
 
-        self._value_set = REALS
+        self._mathematical_value_set = REALS
 
         super().__init__(parameters=(mean, std), symbol="N")
 
     @property
     def value_set(self) -> HomogeneousNumericValueSet:
-        return self._value_set
+        return self._mathematical_value_set
 
     def _sample(self,
                 *parameters: np.ndarray,

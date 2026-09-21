@@ -20,7 +20,7 @@ class CategoricalDistribution(Distribution):
     )
     def __init__(self,
                  categories: Iterable[Any],
-                 probabilities: Iterable[float],
+                 probabilities: Iterable[float]
                  ) -> None:
 
         categories = tuple(categories)
@@ -39,11 +39,11 @@ class CategoricalDistribution(Distribution):
 
         self._category_inputs = categories
 
-        self._categories, self._value_set = (
+        self._categories, self._mathematical_value_set = (
             _infer_categorical_configuration(categories)
         )
 
-        super().__init__(parameters=None)
+        super().__init__(parameters=None, symbol="Categorical")
 
     @property
     def categories(self) -> tuple[Any, ...]:
@@ -55,7 +55,7 @@ class CategoricalDistribution(Distribution):
 
     @property
     def value_set(self) -> ValueSet:
-        return self._value_set
+        return self._mathematical_value_set
 
     def _sample(self,
                 *parameters: np.ndarray,
