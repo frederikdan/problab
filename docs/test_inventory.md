@@ -1,7 +1,7 @@
 # ProbLab test inventory
 
 This inventory lists every discovered `unittest` test method in `tests` as of
-2026-09-19. The 345 entries below are grouped first by test purpose and then by
+2026-09-21. The 393 entries below are grouped first by test purpose and then by
 test module. A method that uses `subTest` is one entry here because it is one
 test method in discovery, even though it exercises several cases.
 
@@ -196,12 +196,23 @@ for their current status and intended implementation targets.
 
 ## Unit tests
 
+### `tests/unit_tests/_config.py`
+
+- `test_tolerances_are_positive_and_less_than_one` — Checks that the shared numerical tolerances are positive fractions.
+
 ### `tests/unit_tests/_events.py`
 
 - `test_constructor_exposes_boolean_node_name_and_representation` — Checks that an event exposes its boolean node’s name and useful representation.
 - `test_constructor_rejects_non_boolean_node` — Checks that constructing an event from a non-boolean node raises an error.
 - `test_logical_operations_build_boolean_operation_events` — Checks that logical event operators construct boolean operation events.
 - `test_logical_operations_evaluate_each_boolean_array` — Checks that logical event operators calculate elementwise Boolean array results.
+- `test_repeated_conjunction_reuses_the_event_node` — Checks that combining an event with itself reuses the original node.
+- `test_repeated_disjunction_reuses_the_event_node` — Checks that disjoining an event with itself reuses the original node.
+- `test_double_inversion_reuses_the_event_node` — Checks that double event inversion reuses the original node.
+- `test_event_and_its_inverse_simplifies_to_false` — Checks that an event combined with its inverse produces a constant false event.
+- `test_inverse_and_event_simplifies_to_false` — Checks the same contradiction rule when operand order is reversed.
+- `test_event_or_its_inverse_simplifies_to_true` — Checks that an event combined with its inverse by disjunction produces a constant true event.
+- `test_inverse_or_event_simplifies_to_true` — Checks the same tautology rule when operand order is reversed.
 - `test_logical_operations_reject_non_events` — Checks that logical event operators reject operands that are not events.
 - `test_event_has_no_single_truth_value` — Checks that an event cannot be coerced into one Python Boolean value.
 
@@ -210,8 +221,15 @@ for their current status and intended implementation targets.
 - `test_operation_constants_have_expected_types_and_names` — Checks that internal operation constants expose their intended operation types and names.
 - `test_divide_and_modulo_handle_zero_without_warnings` — Checks division and modulo behavior at zero without emitting numerical warnings.
 - `test_power_promotes_integer_base_for_negative_exponents_and_handles_complex_output` — Checks that power promotes integer bases for negative exponents and preserves complex outputs where required.
+- `test_real_power_keeps_real_results_real` — Checks the real-power descriptor keeps provably real power results in a real NumPy representation.
+- `test_function_operations_are_named_descriptors` — Checks every predefined function operation is a shared descriptor with its intended display name.
 - `test_logical_and_comparison_operations_apply_elementwise` — Checks that logical and comparison operations act elementwise on sample arrays.
 - `test_unary_arithmetic_operations_preserve_expected_values_and_names` — Checks unary arithmetic values and human-readable operation names.
+
+### `tests/unit_tests/_utils.py`
+
+- `test_is_close_accepts_exact_and_within_tolerance_values` — Checks that the shared numeric comparison accepts exact and configured-close values.
+- `test_is_close_rejects_nan_and_values_outside_tolerance` — Checks that the shared numeric comparison rejects NaN and materially different values.
 
 ### `tests/unit_tests/distributions/_config.py`
 
@@ -221,6 +239,7 @@ for their current status and intended implementation targets.
 
 - `test_mode_members` — Checks that `Mode` has exactly the declared automatic, exact, and Monte Carlo options.
 - `test_constructor_preserves_parameters_and_builds_constant_nodes` — Checks that a distribution keeps public parameters while creating corresponding constant parameter nodes.
+- `test_distribution_uses_mathematical_support_as_default_realization_support` — Checks that distributions use their mathematical support for runtime validation unless they declare a separate realization support.
 - `test_parameter_to_node_preserves_existing_node` — Checks that an already internal node is reused rather than wrapped again.
 - `test_parameter_to_node_uses_a_random_variable_node_without_changing_public_input` — Checks that a random-variable parameter uses its internal node without replacing the public parameter object.
 - `test_node_dependencies_include_variable_parameters_but_not_constants` — Checks that only non-constant parameter nodes become distribution dependencies.
@@ -250,9 +269,10 @@ for their current status and intended implementation targets.
 
 ### `tests/unit_tests/distributions/discrete/binomial.py`
 
-- `test_configuration_and_finite_support` — Checks binomial parameters, name, and support for a finite fixed trial count.
+- `test_configuration_and_symbolic_finite_support` — Checks binomial parameters, name, and symbolic finite support for a fixed trial count.
 - `test_zero_n_has_single_value_support` — Checks that a binomial distribution with zero trials has only zero in its support.
 - `test_sample_delegates_to_scipy_with_parameters` — Checks that binomial `_sample()` forwards parameters, sample count, and generator to SciPy.
+- `test_invalid_parameters_are_rejected` — Checks that invalid binomial trial counts and probabilities are rejected.
 - `test_invalid_parameters_are_rejected` — Checks binomial constructor validation for invalid trial counts and probabilities.
 
 ### `tests/unit_tests/distributions/discrete/categorical.py`
@@ -281,25 +301,28 @@ for their current status and intended implementation targets.
 
 ### `tests/unit_tests/functions/_utils.py`
 
-- `test_apply_scalar_or_rv_returns_scalar_function_result` — Checks scalar application returns the scalar function result unchanged.
-- `test_apply_scalar_or_rv_delegates_random_variable_to_apply` — Checks random-variable scalar-or-RV application delegates to `RandomVariable.apply()`.
-- `test_apply_converts_scalar_result_to_float` — Checks the generic application helper converts scalar numerical results to `float`.
-- `test_apply_delegates_random_variable_to_apply` — Checks the generic application helper delegates random-variable inputs to `apply()`.
+- `test_apply_converts_scalar_operation_result_to_float` — Checks the descriptor-based application helper converts scalar numerical results to `float`.
+- `test_apply_delegates_random_variable_to_private_operation_method` — Checks the helper delegates random-variable inputs to `_apply_operation()` with the shared descriptor.
+- `test_apply_builds_node_for_mixed_scalar_and_random_variable_inputs` — Checks the helper builds one operation node when an operation combines scalar and random-variable inputs.
 
 ### `tests/unit_tests/functions/basic.py`
 
-- `test_sqrt_validates_non_negative_domain_and_applies_numpy_sqrt` — Checks square root domain validation, NumPy delegation, and declared output support.
+- `test_sqrt_validates_non_negative_domain_and_applies_sqrt_operation` — Checks square root domain validation, shared operation selection, and declared output support.
 - `test_absolute_validates_real_input_and_declares_non_negative_output` — Checks absolute value validates real inputs and declares non-negative support.
 - `test_floor_validates_real_input_and_declares_integer_output` — Checks floor validates real inputs and declares integer support.
 - `test_ceil_validates_real_input_and_declares_integer_output` — Checks ceiling validates real inputs and declares integer support.
 - `test_sign_validates_real_input_and_declares_three_possible_outputs` — Checks sign validation and its three-element output support.
+- `test_hypot_validates_both_inputs_and_declares_non_negative_output` — Checks `hypot` validates both real inputs and declares non-negative output support.
 
 ### `tests/unit_tests/functions/exponential.py`
 
-- `test_exp_validates_real_input_and_declares_positive_output` — Checks exponential validation and its declared positive-real output support.
-- `test_log_validates_positive_domain_and_applies_numpy_log` — Checks natural-log domain validation and NumPy delegation.
-- `test_log2_validates_positive_domain_and_applies_numpy_log2` — Checks base-two-log domain validation and NumPy delegation.
-- `test_log10_validates_positive_domain_and_applies_numpy_log10` — Checks base-ten-log domain validation and NumPy delegation.
+- `test_exp_declares_positive_math_support_and_non_negative_realization_support` — Checks that exponential output is mathematically positive while machine realizations may include zero.
+- `test_log_validates_positive_domain_and_applies_log_operation` — Checks natural-log domain validation and shared operation selection.
+- `test_log2_validates_positive_domain_and_applies_log2_operation` — Checks base-two-log domain validation and shared operation selection.
+- `test_log10_validates_positive_domain_and_applies_log10_operation` — Checks base-ten-log domain validation and shared operation selection.
+- `test_log1p_validates_domain_and_applies_log1p_operation` — Checks `log1p` requires inputs greater than negative one and selects its stable operation descriptor.
+- `test_expm1_validates_real_input_and_declares_its_range` — Checks `expm1` accepts real inputs and declares its open mathematical and closed realization lower bounds.
+- `test_logaddexp_validates_both_inputs_and_applies_binary_operation` — Checks `logaddexp` validates both real inputs and uses its shared binary descriptor.
 
 ### `tests/unit_tests/functions/trigonometric.py`
 
@@ -308,10 +331,10 @@ for their current status and intended implementation targets.
 - `test_tan_validates_real_input_and_declares_real_output` — Checks tangent validation and real-valued output support.
 - `test_arcsin_validates_closed_unit_interval_and_declares_output_range` — Checks arcsine input validation and declared output interval.
 - `test_arccos_validates_closed_unit_interval_and_declares_output_range` — Checks arccosine input validation and declared output interval.
-- `test_arctan_validates_real_input_and_declares_open_output_range` — Checks arctangent validation and declared open output interval.
+- `test_arctan_declares_open_math_range_and_closed_realization_range` — Checks that arctangent has an open mathematical range and a closed machine-realization range.
 - `test_sinh_validates_real_input_and_declares_real_output` — Checks hyperbolic sine validation and real-valued output support.
 - `test_cosh_validates_real_input_and_declares_output_at_least_one` — Checks hyperbolic cosine validation and lower-bounded output support.
-- `test_tanh_validates_real_input_and_declares_open_unit_interval` — Checks hyperbolic tangent validation and declared open unit interval.
+- `test_tanh_declares_open_math_range_and_closed_realization_range` — Checks that hyperbolic tangent has an open mathematical range and a closed machine-realization range.
 - `test_arcsinh_validates_real_input_and_declares_real_output` — Checks inverse hyperbolic sine validation and real output support.
 - `test_arccosh_validates_lower_bound_and_declares_non_negative_output` — Checks inverse hyperbolic cosine lower-bound validation and non-negative output support.
 - `test_arctanh_validates_open_unit_interval_and_declares_real_output` — Checks inverse hyperbolic tangent domain validation and real output support.
@@ -358,6 +381,7 @@ for their current status and intended implementation targets.
 - `test_evaluate_rejects_dtype_outside_declared_family` — Checks that a node result outside its declared dtype family is rejected.
 - `test_evaluate_accepts_any_dtype_when_value_set_has_no_dtype_family` — Checks that an unspecified dtype family accepts any result dtype.
 - `test_evaluate_validates_result_when_requested` — Checks that realization validation calls subset validation when requested.
+- `test_evaluate_uses_realization_support_for_runtime_validation` — Checks that runtime validation uses the node’s realization support rather than its mathematical support.
 - `test_evaluate_releases_dependency_after_last_dependant_is_realized` — Checks that a cached dependency is released after its last dependent has been realized.
 - `test_constructor_rejects_incomplete_dependency_graph` — Checks that a realization context rejects a graph truncated by its maximum-size limit.
 
@@ -380,11 +404,16 @@ for their current status and intended implementation targets.
 - `test_public_arithmetic_methods_delegate_with_correct_operations` — Checks public arithmetic operators choose their corresponding internal operations.
 - `test_binary_operation_rejects_unsupported_operand` — Checks binary operations reject operands of unsupported Python types.
 - `test_binary_operation_rejects_non_numeric_value_set` — Checks binary operations reject random variables with nonnumeric value sets.
-- `test_real_power_uses_real_numpy_power_operation` — Checks powers inferred as real use NumPy’s real power operation.
+- `test_real_power_uses_real_power_operation_descriptor` — Checks powers inferred as real use the shared real-power operation descriptor.
 - `test_unary_operation_builds_node` — Checks a unary operation creates an operation node with expected input and value set.
+- `test_binary_operation_reuses_node_when_additive_identity_applies` — Checks arithmetic construction reuses the original node for `X + 0`.
+- `test_unary_operation_reuses_node_when_double_negation_applies` — Checks unary construction reuses the original node for `-(-X)`.
+- `test_predefined_function_operations_use_simplifier` — Checks predefined `log(exp(X))` construction returns the original node.
 - `test_public_unary_methods_delegate_with_correct_operations` — Checks public unary operators choose their corresponding internal operations.
 - `test_apply_wraps_non_vectorized_function_for_sample_arrays` — Checks `apply()` adapts a scalar function to aligned sample arrays.
 - `test_apply_preserves_vectorized_function` — Checks `apply()` passes a vectorized function through unchanged.
+- `test_apply_defaults_unknown_supports_when_no_supports_are_given` — Checks `apply()` uses unknown mathematical and realization supports when neither support is supplied.
+- `test_apply_defaults_realization_support_to_mathematical_support` — Checks `apply()` uses the mathematical support as the realization support when only the mathematical support is supplied.
 - `test_apply_passes_aligned_values_from_other_variables` — Checks `apply()` passes aligned realizations from every additional random variable.
 - `test_interval_uses_inverted_cdf_quantiles_of_samples` — Checks random-variable interval estimation uses inverted-CDF sample quantiles.
 - `test_is_in_interval_rejects_reversed_bounds` — Checks interval membership rejects a lower bound greater than the upper bound.
@@ -424,16 +453,40 @@ for their current status and intended implementation targets.
 ### `tests/unit_tests/random_variables/nodes/operation.py`
 
 - `test_properties_expose_operation_inputs_and_value_set` — Checks an operation node exposes its operation, input nodes, and declared value set.
-- `test_evaluate_realizes_inputs_then_calls_operation` — Checks operation-node evaluation realizes inputs before calling the wrapped operation.
+- `test_properties_expose_distinct_mathematical_and_realization_sets` — Checks an operation node can expose different mathematical and machine-realization supports.
+- `test_evaluate_realizes_inputs_then_calls_operation_descriptor` — Checks operation-node evaluation realizes inputs before calling its operation descriptor.
 
 ### `tests/unit_tests/random_variables/nodes/_utils.py`
 
-- `test_sympy_constant_value_converts_integral_float_to_integer` — Checks that a finite integral float becomes a SymPy integer constant.
-- `test_sympy_constant_value_preserves_non_integral_float` — Checks that a non-integral float remains a floating SymPy value.
 - `test_constant_array_keeps_scalar_array` — Checks scalar constants are stored as scalar NumPy arrays.
 - `test_constant_array_keeps_compound_value_atomic` — Checks compound constants become one atomic object-array item.
 - `test_constant_value_set_for_numeric_value_uses_sympy_and_dtype` — Checks numeric constants infer a SymPy support and compatible dtype family.
 - `test_constant_value_set_for_unrepresentable_object_preserves_object` — Checks non-SymPy objects retain object membership in their constant value set.
+- `test_node_type_predicates_recognize_matching_constant_and_operation_nodes` — Checks node predicates recognize constants, operations, and real-power square expressions.
+
+### `tests/unit_tests/random_variables/nodes/_simplification.py`
+
+- `test_creates_operation_node_when_no_rule_applies` — Checks the simplification entry point creates an operation node when no identity applies.
+- `test_addition_by_zero_returns_original_node` — Checks additive identity simplification reuses the original node.
+- `test_power_to_one_returns_base_node_for_both_power_operations` — Checks both power descriptors participate in the exponent-one identity rule.
+- `test_zero_plus_addition_returns_original_node` — Checks the left additive identity reuses the original node.
+- `test_subtraction_by_zero_returns_original_node` — Checks subtraction by zero reuses the original node.
+- `test_multiplication_by_one_returns_original_node_in_both_orders` — Checks both multiplicative identity orders reuse the original node.
+- `test_division_by_one_returns_original_node` — Checks division by one reuses the original node.
+- `test_nested_absolute_value_returns_inner_absolute_value_node` — Checks nested absolute value simplifies to the existing inner node.
+- `test_double_negation_returns_original_node` — Checks double negation returns the original node.
+- `test_log_of_exponential_returns_real_input_node` — Checks `log(exp(X))` simplifies for real-valued inputs.
+- `test_exponential_of_logarithm_returns_positive_input_node` — Checks `exp(log(X))` simplifies for positive-valued inputs.
+- `test_square_root_of_real_square_creates_absolute_value_node` — Checks `sqrt(X ** 2)` produces an absolute-value node for real inputs.
+- `test_square_root_of_absolute_value_square_reuses_absolute_value_node` — Checks recursively created replacements are simplified before being returned.
+- `test_sine_of_arcsine_returns_input_in_closed_unit_interval` — Checks `sin(arcsin(X))` returns `X` when its support is within the closed interval from negative one to one.
+- `test_cosine_of_arccosine_returns_input_in_closed_unit_interval` — Checks `cos(arccos(X))` returns `X` when its support is within the closed interval from negative one to one.
+- `test_tangent_of_arctangent_returns_real_input` — Checks `tan(arctan(X))` returns a real-valued `X`.
+- `test_logarithm_of_one_plus_input_creates_log1p_node` — Checks `log(1 + X)` is replaced by the numerically stable `log1p(X)` node.
+- `test_exponential_minus_one_creates_expm1_node` — Checks `exp(X) - 1` is replaced by the numerically stable `expm1(X)` node.
+- `test_square_root_of_sum_of_squares_creates_hypot_node` — Checks `sqrt(X ** 2 + Y ** 2)` is replaced by the numerically stable `hypot(X, Y)` node.
+- `test_logarithm_of_sum_of_exponentials_creates_logaddexp_node` — Checks `log(exp(X) + exp(Y))` is replaced by the numerically stable `logaddexp(X, Y)` node.
+- `test_logarithm_of_one_plus_exponential_creates_softplus_node` — Checks `log(1 + exp(X))` is replaced by `logaddexp(0, X)`.
 
 ### `tests/unit_tests/statistics/_clopper_pearson.py`
 
@@ -449,7 +502,7 @@ for their current status and intended implementation targets.
 - `test_rejects_invalid_quantile_alpha_and_empty_samples` — Checks quantile intervals reject invalid quantiles, alpha values, and empty samples.
 - `test_rejects_sample_size_below_confidence_requirement` — Checks quantile intervals reject samples below the confidence requirement.
 - `test_uses_outer_order_statistics_when_tail_probabilities_are_large` — Checks that large tail probabilities select outer order statistics.
-- `test_moves_order_statistics_inward_until_tail_probability_exceeds_alpha` — Checks that order statistics move inward until each tail exceeds the alpha threshold.
+- `test_binary_search_selects_tail_boundary_order_statistics` — Checks that binary search selects the order statistics at the lower- and upper-tail boundaries.
 
 ### `tests/unit_tests/validation/_common.py`
 
@@ -489,6 +542,7 @@ for their current status and intended implementation targets.
 - `test_category_and_probability_inputs_require_iterables` — Checks categorical category and probability inputs must be iterable.
 - `test_configuration_accepts_matching_normalized_probabilities` — Checks categorical configuration accepts matching categories and normalized probability weights.
 - `test_configuration_rejects_invalid_category_probability_pairs` — Checks categorical configuration rejects invalid category and probability combinations.
+- `test_configuration_uses_configured_probability_tolerance` — Checks categorical probability totals use the shared configured tolerance.
 
 ### `tests/unit_tests/validation/distributions/discrete/_poisson.py`
 
@@ -516,12 +570,14 @@ for their current status and intended implementation targets.
 - `test_non_negative_integer_accepts_numpy_integer` — Checks result-count validation accepts NumPy integer values.
 - `test_configuration_accepts_unconditional_and_zero_conditioned_results` — Checks result validation accepts valid unconditional results and NaN for zero conditioned samples.
 - `test_configuration_rejects_invalid_counts_and_probability` — Checks result validation rejects invalid counts and probability values.
+- `test_configuration_uses_tolerance_for_probability_consistency` — Checks result validation accepts only configured-close probability ratios.
 
 ### `tests/unit_tests/validation/random_variables/_base.py`
 
 - `test_distribution_and_name_accept_expected_values` — Checks random-variable distribution and name validation accepts expected values.
 - `test_interval_bounds_and_closure_are_validated` — Checks random-variable interval bounds and closure values are validated.
 - `test_target_set_accepts_sympy_set_or_two_element_sequence` — Checks target-set validation accepts a SymPy set or a two-element range sequence.
+- `test_realization_value_set_accepts_none_or_a_value_set` — Checks realization support validation accepts `None` or a value-set instance and rejects other values.
 - `test_function_value_set_and_name_validators` — Checks custom-function, output-value-set, and function-name validation.
 - `test_others_requires_random_variables` — Checks additional custom-function operands must be random variables.
 
@@ -572,6 +628,8 @@ for their current status and intended implementation targets.
 
 ### `tests/unit_tests/value_sets/_utils.py`
 
+- `test_to_sympy_value_converts_integral_float_to_integer` — Checks that a finite integral float becomes a SymPy integer value.
+- `test_to_sympy_value_preserves_non_integral_float` — Checks that a non-integral float remains a floating SymPy value.
 - `test_is_known_subset_handles_numeric_object_and_unknown_sets` — Checks known-subset detection across numeric, object, and unknown value sets.
 - `test_validate_as_subset_accepts_integer_valued_floats_for_integer_set` — Checks subset validation accepts integer-valued floats for the integer set.
 - `test_validate_as_subset_rejects_outside_or_unknown_values` — Checks subset validation rejects values outside or indeterminate for the target set.

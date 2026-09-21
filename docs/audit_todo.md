@@ -30,27 +30,26 @@ Status: `[ ]` pending, `[x]` completed.
 - [x] Make real-valued expressions keep a compatible real representation. Power nodes now use `np.power` when inference proves a real result and retain `_power_values` for complex-capable cases.
 - [x] Treat each categorical item as one atomic opaque object, even if it is numeric, a tuple, list-like object, or another compound object. Numeric categories use `NumericValueSet`; other categories use `ObjectValueSet`, preserving category identity for sampling, equality, membership, and `validate=True` realization validation.
 - [x] Define safe categorical support handling for ordinary labels. Object categories such as `"red apple"`, lists, tuples, and mappings no longer require a SymPy representation.
-- [ ] Make set membership use the same numeric conversion as realization validation. Integer-valued floating samples such as `-2.0` should be recognized as members of `Integers`.
+- [x] Make set membership use the same numeric conversion as realization validation. Integer-valued floating samples such as `-2.0` are recognized as members of `Integers`.
 
 ### Remaining necessary changes
 
-- [ ] Define an overflow policy for fixed-width integer arithmetic. Operations such as `np.int8(100) + np.int8(100)` silently wrap around.
+- [x] Define an overflow policy for fixed-width integer arithmetic. Arithmetic wrappers now raise `OverflowError` instead of allowing fixed-width integer results to wrap around.
 - [x] Explicitly support mixed numeric categorical values through `MixedNumericValueSet` while preserving their original types.
-- [ ] Make CDF handling consistent for NaN and invalid domains. Scalar and array NaN inputs currently produce different results.
-- [ ] Reconcile declared value sets with floating-point boundary behavior. Examples include `tanh(20.0) == 1.0` despite an open `(-1, 1)` support and `exp(-1000.0) == 0.0` despite positive support.
-- [ ] Validate `ProbabilityResult` counts and value together; contradictory data such as `value=0.9` with `num_successes=0` is currently accepted.
+- [x] Make CDF handling consistent for NaN and invalid domains. CDF validation now rejects NaN for both scalar and array inputs.
+- [x] Reconcile declared value sets with floating-point boundary behavior. Nodes now keep mathematical support separate from machine-realization support, allowing mathematically open ranges while validating rounded or underflowed NumPy values correctly.
+- [x] Validate `ProbabilityResult` counts and value together; the reported value must match the success count and effective sample count within the configured numerical tolerance.
 
 ## Recommended changes
 
 - [x] Add regression tests for the public API, distributions, random variables, graph dependencies, sampling, events, validation, categorical values, and all identified findings above.
-- [ ] Rename `tests/tast_random_variables.py` to `tests/test_random_variables.py`; the current name is skipped by standard unittest discovery.
-- [ ] Give `Distribution.sample()` controls matching `RandomVariable.sample()`: sample count, RNG, and optional validation.
-- [ ] Make the graph evaluation limit configurable instead of always using the hard-coded maximum of 100 nodes.
-- [ ] Represent binomial support symbolically instead of expanding every integer from zero through `n`.
-- [ ] Improve quantile confidence interval performance; the current repeated scalar CDF search is slow for large samples.
-- [ ] Make validation consistent for Python and NumPy numeric types, and reject booleans consistently where integers are expected.
-- [ ] Clarify that `ProbabilityInterval.probability` is nominal coverage (`1 - alpha`), not the exact probability mass inside the returned interval.
-- [ ] Improve graph labels for constants, operation nodes, mathematical wrappers, Poisson distributions, and categorical distributions.
+- [x] Give `Distribution.sample()` controls matching `RandomVariable.sample()`: sample count, RNG, and optional validation.
+- [x] Make the graph evaluation limit configurable instead of always using the hard-coded maximum of 100 nodes.
+- [x] Represent binomial support symbolically instead of expanding every integer from zero through `n`.
+- [x] Improve quantile confidence interval performance with binary search over the binomial tails.
+- [x] Make validation consistent for Python and NumPy numeric types, and reject booleans consistently where integers are expected.
+- [x] Rename `ProbabilityInterval.probability` to `nominal_coverage` to distinguish the target level (`1 - alpha`) from the exact probability mass inside a returned interval.
+- [x] Improve graph labels for constants, operation nodes, mathematical wrappers, Poisson distributions, and categorical distributions.
 - [ ] Implement exact distribution methods after the parameter and support contracts are stable. Random parameters require separate treatment from fixed scalar parameters.
 - [x] Add package metadata and installation instructions once the import standardization is complete.
 
@@ -81,6 +80,6 @@ Progress: **100% of the current test-organization checklist**. Unit tests cover 
 
 ## Verification baseline
 
-- Full discovery: 345 test methods; 14 assertion failures and 31 errors from deliberately active gap tests.
-- The 20 exact-method subcases each report an error, so failure and error counts are larger than the number of distinct unfinished behaviors. `docs/test_gap_inventory.md` maps the failures to source behavior.
+- Full discovery: 393 test methods; 20 errors from deliberately active exact-method tests.
+- The 20 exact-method subcases each report an error, so error counts are larger than the number of distinct unfinished behaviors. `docs/test_gap_inventory.md` maps the errors to source behavior.
 - `docs/mathematics/tmp.png` is unrelated and should remain untouched.
