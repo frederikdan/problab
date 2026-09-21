@@ -8,6 +8,7 @@ from problab.validation.value_sets._base import (
     _validate_value_set_configuration,
 )
 from ._unknown import _UnknownValueSet
+from ._utils import _to_sympy_value
 from .base import NumericValueSet
 
 
@@ -28,16 +29,19 @@ class HomogeneousNumericValueSet(NumericValueSet):
         scalar = array.ndim == 0
         flat_values = array.reshape(-1)
 
-        result = np.empty(flat_values.shape, dtype=bool)
+        if isinstance(self.sympy_set, _UnknownValueSet):
+            result = np.zeros(flat_values.shape, dtype=bool)
+        else:
+            result = np.empty(flat_values.shape, dtype=bool)
 
-        for index, value in enumerate(flat_values):
-            try:
-                symbolic_value = sp.sympify(value)
-                result[index] = (
-                    self.sympy_set.contains(symbolic_value) is sp.true
-                )
-            except Exception:
-                result[index] = False
+            for index, value in enumerate(flat_values):
+                try:
+                    symbolic_value = _to_sympy_value(value)
+                    result[index] = (
+                            self.sympy_set.contains(symbolic_value) is sp.true
+                    )
+                except (TypeError, ValueError, NotImplementedError):
+                    result[index] = False
 
         if scalar:
             return bool(result[0])

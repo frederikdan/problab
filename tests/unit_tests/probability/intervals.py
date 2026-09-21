@@ -42,7 +42,7 @@ class ProbabilityIntervalTests(unittest.TestCase):
             is_estimate=True,
         )
 
-        self.assertEqual(interval.probability, 0.9)
+        self.assertEqual(interval.nominal_coverage, 0.9)
         self.assertEqual(str(interval), "[1.0, 3.0]")
         self.assertTrue(interval.is_estimate)
 

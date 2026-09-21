@@ -3,12 +3,23 @@ import unittest
 import numpy as np
 import sympy as sp
 
-from problab.value_sets._utils import is_known_subset, validate_as_subset
+from problab.value_sets._utils import (
+    _to_sympy_value,
+    is_known_subset,
+    validate_as_subset,
+)
 from problab.value_sets.object_value_set import ObjectValueSet
 from problab.value_sets.sets import INTEGERS, REALS, UNKNOWN_VALUE_SET
 
 
 class ValueSetUtilityTests(unittest.TestCase):
+
+    def test_to_sympy_value_converts_integral_float_to_integer(self):
+        self.assertEqual(_to_sympy_value(2.0), sp.Integer(2))
+        self.assertEqual(_to_sympy_value(np.float64(-3.0)), sp.Integer(-3))
+
+    def test_to_sympy_value_preserves_non_integral_float(self):
+        self.assertEqual(_to_sympy_value(2.5), sp.Float(2.5))
 
     def test_is_known_subset_handles_numeric_object_and_unknown_sets(self):
         self.assertTrue(is_known_subset(INTEGERS, REALS))

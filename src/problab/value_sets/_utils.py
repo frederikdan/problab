@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import sympy as sp
 
@@ -6,6 +8,22 @@ from problab.value_sets.base import NumericValueSet
 from problab.value_sets.object_value_set import ObjectValueSet
 from problab.value_sets._unknown import _UnknownValueSet
 
+
+def _to_sympy_value(value: Any) -> sp.Basic:
+    try:
+        if (
+            isinstance(value, (float, np.floating))
+            and np.isfinite(value)
+            and value == np.trunc(value)
+        ):
+            return sp.Integer(int(value))
+
+        return sp.sympify(value)
+
+    except (TypeError, ValueError, NotImplementedError, sp.SympifyError) as error:
+        raise ValueError(
+            f"Could not convert value {value!r} to SymPy."
+        ) from error
 
 def is_known_subset(subset: ValueSet | sp.Set, superset: ValueSet | sp.Set) -> bool:
 
@@ -27,33 +45,49 @@ def validate_as_subset(values: np.ndarray,
 
     if isinstance(target_set, ObjectValueSet):
         flat_values = np.asarray(values, dtype=object).reshape(-1)
-        membership = np.asarray(target_set.contains(flat_values), dtype=bool).reshape(-1)
-        for index, (value, is_member) in enumerate(zip(flat_values, membership)):
+        membership = np.asarray(
+            target_set.contains(flat_values),
+            dtype=bool,
+        ).reshape(-1)
+
+        for index, (value, is_member) in enumerate(
+            zip(flat_values, membership)
+        ):
             if not is_member:
                 raise ValueError(
-                    f"Value at index {index}, {value!r}, is outside the target set {target_set}."
+                    f"Value at index {index}, {value!r}, "
+                    f"is outside the target set {target_set}."
                 )
+
         return
 
     if not isinstance(target_set, NumericValueSet):
         raise TypeError("'target_set' must be a ValueSet.")
 
     if isinstance(target_set.sympy_set, _UnknownValueSet):
-        raise ValueError("Cannot validate membership: the target set is unknown.")
+        raise ValueError(
+            "Cannot validate membership: the target set is unknown."
+        )
 
     for index, value in enumerate(values):
         try:
-            if isinstance(value, (float, np.floating)) and np.isfinite(value) and value == np.trunc(value):
-                symbolic_value = sp.Integer(int(value))
-            else:
-                symbolic_value = sp.sympify(value)
-
+            symbolic_value = _to_sympy_value(value)
             result = target_set.sympy_set.contains(symbolic_value)
+
         except (TypeError, ValueError, NotImplementedError) as error:
-            raise ValueError(f"Could not validate value at index {index}: {value!r} against {target_set}.") from error
+            raise ValueError(
+                f"Could not validate value at index {index}: "
+                f"{value!r} against {target_set}."
+            ) from error
 
         if result is sp.false:
-            raise ValueError(f"Value at index {index}, {value!r}, is outside the target set {target_set}.")
+            raise ValueError(
+                f"Value at index {index}, {value!r}, "
+                f"is outside the target set {target_set}."
+            )
 
         if result is not sp.true:
-            raise ValueError(f"Could not determine membership for value at index {index}: {value!r} in {target_set}.")
+            raise ValueError(
+                f"Could not determine membership for value at index "
+                f"{index}: {value!r} in {target_set}."
+            )

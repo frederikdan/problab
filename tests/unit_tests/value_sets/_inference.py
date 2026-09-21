@@ -228,10 +228,11 @@ class ValueSetInferenceTests(unittest.TestCase):
             right_node = _ConstantNode(float(right) if isinstance(right, sp.Rational) else right)
             exponent_set = HomogeneousNumericValueSet(sp.FiniteSet(right), right_node.value_set.dtype_types)
             node = _OperationNode(
-                operation=operation.operation,
+                operation=operation,
                 inputs=(left_node, right_node),
                 name="inference regression",
-                value_set=operation.infer_output_value_set(left_node.value_set, exponent_set),
+                mathematical_value_set=operation.infer_output_value_set(left_node.value_set, exponent_set),
+                realization_value_set=operation.infer_output_value_set(left_node.value_set, exponent_set),
             )
             actual = _RealizationContext(node, num_samples=3).evaluate(node)
             np.testing.assert_allclose(actual, np.full(3, expected), atol=1e-14)

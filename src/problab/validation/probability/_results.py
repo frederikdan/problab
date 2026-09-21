@@ -3,6 +3,8 @@ from math import isfinite, isnan
 
 import numpy as np
 
+from problab._utils import _is_close
+
 
 def _validate_non_negative_integer(value: int, name: str) -> None:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)):
@@ -23,18 +25,22 @@ def _validate_probability_result_configuration(
         raise TypeError("'value' must be a real number.")
 
     _validate_non_negative_integer(num_successes, "num_successes")
-    _validate_non_negative_integer(num_unconditioned_samples, "num_unconditioned_samples")
+    _validate_non_negative_integer(num_unconditioned_samples,"num_unconditioned_samples")
 
     if num_unconditioned_samples < 1:
         raise ValueError("'num_unconditioned_samples' must be at least 1.")
 
     if num_conditioned_samples is not None:
-        _validate_non_negative_integer(num_conditioned_samples, "num_conditioned_samples")
+        _validate_non_negative_integer(num_conditioned_samples,"num_conditioned_samples")
 
         if num_conditioned_samples > num_unconditioned_samples:
             raise ValueError("'num_conditioned_samples' must not exceed 'num_unconditioned_samples'.")
 
-    num_samples = num_unconditioned_samples if num_conditioned_samples is None else num_conditioned_samples
+    num_samples = (
+        num_unconditioned_samples
+        if num_conditioned_samples is None
+        else num_conditioned_samples
+    )
 
     if num_successes > num_samples:
         raise ValueError("'num_successes' must not exceed the number of samples.")
@@ -46,3 +52,8 @@ def _validate_probability_result_configuration(
 
     if not isfinite(value) or not 0 <= value <= 1:
         raise ValueError("'value' must be between 0 and 1.")
+
+    expected_value = num_successes / num_samples
+
+    if not _is_close(value, expected_value):
+        raise ValueError("'value' must match 'num_successes' divided by the number of samples.")

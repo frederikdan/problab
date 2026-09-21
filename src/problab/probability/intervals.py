@@ -33,7 +33,7 @@ class ProbabilityInterval():
         )
 
     @property
-    def probability(self) -> float:
+    def nominal_coverage(self) -> float:
         return 1 - self.alpha
 
     def __str__(self) -> str:
