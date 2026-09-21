@@ -3,6 +3,20 @@ from numbers import Real
 import numpy as np
 import sympy as sp
 
+from problab._operations import (
+    _SIN,
+    _ARCSIN,
+    _COS,
+    _ARCCOS,
+    _TAN,
+    _ARCTAN,
+    _SINH,
+    _COSH,
+    _TANH,
+    _ARCSINH,
+    _ARCCOSH,
+    _ARCTANH,
+)
 from problab.functions._utils import _apply
 from problab.random_variables.base import RandomVariable
 from problab.validation.functions._common import _validate_domain, _validate_real_valued
@@ -15,8 +29,9 @@ def sin(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.sin,
-        value_set=HomogeneousNumericValueSet(sp.Interval(-1, 1), (np.floating,)),
+        operation=_SIN,
+        mathematical_value_set=HomogeneousNumericValueSet(sp.Interval(-1, 1), (np.floating,)),
+        realization_value_set=HomogeneousNumericValueSet(sp.Interval(-1, 1), (np.floating,)),
     )
 
 
@@ -25,8 +40,9 @@ def cos(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.cos,
-        value_set=HomogeneousNumericValueSet(sp.Interval(-1, 1), (np.floating,)),
+        operation=_COS,
+        mathematical_value_set=HomogeneousNumericValueSet(sp.Interval(-1, 1), (np.floating,)),
+        realization_value_set=HomogeneousNumericValueSet(sp.Interval(-1, 1), (np.floating,)),
     )
 
 
@@ -35,8 +51,9 @@ def tan(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.tan,
-        value_set=REALS,
+        operation=_TAN,
+        mathematical_value_set=REALS,
+        realization_value_set=REALS,
     )
 
 
@@ -48,8 +65,9 @@ def arcsin(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.arcsin,
-        value_set=HomogeneousNumericValueSet(sp.Interval(-sp.pi / 2, sp.pi / 2), (np.floating,)),
+        operation=_ARCSIN,
+        mathematical_value_set=HomogeneousNumericValueSet(sp.Interval(-sp.pi / 2, sp.pi / 2), (np.floating,)),
+        realization_value_set=HomogeneousNumericValueSet(sp.Interval(-sp.pi / 2, sp.pi / 2), (np.floating,)),
     )
 
 
@@ -61,8 +79,9 @@ def arccos(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.arccos,
-        value_set=HomogeneousNumericValueSet(sp.Interval(0, sp.pi), (np.floating,)),
+        operation=_ARCCOS,
+        mathematical_value_set=HomogeneousNumericValueSet(sp.Interval(0, sp.pi), (np.floating,)),
+        realization_value_set=HomogeneousNumericValueSet(sp.Interval(0, sp.pi), (np.floating,)),
     )
 
 
@@ -71,8 +90,15 @@ def arctan(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.arctan,
-        value_set=HomogeneousNumericValueSet(sp.Interval.open(-sp.pi / 2, sp.pi / 2), (np.floating,)),
+        operation=_ARCTAN,
+        mathematical_value_set=HomogeneousNumericValueSet(
+            sp.Interval.open(-sp.pi / 2, sp.pi / 2),
+            (np.floating,),
+        ),
+        realization_value_set=HomogeneousNumericValueSet(
+            sp.Interval(-sp.pi / 2, sp.pi / 2),
+            (np.floating,),
+        ),
     )
 
 
@@ -81,8 +107,9 @@ def sinh(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.sinh,
-        value_set=REALS,
+        operation=_SINH,
+        mathematical_value_set=REALS,
+        realization_value_set=REALS,
     )
 
 
@@ -91,8 +118,9 @@ def cosh(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.cosh,
-        value_set=HomogeneousNumericValueSet(sp.Interval(1, sp.oo), (np.floating,)),
+        operation=_COSH,
+        mathematical_value_set=HomogeneousNumericValueSet(sp.Interval(1, sp.oo), (np.floating,)),
+        realization_value_set=HomogeneousNumericValueSet(sp.Interval(1, sp.oo), (np.floating,)),
     )
 
 
@@ -101,8 +129,15 @@ def tanh(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.tanh,
-        value_set=HomogeneousNumericValueSet(sp.Interval.open(-1, 1), (np.floating,)),
+        operation=_TANH,
+        mathematical_value_set=HomogeneousNumericValueSet(
+            sp.Interval.open(-1, 1),
+            (np.floating,),
+        ),
+        realization_value_set=HomogeneousNumericValueSet(
+            sp.Interval(-1, 1),
+            (np.floating,),
+        ),
     )
 
 
@@ -111,8 +146,9 @@ def arcsinh(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.arcsinh,
-        value_set=REALS,
+        operation=_ARCSINH,
+        mathematical_value_set=REALS,
+        realization_value_set=REALS,
     )
 
 
@@ -124,8 +160,9 @@ def arccosh(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.arccosh,
-        value_set=NON_NEGATIVE_REALS,
+        operation=_ARCCOSH,
+        mathematical_value_set=NON_NEGATIVE_REALS,
+        realization_value_set=NON_NEGATIVE_REALS,
     )
 
 
@@ -137,6 +174,7 @@ def arctanh(x: RandomVariable | Real) -> RandomVariable | float:
 
     return _apply(
         x=x,
-        function=np.arctanh,
-        value_set=REALS,
+        operation=_ARCTANH,
+        mathematical_value_set=REALS,
+        realization_value_set=REALS,
     )

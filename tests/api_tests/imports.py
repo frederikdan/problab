@@ -57,8 +57,8 @@ class PublicImportTests(unittest.TestCase):
 
     def test_function_package_exports(self):
         expected_names = {
-            "absolute", "ceil", "floor", "sign", "sqrt",
-            "exp", "log", "log2", "log10",
+            "absolute", "ceil", "floor", "hypot", "sign", "sqrt",
+            "exp", "expm1", "log", "log1p", "log2", "log10", "logaddexp",
             "arccos", "arccosh", "arcsin", "arcsinh", "arctan", "arctanh",
             "cos", "cosh", "sin", "sinh", "tan", "tanh",
         }

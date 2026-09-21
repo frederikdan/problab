@@ -1,10 +1,11 @@
+from numbers import Real
+
 import numpy as np
 import sympy as sp
 
-from numbers import Real
-
+from problab._operations import _SQRT, _ABS, _FLOOR, _CEIL, _SIGN, _HYPOT
 from problab.random_variables.base import RandomVariable
-from problab.functions._utils import _apply_scalar_or_rv
+from problab.functions._utils import _apply
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.validation.functions._common import _validate_domain, _validate_real_valued
 
@@ -17,51 +18,69 @@ def sqrt(x: RandomVariable | Real) -> RandomVariable | Real:
         domain=NON_NEGATIVE_REALS.sympy_set,
     )
 
-    return _apply_scalar_or_rv(
+    return _apply(
         x=x,
-        function=np.sqrt,
-        value_set=NON_NEGATIVE_REALS,
+        operation=_SQRT,
+        mathematical_value_set=NON_NEGATIVE_REALS,
+        realization_value_set=NON_NEGATIVE_REALS,
     )
 
 
 def absolute(x: RandomVariable | Real) -> RandomVariable | Real:
     _validate_real_valued(x)
 
-    return _apply_scalar_or_rv(
+    return _apply(
         x=x,
-        function=np.abs,
-        value_set=NON_NEGATIVE_REALS,
+        operation=_ABS,
+        mathematical_value_set=NON_NEGATIVE_REALS,
+        realization_value_set=NON_NEGATIVE_REALS,
     )
 
 
 def floor(x: RandomVariable | Real) -> RandomVariable | Real:
     _validate_real_valued(x)
 
-    return _apply_scalar_or_rv(
+    return _apply(
         x=x,
-        function=np.floor,
-        value_set=INTEGERS,
+        operation=_FLOOR,
+        mathematical_value_set=INTEGERS,
+        realization_value_set=INTEGERS,
     )
 
 
 def ceil(x: RandomVariable | Real) -> RandomVariable | Real:
     _validate_real_valued(x)
 
-    return _apply_scalar_or_rv(
+    return _apply(
         x=x,
-        function=np.ceil,
-        value_set=INTEGERS,
+        operation=_CEIL,
+        mathematical_value_set=INTEGERS,
+        realization_value_set=INTEGERS,
     )
 
 
 def sign(x: RandomVariable | Real) -> RandomVariable | Real:
     _validate_real_valued(x)
 
-    return _apply_scalar_or_rv(
+    return _apply(
         x=x,
-        function=np.sign,
-        value_set=HomogeneousNumericValueSet(
+        operation=_SIGN,
+        mathematical_value_set=HomogeneousNumericValueSet(
+            sympy_set=sp.FiniteSet(-1, 0, 1),
+            dtype_types=(np.integer, np.floating),
+        ),
+        realization_value_set=HomogeneousNumericValueSet(
             sympy_set=sp.FiniteSet(-1, 0, 1),
             dtype_types=(np.integer, np.floating),
         ),
     )
+
+
+def hypot(
+    x: RandomVariable | Real,
+    y: RandomVariable | Real,
+) -> RandomVariable | Real:
+    _validate_real_valued(x)
+    _validate_real_valued(y)
+
+    return _apply(x, _HYPOT, NON_NEGATIVE_REALS, NON_NEGATIVE_REALS, y)

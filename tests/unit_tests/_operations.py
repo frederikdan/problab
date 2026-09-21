@@ -15,10 +15,32 @@ from problab._operations import (
     _NEGATIVE,
     _OR,
     _POWER,
+    _REAL_POWER,
     _Operation,
     _ArithmeticOperation,
     _ComparisonOperation,
+    _FunctionOperation,
     _LogicalOperation,
+    _EXP,
+    _LOG,
+    _LOG2,
+    _LOG10,
+    _SQRT,
+    _FLOOR,
+    _CEIL,
+    _SIGN,
+    _SIN,
+    _ARCSIN,
+    _COS,
+    _ARCCOS,
+    _TAN,
+    _ARCTAN,
+    _SINH,
+    _ARCSINH,
+    _COSH,
+    _ARCCOSH,
+    _TANH,
+    _ARCTANH,
 )
 
 
@@ -48,6 +70,44 @@ class OperationTests(unittest.TestCase):
 
         np.testing.assert_allclose(reciprocal, [0.5])
         np.testing.assert_allclose(complex_root, [2j])
+
+    def test_real_power_keeps_real_results_real(self):
+        result = _REAL_POWER.operation(
+            np.array([4.0]),
+            np.array([0.5]),
+        )
+
+        np.testing.assert_allclose(result, [2.0])
+        self.assertFalse(np.iscomplexobj(result))
+
+    def test_function_operations_are_named_descriptors(self):
+        cases = (
+            (_EXP, "exp(X)"),
+            (_LOG, "log(X)"),
+            (_LOG2, "log2(X)"),
+            (_LOG10, "log10(X)"),
+            (_SQRT, "sqrt(X)"),
+            (_FLOOR, "floor(X)"),
+            (_CEIL, "ceil(X)"),
+            (_SIGN, "sign(X)"),
+            (_SIN, "sin(X)"),
+            (_ARCSIN, "arcsin(X)"),
+            (_COS, "cos(X)"),
+            (_ARCCOS, "arccos(X)"),
+            (_TAN, "tan(X)"),
+            (_ARCTAN, "arctan(X)"),
+            (_SINH, "sinh(X)"),
+            (_ARCSINH, "arcsinh(X)"),
+            (_COSH, "cosh(X)"),
+            (_ARCCOSH, "arccosh(X)"),
+            (_TANH, "tanh(X)"),
+            (_ARCTANH, "arctanh(X)"),
+        )
+
+        for operation, expected_name in cases:
+            with self.subTest(operation=expected_name):
+                self.assertIsInstance(operation, _FunctionOperation)
+                self.assertEqual(operation.name_func("X"), expected_name)
 
     def test_logical_and_comparison_operations_apply_elementwise(self):
         left = np.array([True, False])

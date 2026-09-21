@@ -17,6 +17,8 @@ POSITIVE_REALS           = HomogeneousNumericValueSet(sympy_set=sp.Interval.open
 NEGATIVE_REALS           = HomogeneousNumericValueSet(sympy_set=sp.Interval.open(-sp.oo, 0), dtype_types=_REAL_DTYPES)
 NON_NEGATIVE_REALS       = HomogeneousNumericValueSet(sympy_set=sp.Interval(0, sp.oo), dtype_types=_REAL_DTYPES)
 NON_POSITIVE_REALS       = HomogeneousNumericValueSet(sympy_set=sp.Interval(-sp.oo, 0), dtype_types=_REAL_DTYPES)
+GT_NEG_ONE_REALS         = HomogeneousNumericValueSet(sympy_set=sp.Interval.open(-1, sp.oo), dtype_types=_REAL_DTYPES)
+GE_NEG_ONE_REALS         = HomogeneousNumericValueSet(sympy_set=sp.Interval(-1, sp.oo), dtype_types=_REAL_DTYPES)
 INTEGERS                 = HomogeneousNumericValueSet(sympy_set=sp.S.Integers, dtype_types=_INTEGER_DTYPES)
 POSITIVE_INTEGERS        = HomogeneousNumericValueSet(sympy_set=sp.S.Naturals, dtype_types=_INTEGER_DTYPES)
 NEGATIVE_INTEGERS        = HomogeneousNumericValueSet(sympy_set=sp.Intersection(sp.S.Integers, sp.Interval.open(-sp.oo, 0)), dtype_types=_INTEGER_DTYPES)
