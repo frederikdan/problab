@@ -29,7 +29,8 @@ Practically, these results enable Problab to return finite-sample confidence int
 
 \vspace{2em}
 
-\begin{lemma}
+
+\begin{lemma}\label{lemma:quantile_CI}
 Let $X_i$ with $i\in\{1,\ldots,n-1\}$ be i.i.d samples. Suppose that $P(X_i\leq \xi_q)=q$ for all $i$, some $q\in(0,1)$, and $\xi_q$ in the value space of $X_i$. Let
 $$I_i =
 \begin{cases}
@@ -119,6 +120,78 @@ is at least as conservative as a confidence interval with coverage probability $
 \end{proof}
 
 \begin{lemma}
+Let $\alpha\in(0,1)$, $q\in(0,1)$, $n\geq\lceil\ln(\alpha/2)/\ln(\max (q, 1-q))\rceil$ and $K\sim Bin(n,q)$. Then the optimization problems
+$$
+\begin{aligned}
+k_L^*
+&=
+\max_{k\in\{1,\ldots,n-1\}}
+\left\{
+k:
+P(K<k)\leq\frac{\alpha}{2}
+\right\},\\
+k_U^*
+&=
+\min_{k\in\{1,\ldots,n-1\}}
+\left\{
+k:
+P(K>k)\leq\frac{\alpha}{2}
+\right\}.
+\end{aligned}
+$$
+have solutions.
+\end{lemma}
+\begin{proof}
+Suppose that no feasible pair $(k_L^*, k_U^*)$ exists. Since $P(K<k)$ is increasing and $P(K>k)$ is decreasing for $k\in\{1,\ldots,n-1\}$, that would imply that
+$$
+P(K<1)=P(K=0)=(1-q)^n>\alpha/2
+\,\bigvee\,
+P(K>n-1)=P(K=n)=q^n>\alpha/2
+$$
+$$
+\Leftrightarrow
+\max(q^n,(1-q)^n)=\max(q,1-q)^n>\alpha/2.
+$$
+Therefore, if we want
+$$
+P(K<1)\leq\alpha/2
+\,\wedge\,
+P(K>n-1)\leq\alpha/2,
+$$
+then it must be the case that
+$$
+\max(q,1-q)^n\leq \frac{\alpha}{2}.
+$$
+Taking logarithms gives
+$$
+n\ln(\max(q,1-q))
+\leq
+\ln\left(\frac{\alpha}{2}\right).
+$$
+Since $\max(q,1-q)\in(0,1)$, we have
+$$
+\ln(\max(q,1-q))<0,
+$$
+so dividing by $\ln(\max(q,1-q))$ reverses the inequality:
+$$
+n \geq \frac{\ln(\alpha/2)}{\ln(\max(q,1-q))}.
+$$
+Thus, the minimum value required for $n$ is
+$$
+n_\mathrm{min}
+=
+\left\lceil
+\frac{\ln(\alpha/2)}
+{\ln(\max(q,1-q))}
+\right\rceil.
+$$
+Hence, under the stated condition on $n$, both optimization problems have solutions.
+\end{proof}
+
+
+
+
+\begin{lemma}
 Let $K\sim Bin(n,q)$ and $\alpha\in(0,1)$, and suppose that the optimization problems
 $$
 \begin{aligned}
@@ -138,88 +211,89 @@ P(K>k)\leq\frac{\alpha}{2}
 \right\}
 \end{aligned}
 $$
-have solutions. Consider the iterative procedures
+have solutions. Consider the binary-search procedures
 $$
 \begin{aligned}
-&k_L\leftarrow 1,\\
-&\text{while } k_L<n-1
-\text{ and }
-P(K\leq k_L)\leq\frac{\alpha}{2},
-\quad
-k_L\leftarrow k_L+1,
+&a_L\leftarrow 1,\qquad b_L\leftarrow n-1,\\
+&\text{while } a_L<b_L:\\
+&\qquad m_L\leftarrow
+\left\lceil\frac{a_L+b_L}{2}\right\rceil,\\
+&\qquad\text{if }
+P(K<m_L)\leq\frac{\alpha}{2},
+\text{ then }
+a_L\leftarrow m_L,\\
+&\qquad\text{otherwise }
+b_L\leftarrow m_L-1,
 \end{aligned}
 $$
 and
 $$
 \begin{aligned}
-&k_U\leftarrow n-1,\\
-&\text{while } k_U>1
-\text{ and }
-P(K\geq k_U)\leq\frac{\alpha}{2},
-\quad
-k_U\leftarrow k_U-1.
+&a_U\leftarrow 1,\qquad b_U\leftarrow n-1,\\
+&\text{while } a_U<b_U:\\
+&\qquad m_U\leftarrow
+\left\lfloor\frac{a_U+b_U}{2}\right\rfloor,\\
+&\qquad\text{if }
+P(K>m_U)\leq\frac{\alpha}{2},
+\text{ then }
+b_U\leftarrow m_U,\\
+&\qquad\text{otherwise }
+a_U\leftarrow m_U+1.
 \end{aligned}
 $$
-Then the procedures terminate with
+Then both procedures terminate with
 $$
-k_L=k_L^*
+a_L=b_L=k_L^*
 \qquad\text{and}\qquad
-k_U=k_U^*.
+a_U=b_U=k_U^*.
 $$
+Each procedure evaluates its tail probability at most
+$$
+\left\lceil\log_2(n-1)\right\rceil
+$$
+times.
 \end{lemma}
+
 \begin{proof}
-For the lower index, observe that increasing the current value $k_L$ to $k_L+1$ is permissible exactly when
+For the lower index, $P(K<k)$ is nondecreasing in $k$. Since $k_L^*$ exists, $1$ is feasible, and every feasible index is at most $k_L^*$. Thus, initially,
 $$
-P(K<k_L+1)=P(K\leq k_L)\leq\frac{\alpha}{2}.
+a_L\leq k_L^*\leq b_L.
 $$
-Thus, at every iteration, the algorithm increments $k_L$ only when the next larger value satisfies the lower-tail constraint. Since $k_L$ increases by one at each iteration and is bounded above by $n-1$, the procedure terminates.
-If the procedure stops before reaching $n-1$, then increasing $k_L$ by one would violate the constraint. Indeed, the next candidate would be $k_L+1$, and for this candidate the constraint is
+At each iteration, $m_L$ is a candidate index. If
 $$
-P(K<k_L+1)\leq\frac{\alpha}{2}.
+P(K<m_L)\leq\frac{\alpha}{2},
 $$
-Since
+then $m_L$ is feasible, so $k_L^*\geq m_L$ and replacing $a_L$ by $m_L$ preserves
 $$
-P(K<k_L+1)=P(K\leq k_L),
+a_L\leq k_L^*\leq b_L.
 $$
-and the loop has stopped, this inequality is no longer satisfied. Therefore, $k_L+1$ is not feasible. Since $P(K<k)$ is nondecreasing as $k$ increases, no larger value can be feasible either. Hence, the returned $k_L$ is the largest feasible value, so
+Otherwise, $m_L$ is infeasible. Since the lower-tail probability is nondecreasing, every index at least $m_L$ is infeasible, so $k_L^*\leq m_L-1$. Replacing $b_L$ by $m_L-1$ therefore preserves the same inequality.
+Because $m_L$ is rounded up, each iteration strictly reduces the number of candidate indices. The procedure terminates when $a_L=b_L$. At that point, the preserved inequality gives
 $$
-k_L
-=
-\max_{k\in\{1,\ldots,n-1\}}
-\left\{
-k:
-P(K<k)\leq\frac{\alpha}{2}
-\right\}
-=
-k_L^*.
+a_L=b_L=k_L^*.
 $$
-If the procedure instead terminates at $k_L=n-1$, then $n-1$ is itself the largest possible value in the domain, so again $k_L=k_L^*$.
-For the upper index, observe that decreasing the current value $k_U$ to $k_U-1$ is permissible exactly when
+For the upper index, $P(K>k)$ is nonincreasing in $k$. Since $k_U^*$ exists, $n-1$ is feasible, and every feasible index is at least $k_U^*$. Thus, initially,
 $$
-P(K>k_U-1)=P(K\geq k_U)\leq\frac{\alpha}{2}.
+a_U\leq k_U^*\leq b_U.
 $$
-Thus, at every iteration, the algorithm decrements $k_U$ only when the next smaller value satisfies the upper-tail constraint. Since $k_U$ decreases by one at each iteration and is bounded below by $1$, the procedure terminates.
-If the procedure stops before reaching $1$, then decreasing $k_U$ by one would violate the constraint. Indeed, the next candidate would be $k_U-1$, and for this candidate the constraint is
+If
 $$
-P(K>k_U-1)\leq\frac{\alpha}{2}.
+P(K>m_U)\leq\frac{\alpha}{2},
 $$
-Since
+then $m_U$ is feasible, so $k_U^*\leq m_U$. Replacing $b_U$ by $m_U$ preserves
 $$
-P(K>k_U-1)=P(K\geq k_U),
+a_U\leq k_U^*\leq b_U.
 $$
-and the loop has stopped, this inequality is no longer satisfied. Therefore, $k_U-1$ is not feasible. Since $P(K>k)$ increases as $k$ decreases, no smaller value can be feasible either. Hence, the returned $k_U$ is the smallest feasible value, so
+Otherwise, $m_U$ is infeasible. Since the upper-tail probability is nonincreasing, every index at most $m_U$ is infeasible, so $k_U^*\geq m_U+1$. Replacing $a_U$ by $m_U+1$ therefore preserves the same inequality.
+Because $m_U$ is rounded down, each iteration strictly reduces the number of candidate indices. The procedure terminates when $a_U=b_U$, and the preserved inequality gives
 $$
-k_U
-=
-\min_{k\in\{1,\ldots,n-1\}}
-\left\{
-k:
-P(K>k)\leq\frac{\alpha}{2}
-\right\}
-=
-k_U^*.
+a_U=b_U=k_U^*.
 $$
-If the procedure instead terminates at $k_U=1$, then $1$ is itself the smallest possible value in the domain, so again $k_U=k_U^*$.
+Each iteration removes at least half of the remaining candidate indices. Since there are initially $n-1$ candidates, each procedure requires at most
+$$
+\left\lceil\log_2(n-1)\right\rceil
+$$
+tail-probability evaluations.
 \end{proof}
 
 

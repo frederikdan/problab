@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 import numpy as np
 
@@ -40,25 +40,31 @@ class QuantileConfidenceIntervalTests(unittest.TestCase):
         interval = _quantile_confidence_interval(samples, q=0.5, alpha=0.05)
 
         self.assertEqual((interval.lower, interval.upper, interval.alpha), (1.0, 6.0, 0.05))
-        cdf.assert_called_once_with(1, 6, 0.5)
-        sf.assert_called_once_with(4, 6, 0.5)
+        self.assertLessEqual(cdf.call_count, 3)
+        self.assertLessEqual(sf.call_count, 3)
 
     @patch("problab.statistics._quantiles.binom.sf")
     @patch("problab.statistics._quantiles.binom.cdf")
-    def test_moves_order_statistics_inward_until_tail_probability_exceeds_alpha(
+    def test_binary_search_selects_tail_boundary_order_statistics(
         self,
         cdf,
         sf,
     ):
-        cdf.side_effect = (0.01, 0.1)
-        sf.side_effect = (0.01, 0.1)
+        cdf.side_effect = lambda k, n, q: 0.01 if k <= 1 else 0.1
+        sf.side_effect = lambda k, n, q: 0.01 if k >= 6 else 0.1
         samples = np.array([8, 1, 7, 2, 6, 3, 5, 4])
 
         interval = _quantile_confidence_interval(samples, q=0.5, alpha=0.05)
 
         self.assertEqual((interval.lower, interval.upper), (2.0, 7.0))
-        self.assertEqual(cdf.call_args_list, [call(1, 8, 0.5), call(2, 8, 0.5)])
-        self.assertEqual(sf.call_args_list, [call(6, 8, 0.5), call(5, 8, 0.5)])
+        self.assertEqual(
+            [arguments.args[0] for arguments in cdf.call_args_list],
+            [3, 1, 2],
+        )
+        self.assertEqual(
+            [arguments.args[0] for arguments in sf.call_args_list],
+            [4, 6, 5],
+        )
 
 
 if __name__ == "__main__":
