@@ -16,6 +16,7 @@ class _RealizationContext:
                  root_node: _Node,
                  num_samples: int = 1,
                  rng: np.random.Generator | None = None,
+                 max_graph_size: int = DEF_MAX_GRAPH_SIZE,
                  validate: bool = False,
                  ) -> None:
 
@@ -28,10 +29,10 @@ class _RealizationContext:
         num_samples = int(num_samples)
 
         self._root_node = root_node
-        self._graph = NodeGraph(root_node, max_size=DEF_MAX_GRAPH_SIZE)
+        self._graph = NodeGraph(root_node, max_size=max_graph_size)
 
         if not self._graph.is_complete:
-            raise ValueError(f"RandomVariable dependency graph exceeds the maximum size of {DEF_MAX_GRAPH_SIZE} nodes.")
+            raise ValueError(f"RandomVariable dependency graph exceeds the maximum size of {max_graph_size} nodes.")
 
         self._remaining_dependants = {
             node: self._graph.num_dependents(node)
@@ -70,14 +71,17 @@ class _RealizationContext:
                     f"got {node_realizations.shape}."
                 )
 
-            dtype_types = node.value_set.dtype_types
+            dtype_types = node._realization_value_set.dtype_types
             if dtype_types is not None:
                 if not any(np.issubdtype(node_realizations.dtype, dtype_type) for dtype_type in dtype_types):
                     raise TypeError(
                         f"Node {node.name!r} returned dtype {node_realizations.dtype}; expected one of {dtype_types}.")
 
             if self._validate:
-                validate_as_subset(values=node_realizations, target_set=node.value_set)
+                validate_as_subset(
+                    values=node_realizations,
+                    target_set=node._realization_value_set,
+                )
 
             self._realizations[node] = node_realizations
 

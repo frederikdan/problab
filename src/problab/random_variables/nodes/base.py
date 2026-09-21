@@ -31,6 +31,11 @@ class _Node(ABC):
 
     @property
     @abstractmethod
+    def _realization_value_set(self) -> ValueSet:
+        ...
+
+    @property
+    @abstractmethod
     def dependencies(self) -> set[_Node]:
         # Only top-level dependencies, not a graph of dependencies of dependencies.
         ...

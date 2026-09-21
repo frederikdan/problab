@@ -4,6 +4,7 @@ import sympy as sp
 
 from problab._operations import _AND, _INVERT, _OR
 from problab.random_variables.nodes import _Node, _OperationNode
+from problab.random_variables.nodes._simplification import _simplify_or_create_node
 from problab.value_sets._utils import is_known_subset
 from problab.value_sets.sets import BOOLEANS
 
@@ -35,13 +36,11 @@ class _Event:
         if not isinstance(other, _Event):
             return NotImplemented
 
-        node_name = _AND.name_func(self._node.name, other.name)
-
-        return _Event._from_node(_OperationNode(
-            operation=_AND.operation,
+        return _Event._from_node(_simplify_or_create_node(
+            operation=_AND,
             inputs=(self._node, other._node),
-            name=node_name,
-            value_set=BOOLEANS,
+            mathematical_value_set=BOOLEANS,
+            realization_value_set=BOOLEANS,
         ))
 
     def __or__(self, other: _Event) -> _Event:
@@ -49,24 +48,20 @@ class _Event:
         if not isinstance(other, _Event):
             return NotImplemented
 
-        node_name = _OR.name_func(self._node.name, other.name)
-
-        return _Event._from_node(_OperationNode(
-            operation=_OR.operation,
+        return _Event._from_node(_simplify_or_create_node(
+            operation=_OR,
             inputs=(self._node, other._node),
-            name=node_name,
-            value_set=BOOLEANS,
+            mathematical_value_set=BOOLEANS,
+            realization_value_set=BOOLEANS,
         ))
 
     def __invert__(self) -> _Event:
 
-        node_name = _INVERT.name_func(self._node.name)
-
-        return _Event._from_node(_OperationNode(
-            operation=_INVERT.operation,
+        return _Event._from_node(_simplify_or_create_node(
+            operation=_INVERT,
             inputs=(self._node,),
-            name=node_name,
-            value_set=BOOLEANS,
+            mathematical_value_set=BOOLEANS,
+            realization_value_set=BOOLEANS,
         ))
 
     def __bool__(self) -> bool:

@@ -34,6 +34,59 @@ class EventTests(unittest.TestCase):
         self.assertEqual(inversion.name, "{~True}")
         self.assertIs(conjunction._node.value_set, BOOLEANS)
 
+    def test_repeated_conjunction_reuses_the_event_node(self):
+        event = _Event(_ConstantNode(True))
+
+        result = event & event
+
+        self.assertIs(result._node, event._node)
+
+    def test_repeated_disjunction_reuses_the_event_node(self):
+        event = _Event(_ConstantNode(True))
+
+        result = event | event
+
+        self.assertIs(result._node, event._node)
+
+    def test_double_inversion_reuses_the_event_node(self):
+        event = _Event(_ConstantNode(True))
+
+        result = ~(~event)
+
+        self.assertIs(result._node, event._node)
+
+    def test_event_and_its_inverse_simplifies_to_false(self):
+        event = _Event(_ConstantNode(True))
+
+        result = event & ~event
+
+        self.assertIsInstance(result._node, _ConstantNode)
+        self.assertIs(result._node.value, False)
+
+    def test_inverse_and_event_simplifies_to_false(self):
+        event = _Event(_ConstantNode(True))
+
+        result = ~event & event
+
+        self.assertIsInstance(result._node, _ConstantNode)
+        self.assertIs(result._node.value, False)
+
+    def test_event_or_its_inverse_simplifies_to_true(self):
+        event = _Event(_ConstantNode(False))
+
+        result = event | ~event
+
+        self.assertIsInstance(result._node, _ConstantNode)
+        self.assertIs(result._node.value, True)
+
+    def test_inverse_or_event_simplifies_to_true(self):
+        event = _Event(_ConstantNode(False))
+
+        result = ~event | event
+
+        self.assertIsInstance(result._node, _ConstantNode)
+        self.assertIs(result._node.value, True)
+
     def test_logical_operations_evaluate_each_boolean_array(self):
         left = _Event(_ConstantNode(True))
         right = _Event(_ConstantNode(False))

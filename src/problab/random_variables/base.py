@@ -10,20 +10,23 @@ from problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA
 from problab.distributions.base import Distribution
 from problab._events import _Event
 from problab._operations import _ADD, _SUBTRACT, _MULTIPLY, _MODULO, _LT, _LTE, _GT, _GTE, _EQ, _NEQ, _POWER, \
-    _ArithmeticOperation, _NEGATIVE, _ABS, _DIVIDE, _ComparisonOperation
+    _ArithmeticOperation, _NEGATIVE, _ABS, _DIVIDE, _ComparisonOperation, _FunctionOperation, _Operation, \
+    _REAL_POWER
 from problab.probability.intervals import ProbabilityInterval, ConfidenceInterval
 from problab.random_variables._config import DEF_MAX_GRAPH_SIZE
 from problab.random_variables._context import _RealizationContext
 from problab.random_variables.graph import NodeGraph
 from problab.random_variables.nodes import _DistributionNode, _Node, _ConstantNode, _OperationNode
+from problab.random_variables.nodes._simplification import _simplify_or_create_node
 from problab.statistics._quantiles import _quantile_confidence_interval
 from problab.validation._common import _validate_num_samples, _validate_rng, _validate_alpha, _validate_q, \
     _validate_max_size, _validate_validate
 from problab.validation._decorator import _validate_parameters
 from problab.validation.random_variables._base import _validate_distribution, _validate_name, \
     _validate_interval_bound, _validate_closed, _validate_target_set, _validate_function, _validate_others, \
-    _validate_value_set, _validate_function_name, _validate_vectorized
-from problab.value_sets._utils import is_known_subset
+    _validate_mathematical_value_set, _validate_realization_value_set, _validate_function_name, _validate_vectorized
+from problab.value_sets import UNKNOWN_VALUE_SET
+from problab.value_sets._utils import is_known_subset, _to_sympy_value
 from problab.value_sets.base import ValueSet
 from problab.value_sets.sets import COMPLEXES, REALS, BOOLEANS
 
@@ -79,11 +82,13 @@ class RandomVariable:
     @_validate_parameters(
         num_samples=_validate_num_samples,
         rng=_validate_rng,
+        max_graph_size=_validate_max_size,
         validate=_validate_validate
     )
     def sample(self,
                num_samples: int = 1,
                rng: np.random.Generator | None = None,
+               max_graph_size: int = DEF_MAX_GRAPH_SIZE,
                validate: bool = False,
                ) -> np.ndarray:
 
@@ -93,6 +98,7 @@ class RandomVariable:
             root_node=self._node,
             num_samples=num_samples,
             rng=rng,
+            max_graph_size=max_graph_size,
             validate=validate
         ).evaluate(self._node)
 
@@ -131,23 +137,25 @@ class RandomVariable:
             else (self._node, other._node)
         )
 
-        value_set = operation.infer_output_value_set(
+        mathematical_value_set = operation.infer_output_value_set(
             left_node.value_set,
             right_node.value_set,
         )
+        realization_value_set = operation.infer_output_value_set(
+            left_node._realization_value_set,
+            right_node._realization_value_set,
+        )
 
-        operation_function = operation.operation
-        if operation is _POWER and is_known_subset(value_set, REALS):
-            operation_function = np.power
-
-        node_name = operation.name_func(left_node.name, right_node.name)
+        node_operation = operation
+        if operation is _POWER and is_known_subset(mathematical_value_set, REALS):
+            node_operation = _REAL_POWER
 
         return RandomVariable._from_node(
-            _OperationNode(
-                operation=operation_function,
+            _simplify_or_create_node(
+                operation=node_operation,
                 inputs=(left_node, right_node),
-                name=node_name,
-                value_set=value_set,
+                mathematical_value_set=mathematical_value_set,
+                realization_value_set=realization_value_set,
             )
         )
 
@@ -162,18 +170,19 @@ class RandomVariable:
             raise TypeError(f"The unary operation {operation.name_func('x')} requires a random variable "
                             f"whose value set is a known subset of {operation.valid_input_value_set.sympy_set}.")
 
-        value_set = operation.infer_output_value_set(
+        mathematical_value_set = operation.infer_output_value_set(
             self._node.value_set
         )
-
-        node_name = operation.name_func(self._node.name)
+        realization_value_set = operation.infer_output_value_set(
+            self._node._realization_value_set
+        )
 
         return RandomVariable._from_node(
-            _OperationNode(
-                operation=operation.operation,
+            _simplify_or_create_node(
+                operation=operation,
                 inputs=(self._node,),
-                name=node_name,
-                value_set=value_set,
+                mathematical_value_set=mathematical_value_set,
+                realization_value_set=realization_value_set,
             )
         )
 
@@ -257,7 +266,7 @@ class RandomVariable:
             )
 
         def contains(value) -> bool:
-            result = target_set.contains(value)
+            result = target_set.contains(_to_sympy_value(value))
 
             if result is sp.true:
                 return True
@@ -274,29 +283,29 @@ class RandomVariable:
                 count=len(samples),
             )
 
+        membership_operation = _FunctionOperation(
+            operation=operation,
+            name_func=lambda name: f"{{{name} in {target_set}}}",
+        )
+
         return _Event(
             _OperationNode(
-                operation=operation,
+                operation=membership_operation,
                 inputs=(self._node,),
                 name=f"{{{self._node.name} in {target_set}}}",
-                value_set=BOOLEANS,
+                mathematical_value_set=BOOLEANS,
+                realization_value_set=BOOLEANS,
             )
         )
 
-    @_validate_parameters(
-        function=_validate_function,
-        others=_validate_others,
-        value_set=_validate_value_set,
-        function_name=_validate_function_name,
-        vectorized=_validate_vectorized,
-    )
-    def apply(self,
-              function: Callable,
-              *others: RandomVariable,
-              value_set: ValueSet,
-              function_name: str = "f",
-              vectorized: bool = False
-              ) -> RandomVariable:
+    def _apply_operation(
+            self,
+            operation: _Operation,
+            *others: RandomVariable,
+            mathematical_value_set: ValueSet,
+            realization_value_set: ValueSet,
+            vectorized: bool = False,
+    ) -> RandomVariable:
 
         inputs = (
             self._node,
@@ -304,21 +313,71 @@ class RandomVariable:
         )
 
         if vectorized:
-            operation = function
+            node_operation = operation
         else:
-            operation = lambda *values: np.asarray([
+            node_operation = _FunctionOperation(
+                operation=lambda *values: np.asarray([
+                    operation.operation(*realization)
+                    for realization in zip(*values)
+                ]),
+                name_func=operation.name_func,
+            )
+
+        return RandomVariable._from_node(
+            _simplify_or_create_node(
+                operation=node_operation,
+                inputs=inputs,
+                mathematical_value_set=mathematical_value_set,
+                realization_value_set=realization_value_set,
+            )
+        )
+
+    @_validate_parameters(
+        function=_validate_function,
+        others=_validate_others,
+        mathematical_value_set=_validate_mathematical_value_set,
+        realization_value_set=_validate_realization_value_set,
+        function_name=_validate_function_name,
+        vectorized=_validate_vectorized,
+    )
+    def apply(self,
+              function: Callable,
+              *others: RandomVariable,
+              mathematical_value_set: ValueSet = UNKNOWN_VALUE_SET,
+              realization_value_set: ValueSet | None = None,
+              function_name: str = "f",
+              vectorized: bool = False
+              ) -> RandomVariable:
+
+        # functions supplied to apply() are responsible for their own overflow handling.
+
+        if realization_value_set is None:
+            realization_value_set = mathematical_value_set
+
+        inputs = (
+            self._node,
+            *(other._node for other in others),
+        )
+
+        if vectorized:
+            callable_operation = function
+        else:
+            callable_operation = lambda *values: np.asarray([
                 function(*realization)
                 for realization in zip(*values)
             ])
 
-        node_name = f"{function_name}({', '.join(map(str, inputs))})"
+        operation = _FunctionOperation(
+            operation=callable_operation,
+            name_func=lambda *names: f"{function_name}({', '.join(names)})",
+        )
 
         return RandomVariable._from_node(
-            _OperationNode(
+            _simplify_or_create_node(
                 operation=operation,
                 inputs=inputs,
-                name=node_name,
-                value_set=value_set,
+                mathematical_value_set=mathematical_value_set,
+                realization_value_set=realization_value_set,
             )
         )
 
@@ -385,10 +444,11 @@ class RandomVariable:
 
         return _Event(
             _OperationNode(
-                operation=operator.operation,
+                operation=operator,
                 inputs=(self._node, other_node),
                 name=node_name,
-                value_set=BOOLEANS,
+                mathematical_value_set=BOOLEANS,
+                realization_value_set=BOOLEANS,
             )
         )
 
@@ -402,10 +462,11 @@ class RandomVariable:
 
         return _Event(
             _OperationNode(
-                operation=operator.operation,
+                operation=operator,
                 inputs=(self._node, other_node),
                 name=node_name,
-                value_set=BOOLEANS,
+                mathematical_value_set=BOOLEANS,
+                realization_value_set=BOOLEANS,
             )
         )
 

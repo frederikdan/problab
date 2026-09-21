@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 
+from problab._operations import _FunctionOperation
 from problab._events import _Event
 from problab.random_variables.nodes import _OperationNode
 from problab.validation.probability._probability import _validate_event, _validate_given
@@ -11,10 +12,14 @@ from problab.value_sets.sets import BOOLEANS
 def _event():
     return _Event(
         _OperationNode(
-            operation=lambda: np.array([], dtype=bool),
+            operation=_FunctionOperation(
+                operation=lambda: np.array([], dtype=bool),
+                name_func=lambda: "event",
+            ),
             inputs=(),
             name="event",
-            value_set=BOOLEANS,
+            mathematical_value_set=BOOLEANS,
+            realization_value_set=BOOLEANS,
         )
     )
 

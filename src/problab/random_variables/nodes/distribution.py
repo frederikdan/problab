@@ -32,6 +32,10 @@ class _DistributionNode(_Node):
         return self._distribution.value_set
 
     @property
+    def _realization_value_set(self):
+        return self._distribution._realization_value_set
+
+    @property
     def dependencies(self) -> set[_Node]:
         return self._distribution._node_dependencies
 

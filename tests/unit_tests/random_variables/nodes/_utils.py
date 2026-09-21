@@ -3,23 +3,20 @@ import unittest
 import numpy as np
 import sympy as sp
 
+from problab._operations import _ADD, _REAL_POWER
+from problab.random_variables.nodes import _ConstantNode, _OperationNode
 from problab.random_variables.nodes._utils import (
     _constant_array,
     _constant_value_set,
-    _sympy_constant_value,
+    _node_is_constant,
+    _node_is_operation,
+    _node_is_square_operation,
 )
 from problab.value_sets import ObjectValueSet
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 
 
 class NodeUtilityTests(unittest.TestCase):
-
-    def test_sympy_constant_value_converts_integral_float_to_integer(self):
-        self.assertEqual(_sympy_constant_value(2.0), sp.Integer(2))
-        self.assertEqual(_sympy_constant_value(np.float64(-3.0)), sp.Integer(-3))
-
-    def test_sympy_constant_value_preserves_non_integral_float(self):
-        self.assertEqual(_sympy_constant_value(2.5), sp.Float(2.5))
 
     def test_constant_array_keeps_scalar_array(self):
         array = _constant_array(3)
@@ -50,6 +47,25 @@ class NodeUtilityTests(unittest.TestCase):
 
         self.assertIsInstance(value_set, ObjectValueSet)
         self.assertEqual(value_set.objects, (value,))
+
+    def test_node_type_predicates_recognize_matching_constant_and_operation_nodes(self):
+        base_node = _ConstantNode(2)
+        exponent_node = _ConstantNode(2)
+        square_node = _OperationNode(
+            operation=_REAL_POWER,
+            inputs=(base_node, exponent_node),
+            name="(2 ** 2)",
+            mathematical_value_set=HomogeneousNumericValueSet(
+                sympy_set=sp.FiniteSet(4),
+                dtype_types=(np.int64,),
+            ),
+        )
+
+        self.assertTrue(_node_is_constant(base_node, 2))
+        self.assertFalse(_node_is_constant(base_node, 3))
+        self.assertTrue(_node_is_operation(square_node, _REAL_POWER))
+        self.assertFalse(_node_is_operation(square_node, _ADD))
+        self.assertTrue(_node_is_square_operation(square_node))
 
 
 if __name__ == "__main__":

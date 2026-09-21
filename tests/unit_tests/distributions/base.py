@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 
+from problab._operations import _FunctionOperation
 from problab.distributions.base import (
     Distribution,
     Mode,
@@ -67,6 +68,11 @@ class DistributionBaseTests(unittest.TestCase):
             all(isinstance(node, _ConstantNode) for node in distribution._parameter_nodes)
         )
 
+    def test_distribution_uses_mathematical_support_as_default_realization_support(self):
+        distribution = _StubDistribution()
+
+        self.assertIs(distribution._realization_value_set, distribution.value_set)
+
     def test_parameter_to_node_preserves_existing_node(self):
         node = _ConstantNode(3)
 
@@ -81,10 +87,14 @@ class DistributionBaseTests(unittest.TestCase):
 
     def test_node_dependencies_include_variable_parameters_but_not_constants(self):
         parameter_node = _OperationNode(
-            operation=lambda: np.array([1.0]),
+            operation=_FunctionOperation(
+                operation=lambda: np.array([1.0]),
+                name_func=lambda: "parameter",
+            ),
             inputs=(),
             name="parameter",
-            value_set=REALS,
+            mathematical_value_set=REALS,
+            realization_value_set=REALS,
         )
         variable = RandomVariable._from_node(parameter_node, name="X")
         distribution = _StubDistribution(parameters=(variable, 3))
@@ -106,7 +116,12 @@ class DistributionBaseTests(unittest.TestCase):
 
         self.assertIs(samples, sentinel.samples)
         distribution_node.assert_called_once_with(distribution, rv_name="Stub()")
-        realization_context.assert_called_once_with(root_node=sentinel.root_node)
+        realization_context.assert_called_once_with(
+            root_node=sentinel.root_node,
+            num_samples=1,
+            rng=None,
+            validate=False,
+        )
         realization_context.return_value.evaluate.assert_called_once_with(sentinel.root_node)
 
     @patch("problab.distributions.base._RealizationContext")

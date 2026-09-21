@@ -13,7 +13,7 @@ class RealPowerRegressionTests(unittest.TestCase):
 
         samples = sqrt(source ** 2).sample(num_samples=4, validate=True)
 
-        self.assertTrue(np.issubdtype(samples.dtype, np.floating))
+        self.assertFalse(np.iscomplexobj(samples))
         np.testing.assert_array_equal(samples, [2.0, 2.0, 2.0, 2.0])
 
 

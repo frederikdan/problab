@@ -17,6 +17,7 @@ class ConstantNodeTests(unittest.TestCase):
         self.assertEqual(repr(node), "ConstantNode(3)")
         self.assertEqual(node.dependencies, set())
         self.assertTrue(node.value_set.contains(3))
+        self.assertIs(node._realization_value_set, node.value_set)
 
     def test_evaluate_returns_scalar_array_for_scalar_value(self):
         node = _ConstantNode(3)

@@ -5,15 +5,23 @@ import numpy as np
 
 from problab.random_variables._context import _RealizationContext
 from problab.random_variables.nodes.base import _Node
-from problab.value_sets.sets import REALS, UNKNOWN_VALUE_SET
+from problab.value_sets.sets import NON_NEGATIVE_REALS, POSITIVE_REALS, REALS, UNKNOWN_VALUE_SET
 
 
 class _StubNode(_Node):
 
-    def __init__(self, name, value_set=REALS, dependencies=(), evaluator=None):
+    def __init__(
+        self,
+        name,
+        value_set=REALS,
+        realization_value_set=None,
+        dependencies=(),
+        evaluator=None,
+    ):
         super().__init__()
         self._name = name
         self._value_set = value_set
+        self.__realization_value_set = value_set if realization_value_set is None else realization_value_set
         self._dependencies = set(dependencies)
         self._evaluator = Mock() if evaluator is None else evaluator
 
@@ -23,6 +31,10 @@ class _StubNode(_Node):
     @property
     def value_set(self):
         return self._value_set
+
+    @property
+    def _realization_value_set(self):
+        return self.__realization_value_set
 
     @property
     def dependencies(self):
@@ -111,6 +123,23 @@ class RealizationContextTests(unittest.TestCase):
 
         validate_as_subset.assert_called_once()
         self.assertIs(validate_as_subset.call_args.kwargs["target_set"], REALS)
+
+    @patch("problab.random_variables._context.validate_as_subset")
+    def test_evaluate_uses_realization_support_for_runtime_validation(self, validate_as_subset):
+        node = _StubNode(
+            "exp(X)",
+            value_set=POSITIVE_REALS,
+            realization_value_set=NON_NEGATIVE_REALS,
+            evaluator=lambda context: np.array([0.0]),
+        )
+        context = _RealizationContext(node, num_samples=1, validate=True)
+
+        context.evaluate(node)
+
+        self.assertIs(
+            validate_as_subset.call_args.kwargs["target_set"],
+            NON_NEGATIVE_REALS,
+        )
 
     def test_evaluate_releases_dependency_after_last_dependant_is_realized(self):
         child = _StubNode("child", evaluator=lambda context: np.array([1.0]))

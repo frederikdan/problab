@@ -12,7 +12,7 @@ from problab.random_variables._context import _RealizationContext
 from problab.random_variables.nodes import _Node, _ConstantNode, _DistributionNode
 from problab.statistics._quantiles import _quantile_confidence_interval, QuantileMethod
 from problab.validation._common import _validate_q, _validate_alpha, _validate_num_samples, _validate_rng, \
-    _validate_enum
+    _validate_enum, _validate_validate
 from problab.validation._decorator import _validate_parameters
 from problab.validation.distributions._base import _validate_cdf_input, _validate_ppf_input, _validate_quantile_method
 from problab.value_sets._utils import is_known_subset
@@ -36,9 +36,30 @@ class Distribution(ABC):
     def value_set(self) -> ValueSet:
         ...
 
-    def sample(self) -> np.ndarray:
+    @property
+    def _realization_value_set(self) -> ValueSet:
+        return self.value_set
+
+    @_validate_parameters(
+        num_samples=_validate_num_samples,
+        rng=_validate_rng,
+        validate=_validate_validate,
+    )
+    def sample(self,
+               num_samples: int = 1,
+               rng: np.random.Generator | None = None,
+               validate: bool = False
+               ) -> np.ndarray:
+
         root = _DistributionNode(self, rv_name=self.name)
-        context = _RealizationContext(root_node=root)
+
+        context = _RealizationContext(
+            root_node=root,
+            num_samples=num_samples,
+            rng=rng,
+            validate=validate
+        )
+
         return context.evaluate(root)
 
     def _evaluate(self, context: _RealizationContext) -> np.ndarray:

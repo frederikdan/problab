@@ -18,12 +18,16 @@ from problab._operations import (
     _NEGATIVE,
     _NEQ,
     _POWER,
+    _REAL_POWER,
     _SUBTRACT,
+    _FunctionOperation,
 )
 from problab.distributions.base import Distribution
+from problab.functions.exponential import exp, log
 from problab.random_variables.base import RandomVariable
 from problab.random_variables.nodes import _ConstantNode, _Node, _OperationNode
 from problab.value_sets import ObjectValueSet
+from problab.value_sets import UNKNOWN_VALUE_SET
 from problab.value_sets.sets import COMPLEXES, REALS
 
 
@@ -40,6 +44,10 @@ class _StubNode(_Node):
 
     @property
     def value_set(self):
+        return self._value_set
+
+    @property
+    def _realization_value_set(self):
         return self._value_set
 
     @property
@@ -117,6 +125,7 @@ class RandomVariableBaseTests(unittest.TestCase):
             root_node=variable._node,
             num_samples=3,
             rng=rng,
+            max_graph_size=100,
             validate=True,
         )
         realization_context.return_value.evaluate.assert_called_once_with(variable._node)
@@ -144,7 +153,7 @@ class RandomVariableBaseTests(unittest.TestCase):
         self.assertIsInstance(result, RandomVariable)
         self.assertIsInstance(result._node, _OperationNode)
         self.assertEqual(result._node.name, "(X + 2)")
-        self.assertIs(result._node._operation, _ADD.operation)
+        self.assertIs(result._node._operation, _ADD)
         self.assertIs(result._node._inputs[0], variable._node)
         self.assertIsInstance(result._node._inputs[1], _ConstantNode)
         self.assertEqual(result._node._inputs[1].value, 2)
@@ -195,12 +204,12 @@ class RandomVariableBaseTests(unittest.TestCase):
 
         self.assertIs(variable._binary_operation(1, _ADD), NotImplemented)
 
-    def test_real_power_uses_real_numpy_power_operation(self):
+    def test_real_power_uses_real_power_operation_descriptor(self):
         variable = _random_variable(value_set=REALS)
 
         result = variable ** 2
 
-        self.assertIs(result._node._operation, np.power)
+        self.assertIs(result._node._operation, _REAL_POWER)
 
     def test_unary_operation_builds_node(self):
         variable = _random_variable("X")
@@ -210,6 +219,27 @@ class RandomVariableBaseTests(unittest.TestCase):
         self.assertIsInstance(result._node, _OperationNode)
         self.assertEqual(result._node.name, "(-X)")
         self.assertEqual(result._node._inputs, (variable._node,))
+
+    def test_binary_operation_reuses_node_when_additive_identity_applies(self):
+        variable = _random_variable("X")
+
+        result = variable + 0
+
+        self.assertIs(result._node, variable._node)
+
+    def test_unary_operation_reuses_node_when_double_negation_applies(self):
+        variable = _random_variable("X")
+
+        result = -(-variable)
+
+        self.assertIs(result._node, variable._node)
+
+    def test_predefined_function_operations_use_simplifier(self):
+        variable = _random_variable("X")
+
+        result = log(exp(variable))
+
+        self.assertIs(result._node, variable._node)
 
     def test_public_unary_methods_delegate_with_correct_operations(self):
         variable = _random_variable()
@@ -227,7 +257,8 @@ class RandomVariableBaseTests(unittest.TestCase):
 
         result = variable.apply(
             lambda value: value + 1,
-            value_set=REALS,
+            mathematical_value_set=REALS,
+            realization_value_set=REALS,
             function_name="increment",
         )
         context = Mock()
@@ -242,9 +273,34 @@ class RandomVariableBaseTests(unittest.TestCase):
     def test_apply_preserves_vectorized_function(self):
         variable = _random_variable()
 
-        result = variable.apply(np.negative, value_set=REALS, vectorized=True)
+        result = variable.apply(
+            np.negative,
+            mathematical_value_set=REALS,
+            realization_value_set=REALS,
+            vectorized=True,
+        )
 
-        self.assertIs(result._node._operation, np.negative)
+        self.assertIsInstance(result._node._operation, _FunctionOperation)
+        self.assertIs(result._node._operation.operation, np.negative)
+
+    def test_apply_defaults_unknown_supports_when_no_supports_are_given(self):
+        variable = _random_variable()
+
+        result = variable.apply(lambda value: value + 1)
+
+        self.assertIs(result._node.value_set, UNKNOWN_VALUE_SET)
+        self.assertIs(result._node._realization_value_set, UNKNOWN_VALUE_SET)
+
+    def test_apply_defaults_realization_support_to_mathematical_support(self):
+        variable = _random_variable()
+
+        result = variable.apply(
+            lambda value: value + 1,
+            mathematical_value_set=REALS,
+        )
+
+        self.assertIs(result._node.value_set, REALS)
+        self.assertIs(result._node._realization_value_set, REALS)
 
     def test_apply_passes_aligned_values_from_other_variables(self):
         variable = _random_variable("X")
@@ -252,7 +308,8 @@ class RandomVariableBaseTests(unittest.TestCase):
         result = variable.apply(
             lambda left, right: left + right,
             other,
-            value_set=REALS,
+            mathematical_value_set=REALS,
+            realization_value_set=REALS,
             function_name="sum",
         )
         context = Mock()

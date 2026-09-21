@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
 
+from problab.value_sets.base import ValueSet
 from problab.random_variables.nodes.base import _Node
 from problab.random_variables.nodes._utils import _constant_array, _constant_value_set
 
@@ -22,7 +23,7 @@ class _ConstantNode(_Node, Generic[T]):
         self._value = value
         self._array = _constant_array(value)
         self._name = str(value)
-        self._value_set = _constant_value_set(value, self._array)
+        self._mathematical_value_set = _constant_value_set(value, self._array)
 
     def __repr__(self) -> str:
         return f"ConstantNode({self.name})"
@@ -33,7 +34,11 @@ class _ConstantNode(_Node, Generic[T]):
 
     @property
     def value_set(self):
-        return self._value_set
+        return self._mathematical_value_set
+
+    @property
+    def _realization_value_set(self) -> ValueSet:
+        return self._mathematical_value_set
 
     @property
     def dependencies(self) -> set[_Node]:

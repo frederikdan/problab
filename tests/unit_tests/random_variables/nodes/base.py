@@ -22,6 +22,10 @@ class _StubNode(_Node):
         return REALS
 
     @property
+    def _realization_value_set(self):
+        return REALS
+
+    @property
     def dependencies(self):
         return self._dependencies
 

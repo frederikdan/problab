@@ -68,7 +68,8 @@ class DerivedFunctionStatisticalTests(unittest.TestCase):
         product = left.apply(
             lambda a, b: a * b,
             right,
-            value_set=INTEGERS,
+            mathematical_value_set=INTEGERS,
+            realization_value_set=INTEGERS,
             function_name="product",
         )
         expected = 0.3 * 0.6 + 0.5 * 0.4

@@ -45,9 +45,14 @@ def _validate_function(value: Callable) -> None:
         raise TypeError("'function' must be callable.")
 
 
-def _validate_value_set(value: ValueSet) -> None:
+def _validate_mathematical_value_set(value: ValueSet) -> None:
     if not isinstance(value, ValueSet):
-        raise TypeError("'value_set' must be a ValueSet.")
+        raise TypeError("'mathematical_value_set' must be a ValueSet.")
+
+
+def _validate_realization_value_set(value: ValueSet | None) -> None:
+    if value is not None and not isinstance(value, ValueSet):
+        raise TypeError("'realization_value_set' must be a ValueSet or None.")
 
 
 def _validate_function_name(value: str) -> None:

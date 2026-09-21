@@ -14,8 +14,9 @@ from problab.validation.random_variables._base import (
     _validate_interval_bound,
     _validate_name,
     _validate_others,
+    _validate_mathematical_value_set,
+    _validate_realization_value_set,
     _validate_target_set,
-    _validate_value_set,
     _validate_vectorized,
 )
 from problab.value_sets.sets import REALS
@@ -54,18 +55,26 @@ class RandomVariableValidationTests(unittest.TestCase):
 
     def test_function_value_set_and_name_validators(self):
         _validate_function(lambda value: value)
-        _validate_value_set(REALS)
+        _validate_mathematical_value_set(REALS)
+        _validate_realization_value_set(REALS)
         _validate_function_name("function")
         _validate_vectorized(False)
 
         with self.assertRaises(TypeError):
             _validate_function("function")
         with self.assertRaises(TypeError):
-            _validate_value_set("reals")
+            _validate_mathematical_value_set("reals")
         with self.assertRaises(TypeError):
             _validate_function_name(1)
         with self.assertRaises(TypeError):
             _validate_vectorized(1)
+
+    def test_realization_value_set_accepts_none_or_a_value_set(self):
+        _validate_realization_value_set(REALS)
+        _validate_realization_value_set(None)
+
+        with self.assertRaises(TypeError):
+            _validate_realization_value_set("reals")
 
     def test_others_requires_random_variables(self):
         variable = RandomVariable._from_node(_ConstantNode(1))

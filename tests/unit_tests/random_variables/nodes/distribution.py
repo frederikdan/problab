@@ -12,6 +12,7 @@ class DistributionNodeTests(unittest.TestCase):
         distribution = Mock()
         distribution.name = "Normal(0, 1)"
         distribution.value_set = REALS
+        distribution._realization_value_set = REALS
         distribution._node_dependencies = {dependency}
 
         node = _DistributionNode(distribution, rv_name="X")
@@ -21,6 +22,7 @@ class DistributionNodeTests(unittest.TestCase):
         self.assertEqual(node.extended_name, "X ~ Normal(0, 1)")
         self.assertEqual(repr(node), "DistributionNode(X)")
         self.assertIs(node.value_set, REALS)
+        self.assertIs(node._realization_value_set, REALS)
         self.assertEqual(node.dependencies, {dependency})
 
     def test_evaluate_delegates_to_distribution(self):
