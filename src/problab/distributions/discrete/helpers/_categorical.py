@@ -5,11 +5,12 @@ from typing import Any
 import numpy as np
 import sympy as sp
 from numpy.typing import NDArray
+from fractions import Fraction
 
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets.mixed_numeric_value_set import MixedNumericValueSet
 from problab.value_sets.object_value_set import ObjectValueSet
-from problab.value_sets.base import ValueSet
+from problab.value_sets.base import ValueSet, NumericValueSet
 from problab.value_sets._comparison import _objects_equal
 
 
@@ -34,7 +35,7 @@ def _build_untyped_category_configuration(
     return values, value_set
 
 
-def _build_mixed_numeric_category_configuration(
+def _prepare_mixed_numeric_categories_and_mathematical_value_set(
         categories: tuple[Any, ...],
 ) -> tuple[NDArray[Any], MixedNumericValueSet]:
 
@@ -48,7 +49,7 @@ def _build_mixed_numeric_category_configuration(
     return values, MixedNumericValueSet(values=categories)
 
 
-def _infer_categorical_configuration(
+def _prepare_categories_and_mathematical_value_set(
         categories: tuple[Any, ...],
 ) -> tuple[NDArray[Any], ValueSet]:
 
@@ -56,7 +57,7 @@ def _infer_categorical_configuration(
         return _build_untyped_category_configuration(categories)
 
     if len({type(category) for category in categories}) > 1:
-        return _build_mixed_numeric_category_configuration(categories)
+        return _prepare_mixed_numeric_categories_and_mathematical_value_set(categories)
 
     try:
         dtype = np.result_type(
@@ -64,7 +65,7 @@ def _infer_categorical_configuration(
         )
 
         if dtype.kind == "O":
-            return _build_mixed_numeric_category_configuration(categories)
+            return _prepare_mixed_numeric_categories_and_mathematical_value_set(categories)
 
         symbolic_categories = tuple(
             sp.sympify(category)
@@ -74,9 +75,13 @@ def _infer_categorical_configuration(
         sympy_set = sp.FiniteSet(*symbolic_categories)
         values = np.asarray(categories, dtype=dtype)
 
-    except (TypeError, ValueError, sp.SympifyError):
+        if not _conversion_preserves_values(categories, values):
+            return _prepare_mixed_numeric_categories_and_mathematical_value_set(categories)
+
+
+    except (TypeError, ValueError, OverflowError, sp.SympifyError):
         if all(_is_numeric_category(category) for category in categories):
-            return _build_mixed_numeric_category_configuration(categories)
+            return _prepare_mixed_numeric_categories_and_mathematical_value_set(categories)
         return _build_untyped_category_configuration(categories)
 
     values.flags.writeable = False
@@ -108,3 +113,89 @@ def _merge_equal_categories(
         tuple(merged_categories),
         tuple(merged_probabilities),
     )
+
+
+def _conversion_preserves_values(
+    categories: tuple[Any, ...],
+    converted: NDArray[Any],
+) -> bool:
+
+    def _exact_real_value(value) -> Fraction:
+        if isinstance(value, (int, np.integer)):
+            return Fraction(int(value))
+
+        if isinstance(value, (float, np.floating)):
+            return Fraction(*value.as_integer_ratio())
+
+        return Fraction(value)
+
+    def _real_values_equal(original, result) -> bool:
+        if isinstance(original, (float, np.floating)):
+            if np.isnan(original):
+                return (
+                    isinstance(result, (float, np.floating))
+                    and bool(np.isnan(result))
+                )
+
+            if np.isinf(original):
+                return bool(original == result)
+
+        return _exact_real_value(original) == _exact_real_value(result)
+
+    def _numeric_values_equal(original, result) -> bool:
+        if isinstance(original, (complex, np.complexfloating)):
+            original_real, original_imag = original.real, original.imag
+        else:
+            original_real, original_imag = original, 0
+
+        if isinstance(result, (complex, np.complexfloating)):
+            result_real, result_imag = result.real, result.imag
+        else:
+            result_real, result_imag = result, 0
+
+        return (
+            _real_values_equal(original_real, result_real)
+            and _real_values_equal(original_imag, result_imag)
+        )
+
+    if converted.shape != (len(categories),):
+        return False
+
+    try:
+        return all(
+            _numeric_values_equal(original, result)
+            for original, result in zip(categories, converted)
+        )
+    except (TypeError, ValueError, OverflowError):
+        return False
+
+
+def _attempt_make_categories_numeric(categories: tuple[Any, ...],
+                                     mathematical_value_set: ValueSet,
+                                     ) -> NDArray[Any] | None:
+
+    if not isinstance(
+        mathematical_value_set,
+        NumericValueSet
+    ):
+        return None
+
+    try:
+        dtype = np.result_type(
+            *(np.asarray(category).dtype for category in categories)
+        )
+
+        #  i,u,f,c = signed int, unsigned int, floating-point- number, complex number
+        if dtype.kind not in "iufc":
+            return None
+
+        numeric_categories = np.asarray(categories, dtype=dtype)
+
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+    if not _conversion_preserves_values(categories, numeric_categories):
+        return None
+
+    numeric_categories.flags.writeable = False
+    return numeric_categories
