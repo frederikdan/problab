@@ -3,9 +3,19 @@ import unittest
 from problab.value_sets.base import NumericValueSet, ValueSet
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets.object_value_set import ObjectValueSet
+from problab.value_sets.mixed_numeric_value_set import MixedNumericValueSet
 
 
 class ValueSetBaseTests(unittest.TestCase):
+
+    def test_numeric_base_declares_non_finite_permissions_false(self):
+        self.assertFalse(NumericValueSet.allows_positive_infinity)
+        self.assertFalse(NumericValueSet.allows_negative_infinity)
+        self.assertFalse(NumericValueSet.allows_nan)
+        support = MixedNumericValueSet((1, 0.5))
+        self.assertFalse(support.allows_positive_infinity)
+        self.assertFalse(support.allows_negative_infinity)
+        self.assertFalse(support.allows_nan)
 
     def test_value_set_remains_abstract(self):
         with self.assertRaises(TypeError):
