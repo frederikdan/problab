@@ -20,6 +20,7 @@ import sympy as sp
 
 class _StubDistribution(Distribution):
 
+    symbol = "Stub"
 
     def __init__(
         self,
@@ -34,7 +35,7 @@ class _StubDistribution(Distribution):
         self._stub_exact_variance = exact_variance
         self._stub_exact_cdf = exact_cdf
         self._stub_exact_ppf = exact_ppf
-        super().__init__(parameters=parameters, symbol="Stub")
+        super().__init__(parameters=parameters)
 
     @property
     def value_set(self):
@@ -111,6 +112,9 @@ class DistributionBaseTests(unittest.TestCase):
 
         self.assertEqual(distribution.parameters, (3, 4.0))
         self.assertEqual(distribution.symbol, "Stub")
+        self.assertEqual(_StubDistribution.symbol, "Stub")
+        self.assertNotIn("symbol", vars(distribution))
+        self.assertNotIn("_symbol", vars(distribution))
         self.assertEqual(distribution.name, "Stub(3, 4.0)")
         self.assertEqual(distribution._node_dependencies, set())
         self.assertTrue(

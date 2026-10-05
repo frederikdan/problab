@@ -12,8 +12,8 @@ class BinomialDistributionTests(unittest.TestCase):
         distribution = BinomialDistribution(n=4, p=0.25)
 
         self.assertEqual(distribution.parameters, (4, 0.25))
-        self.assertEqual(distribution.symbol, "Bin")
-        self.assertEqual(distribution.name, "Bin(4, 0.25)")
+        self.assertEqual(distribution.symbol, BinomialDistribution.symbol)
+        self.assertEqual(distribution.name, "Binomial(4, 0.25)")
         self.assertEqual(distribution.value_set.sympy_set, sp.Range(0, 5))
         self.assertEqual(distribution.value_set.dtype_types, (np.integer,))
 

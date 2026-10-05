@@ -12,8 +12,8 @@ class NormalDistributionTests(unittest.TestCase):
         distribution = NormalDistribution(mean=2.0, std=3.0)
 
         self.assertEqual(distribution.parameters, (2.0, 3.0))
-        self.assertEqual(distribution.symbol, "N")
-        self.assertEqual(distribution.name, "N(2.0, 3.0)")
+        self.assertEqual(distribution.symbol, NormalDistribution.symbol)
+        self.assertEqual(distribution.name, "Normal(2.0, 3.0)")
         self.assertIs(distribution.value_set, REALS)
 
     @patch("problab.distributions.continuous.normal.norm.rvs")

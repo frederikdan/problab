@@ -29,6 +29,20 @@ def normal_cdf(value: float, mean: float, standard_deviation: float) -> float:
 
 class RandomParameterStatisticalTests(unittest.TestCase):
 
+    def test_mixed_integer_float_normal_mean_matches_analytical_mixture(self):
+        mean = RandomVariable(CategoricalDistribution([0, 2.0], [0.4, 0.6]))
+        variable = RandomVariable(NormalDistribution(mean, 1.0, parameter_risk_policy="raise"))
+        expected = 0.4 * normal_cdf(1, 0, 1) + 0.6 * normal_cdf(1, 2, 1)
+        result = P(variable <= 1, num_samples=NUM_SAMPLES, rng=np.random.default_rng(305))
+        self.assert_probability_matches(result.value, expected, NUM_SAMPLES)
+
+    def test_mixed_integer_float_poisson_rate_matches_weighted_zero_probability(self):
+        rate = RandomVariable(CategoricalDistribution([1, 4.0], [0.25, 0.75]))
+        variable = RandomVariable(PoissonDistribution(rate, parameter_risk_policy="raise"))
+        expected = 0.25 * math.exp(-1) + 0.75 * math.exp(-4)
+        result = P(variable == 0, num_samples=NUM_SAMPLES, rng=np.random.default_rng(306))
+        self.assert_probability_matches(result.value, expected, NUM_SAMPLES)
+
     def assert_probability_matches(self, observed: float, expected: float, samples: int) -> None:
         standard_error = math.sqrt(expected * (1 - expected) / samples)
         self.assertLessEqual(

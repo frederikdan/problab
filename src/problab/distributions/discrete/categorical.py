@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Iterable, Any
+from typing import Iterable, Any, ClassVar
 
 import numpy as np
 from numpy._typing import NDArray
@@ -17,6 +17,7 @@ from problab.value_sets.base import ValueSet, NumericValueSet
 
 class CategoricalDistribution(Distribution):
 
+    symbol: ClassVar[str] = "Categorical"
 
     @_validate_parameters(
         categories=_validate_categories,
@@ -48,7 +49,7 @@ class CategoricalDistribution(Distribution):
 
         self._categories_numeric = _attempt_make_categories_numeric(categories, self._mathematical_value_set)
 
-        super().__init__(parameters=None, symbol="Categorical")
+        super().__init__(parameters=None)
 
     @property
     def categories(self) -> tuple[Any, ...]:

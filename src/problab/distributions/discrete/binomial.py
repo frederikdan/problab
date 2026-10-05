@@ -1,35 +1,43 @@
 from numbers import Real
-from typing import Any
+from typing import Any, ClassVar, Literal
 
 import numpy as np
 import sympy as sp
 from numpy._typing import NDArray
 from scipy.stats import binom
 
+from problab._config import DEF_PARAMETER_RISK_POLICY
 from problab.distributions.base import Distribution
 from problab.random_variables.base import RandomVariable
 from problab.validation._decorator import _validate_parameters
+from problab.validation.distributions._base import _validate_parameter_risk_policy
 from problab.validation.distributions.discrete._binomial import _validate_binomial_n, _validate_binomial_p
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets.sets import NATURALS_0
 
 class BinomialDistribution(Distribution):
 
+    symbol: ClassVar[str] = "Binomial"
+
     @_validate_parameters(
+        validator_arguments=("parameter_risk_policy",),
+        parameter_risk_policy=_validate_parameter_risk_policy,
         n=_validate_binomial_n,
         p=_validate_binomial_p,
     )
     def __init__(
             self,
             n: RandomVariable | int,
-            p: RandomVariable | Real
+            p: RandomVariable | Real,
+            *,
+            parameter_risk_policy: Literal["warn", "raise", "ignore"] = DEF_PARAMETER_RISK_POLICY,
         ) -> None:
 
-        super().__init__(parameters=(n, p), symbol="Bin")
+        super().__init__(parameters=(n, p))
 
         n_node, _ = self._parameter_nodes
 
-        n_max = n_node.value_set.sympy_set.sup  # validation ensures NumericValueSet
+        n_max = n_node.value_set.sympy_set.sup  # validation ensures that this is a NumericValueSet which has sympy_set
 
         if n_max == sp.oo:
             self._mathematical_value_set = NATURALS_0

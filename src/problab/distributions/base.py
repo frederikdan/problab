@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Any
+from typing import TypeVar, Any, ClassVar
 import numpy as np
 from enum import Enum
 from numbers import Real, Complex
@@ -36,6 +36,7 @@ class Mode(Enum):
 
 class Distribution(ABC):
 
+    symbol: ClassVar[str] = DEF_DISTRIBUTION_SYMBOL_NAME
 
     @property
     @abstractmethod
@@ -88,14 +89,12 @@ class Distribution(ABC):
 
     def __init__(self,
                  parameters: tuple[Any, ...] | None = None,
-                 symbol: str = DEF_DISTRIBUTION_SYMBOL_NAME
                  ) -> None:
         self._parameter_inputs: tuple[Any, ...] = parameters if parameters is not None else ()
         self._parameter_nodes: tuple[_Node, ...] = tuple(
             self._parameter_to_node(parameter)
             for parameter in self._parameter_inputs
         )
-        self._symbol = symbol
 
     @staticmethod
     def _parameter_to_node(parameter: Any) -> _Node:
@@ -109,10 +108,6 @@ class Distribution(ABC):
 
         return _ConstantNode(parameter)
 
-
-    @property
-    def symbol(self) -> str:
-        return self._symbol
 
     @property
     def parameters(self) -> tuple[Any, ...]:
