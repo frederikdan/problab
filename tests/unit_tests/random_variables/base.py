@@ -4,29 +4,24 @@ from unittest.mock import Mock, call, patch, sentinel
 import numpy as np
 import sympy as sp
 
-from problab._operations import (
+from problab.operations._arithmetic import (
     _ABS,
     _ADD,
     _DIVIDE,
-    _EQ,
-    _GTE,
-    _GT,
-    _LTE,
-    _LT,
     _MODULO,
     _MULTIPLY,
     _NEGATIVE,
-    _NEQ,
     _POWER,
     _REAL_POWER,
     _SUBTRACT,
-    _FunctionOperation,
 )
+from problab.operations._comparison import (_EQ, _GTE, _GT, _LTE, _LT, _NEQ)
+from problab.operations._function import (_FunctionOperation)
 from problab.distributions.base import Distribution
 from problab.functions.exponential import exp, log
 from problab.random_variables.base import RandomVariable
 from problab.random_variables.nodes import _ConstantNode, _Node, _OperationNode
-from problab.value_sets import ObjectValueSet
+from problab.value_sets import HomogeneousNumericValueSet, ObjectValueSet
 from problab.value_sets import UNKNOWN_VALUE_SET
 from problab.value_sets.sets import COMPLEXES, REALS
 
@@ -58,11 +53,47 @@ class _StubNode(_Node):
         return context.values[self]
 
 
-def _random_variable(name="X", value_set=REALS):
+def _random_variable(name="X", value_set=HomogeneousNumericValueSet(sp.S.Reals, (np.float64,))):
     return RandomVariable._from_node(_StubNode(name, value_set), name=name)
 
 
 class RandomVariableBaseTests(unittest.TestCase):
+
+    @patch("problab.random_variables.base._RealizationContext")
+    def test_sample_forwards_each_policy_and_validates_before_creating_context(self, context):
+        variable = _random_variable()
+        for policy in ("warn", "raise", "ignore"):
+            with self.subTest(policy=policy):
+                variable.sample(numerical_error_policy=policy)
+                self.assertEqual(context.call_args.kwargs["numerical_error_policy"], policy)
+        context.reset_mock()
+        for policy, exception in ((1, TypeError), ("invalid", ValueError)):
+            with self.subTest(policy=policy), self.assertRaises(exception):
+                variable.sample(numerical_error_policy=policy)
+        context.assert_not_called()
+
+    def test_binary_and_unary_operations_use_distinct_support_inference_inputs(self):
+        mathematical = HomogeneousNumericValueSet(sp.Interval(1, 2), (np.float64,))
+        realized = HomogeneousNumericValueSet(sp.Interval(0, 2), (np.float64,))
+        node = Mock(spec=_Node)
+        node.name = "X"
+        node.value_set = mathematical
+        node._realization_value_set = realized
+        variable = RandomVariable._from_node(node)
+        result = variable * variable
+        self.assertFalse(result._node.value_set.contains(0))
+        self.assertTrue(result._node._realization_value_set.contains(0))
+        negative = -variable
+        self.assertFalse(negative._node.value_set.contains(0))
+        self.assertTrue(negative._node._realization_value_set.contains(0))
+
+    def test_ordered_comparisons_reject_complex_realizations_while_equality_allows_them(self):
+        variable = _random_variable(value_set=HomogeneousNumericValueSet(sp.S.Complexes, (np.complex128,)))
+        for compare in (lambda: variable < 1, lambda: variable > 1, lambda: variable <= 1, lambda: variable >= 1):
+            with self.subTest(compare=compare), self.assertRaises(TypeError):
+                compare()
+        self.assertIs(variable.__eq__(1j)._node._operation, _EQ)
+        self.assertIs(variable.__ne__(1j)._node._operation, _NEQ)
 
     @patch("problab.random_variables.base._DistributionNode")
     def test_constructor_creates_distribution_node_with_explicit_name(self, distribution_node):
@@ -127,6 +158,7 @@ class RandomVariableBaseTests(unittest.TestCase):
             rng=rng,
             max_graph_size=100,
             validate=True,
+            numerical_error_policy="warn",
         )
         realization_context.return_value.evaluate.assert_called_once_with(variable._node)
 
@@ -205,7 +237,7 @@ class RandomVariableBaseTests(unittest.TestCase):
         self.assertIs(variable._binary_operation(1, _ADD), NotImplemented)
 
     def test_real_power_uses_real_power_operation_descriptor(self):
-        variable = _random_variable(value_set=REALS)
+        variable = _random_variable()
 
         result = variable ** 2
 
@@ -261,7 +293,7 @@ class RandomVariableBaseTests(unittest.TestCase):
             realization_value_set=REALS,
             function_name="increment",
         )
-        context = Mock()
+        context = Mock(numerical_error_policy="warn")
         context.evaluate.return_value = np.array([1, 2])
 
         values = result._node._evaluate(context)
@@ -312,7 +344,7 @@ class RandomVariableBaseTests(unittest.TestCase):
             realization_value_set=REALS,
             function_name="sum",
         )
-        context = Mock()
+        context = Mock(numerical_error_policy="warn")
         context.evaluate.side_effect = (
             np.array([1, 2]),
             np.array([10, 20]),
@@ -345,7 +377,7 @@ class RandomVariableBaseTests(unittest.TestCase):
     def test_is_in_interval_honors_each_closure_mode(self):
         variable = _random_variable("X")
         sample_values = np.array([0.0, 1.0, 2.0])
-        context = Mock()
+        context = Mock(numerical_error_policy="warn")
 
         def evaluate(node):
             if node is variable._node:
@@ -380,7 +412,7 @@ class RandomVariableBaseTests(unittest.TestCase):
         variable = _random_variable("X")
 
         event = variable.is_in(sp.FiniteSet(1, 3))
-        context = Mock()
+        context = Mock(numerical_error_policy="warn")
         context.evaluate.return_value = np.array([1, 2, 3])
 
         values = event._node._evaluate(context)
@@ -392,7 +424,7 @@ class RandomVariableBaseTests(unittest.TestCase):
         variable = _random_variable("X")
 
         event = variable < 2
-        context = Mock()
+        context = Mock(numerical_error_policy="warn")
         context.evaluate.side_effect = (
             np.array([1, 3]),
             np.array([2, 2]),

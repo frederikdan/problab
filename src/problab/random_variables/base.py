@@ -2,16 +2,37 @@ from __future__ import annotations
 
 from itertools import count
 from numbers import Real, Complex
-from typing import Callable
+from typing import Callable, Literal
 import numpy as np
 import sympy as sp
 
+from problab._config import DEF_NUMERICAL_ERROR_POLICY
 from problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA
 from problab.distributions.base import Distribution
 from problab._events import _Event
-from problab._operations import _ADD, _SUBTRACT, _MULTIPLY, _MODULO, _LT, _LTE, _GT, _GTE, _EQ, _NEQ, _POWER, \
-    _ArithmeticOperation, _NEGATIVE, _ABS, _DIVIDE, _ComparisonOperation, _FunctionOperation, _Operation, \
-    _REAL_POWER
+from problab.operations._arithmetic import (
+    _ADD,
+    _SUBTRACT,
+    _MULTIPLY,
+    _MODULO,
+    _POWER,
+    _ArithmeticOperation,
+    _NEGATIVE,
+    _ABS,
+    _DIVIDE,
+    _REAL_POWER,
+)
+from problab.operations._comparison import (
+    _LT,
+    _LTE,
+    _GT,
+    _GTE,
+    _EQ,
+    _NEQ,
+    _ComparisonOperation,
+)
+from problab.operations._function import _FunctionOperation
+from problab.operations._base import _Operation
 from problab.probability.intervals import ProbabilityInterval, ConfidenceInterval
 from problab.random_variables._config import DEF_MAX_GRAPH_SIZE
 from problab.random_variables._context import _RealizationContext
@@ -20,7 +41,8 @@ from problab.random_variables.nodes import _DistributionNode, _Node, _ConstantNo
 from problab.random_variables.nodes._simplification import _simplify_or_create_node
 from problab.statistics._quantiles import _quantile_confidence_interval
 from problab.validation._common import _validate_num_samples, _validate_rng, _validate_alpha, _validate_q, \
-    _validate_max_size, _validate_validate
+    _validate_max_size, _validate_validate, _require_supported_operation_inputs, \
+    _validate_numerical_error_policy
 from problab.validation._decorator import _validate_parameters
 from problab.validation.random_variables._base import _validate_distribution, _validate_name, \
     _validate_interval_bound, _validate_closed, _validate_target_set, _validate_function, _validate_others, \
@@ -83,13 +105,15 @@ class RandomVariable:
         num_samples=_validate_num_samples,
         rng=_validate_rng,
         max_graph_size=_validate_max_size,
-        validate=_validate_validate
+        validate=_validate_validate,
+        numerical_error_policy=_validate_numerical_error_policy,
     )
     def sample(self,
                num_samples: int = 1,
                rng: np.random.Generator | None = None,
                max_graph_size: int = DEF_MAX_GRAPH_SIZE,
                validate: bool = False,
+               numerical_error_policy: Literal["warn", "raise", "ignore"] = DEF_NUMERICAL_ERROR_POLICY,
                ) -> np.ndarray:
 
         num_samples = int(num_samples)
@@ -99,7 +123,8 @@ class RandomVariable:
             num_samples=num_samples,
             rng=rng,
             max_graph_size=max_graph_size,
-            validate=validate
+            validate=validate,
+            numerical_error_policy=numerical_error_policy,
         ).evaluate(self._node)
 
     def _is_real_or_complex(self) -> bool:
@@ -137,18 +162,24 @@ class RandomVariable:
             else (self._node, other._node)
         )
 
-        mathematical_value_set = operation.infer_output_value_set(
+        _require_supported_operation_inputs(
+            (left_node, right_node),
+            operation_name=operation.name_func(left_node.name, right_node.name),
+            supported_input_types=operation.supported_input_types,
+        )
+
+        mathematical_value_set = operation.infer_mathematical_value_set(
             left_node.value_set,
             right_node.value_set,
         )
-        realization_value_set = operation.infer_output_value_set(
-            left_node._realization_value_set,
-            right_node._realization_value_set,
-        )
-
         node_operation = operation
         if operation is _POWER and is_known_subset(mathematical_value_set, REALS):
             node_operation = _REAL_POWER
+
+        realization_value_set = node_operation.infer_realization_value_set(
+            left_node._realization_value_set,
+            right_node._realization_value_set,
+        )
 
         return RandomVariable._from_node(
             _simplify_or_create_node(
@@ -170,10 +201,16 @@ class RandomVariable:
             raise TypeError(f"The unary operation {operation.name_func('x')} requires a random variable "
                             f"whose value set is a known subset of {operation.valid_input_value_set.sympy_set}.")
 
-        mathematical_value_set = operation.infer_output_value_set(
+        _require_supported_operation_inputs(
+            (self._node,),
+            operation_name=operation.name_func(self._node.name),
+            supported_input_types=operation.supported_input_types,
+        )
+
+        mathematical_value_set = operation.infer_mathematical_value_set(
             self._node.value_set
         )
-        realization_value_set = operation.infer_output_value_set(
+        realization_value_set = operation.infer_realization_value_set(
             self._node._realization_value_set
         )
 
@@ -199,6 +236,12 @@ class RandomVariable:
 
         if not is_known_subset(self._node.value_set, REALS):
             raise TypeError("Probability intervals are only defined for real-valued random variables." )
+
+        _require_supported_operation_inputs(
+            (self._node,),
+            operation_name=f"interval({self.name})",
+            supported_input_types=((np.integer, np.floating, np.object_),),
+        )
 
         samples = self.sample(
             num_samples=num_samples,
@@ -442,6 +485,12 @@ class RandomVariable:
 
         node_name = operator.name_func(self._node.name, other_node.name)
 
+        _require_supported_operation_inputs(
+            (self._node, other_node),
+            operation_name=node_name,
+            supported_input_types=operator.supported_input_types,
+        )
+
         return _Event(
             _OperationNode(
                 operation=operator,
@@ -515,6 +564,12 @@ class RandomVariable:
         if not is_known_subset(self._node.value_set, REALS):
             raise TypeError("Quantile confidence intervals require a real-valued random variable.")
 
+        _require_supported_operation_inputs(
+            (self._node,),
+            operation_name=f"quantile_confidence_interval({self.name})",
+            supported_input_types=((np.integer, np.floating, np.object_),),
+        )
+
         samples = self.sample(
             num_samples=num_samples,
             rng=rng,
@@ -525,4 +580,3 @@ class RandomVariable:
             q=q,
             alpha=alpha,
         )
-

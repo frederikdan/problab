@@ -1,9 +1,16 @@
 import unittest
 
-from problab._config import ABSOLUTE_TOLERANCE, RELATIVE_TOLERANCE
+from problab._config import (
+    ABSOLUTE_TOLERANCE,
+    RELATIVE_TOLERANCE,
+    DEF_NUMERICAL_ERROR_POLICY,
+)
 
 
 class NumericalConfigTests(unittest.TestCase):
+
+    def test_default_numerical_policy_warns(self):
+        self.assertEqual(DEF_NUMERICAL_ERROR_POLICY, "warn")
 
     def test_tolerances_are_positive_and_less_than_one(self):
         self.assertGreater(RELATIVE_TOLERANCE, 0)

@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 
@@ -9,6 +9,17 @@ from problab.value_sets.sets import BOOLEANS
 
 
 class EventTests(unittest.TestCase):
+
+    def test_logical_operations_check_node_dtypes_before_simplifying(self):
+        event = _Event(_ConstantNode(True))
+        for function in (lambda: event & event, lambda: event | event, lambda: ~event):
+            with self.subTest(operation=function):
+                with patch("problab._events._require_supported_operation_inputs", side_effect=TypeError("unsupported")) as require:
+                    with self.assertRaisesRegex(TypeError, "unsupported"):
+                        function()
+                self.assertTrue(require.call_args.args[0])
+                self.assertTrue(all(node is event._node for node in require.call_args.args[0]))
+                self.assertEqual(require.call_args.kwargs["supported_input_types"], ((np.bool_,),))
 
     def test_constructor_exposes_boolean_node_name_and_representation(self):
         event = _Event(_ConstantNode(True))
@@ -90,7 +101,7 @@ class EventTests(unittest.TestCase):
     def test_logical_operations_evaluate_each_boolean_array(self):
         left = _Event(_ConstantNode(True))
         right = _Event(_ConstantNode(False))
-        context = Mock()
+        context = Mock(numerical_error_policy="warn")
         context.evaluate.side_effect = (
             np.array([True, False]),
             np.array([False, False]),

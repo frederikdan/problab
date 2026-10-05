@@ -48,6 +48,11 @@ class _StubNode(_Node):
 
 class RealizationContextTests(unittest.TestCase):
 
+    def test_context_stores_default_and_explicit_numerical_error_policy(self):
+        node = _StubNode("root")
+        self.assertEqual(_RealizationContext((node,)).numerical_error_policy, "warn")
+        for policy in ("warn", "raise", "ignore"):
+            self.assertEqual(_RealizationContext((node,), numerical_error_policy=policy).numerical_error_policy, policy)
 
     def test_duplicate_requests_preserve_results_without_duplicate_evaluation(self):
         node = _StubNode("root", evaluator=Mock(return_value=np.array([1.0])))
@@ -56,6 +61,19 @@ class RealizationContextTests(unittest.TestCase):
         self.assertIs(context.evaluate(node), result)
         node._evaluator.assert_called_once()
 
+    def test_validate_uses_declared_exceptional_permissions_independently_of_policy(self):
+        for policy in ("warn", "raise", "ignore"):
+            for permitted in (False, True):
+                support = HomogeneousNumericValueSet(sp.S.Reals, (np.float64,), allows_nan=permitted)
+                node = _StubNode("root", realization_value_set=support, evaluator=lambda context: np.array([np.nan]))
+                context = _RealizationContext((node,), validate=True, numerical_error_policy=policy)
+                with self.subTest(policy=policy, permitted=permitted):
+                    if permitted:
+                        self.assertTrue(np.isnan(context.evaluate(node)[0]))
+                    else:
+                        with self.assertRaises(ValueError):
+                            context.evaluate(node)
+                        self.assertNotIn(node, context)
 
     def test_failed_parent_evaluation_does_not_release_dependencies_or_cache_failed_result(self):
         child = _StubNode("child", evaluator=Mock(return_value=np.array([2.0])))

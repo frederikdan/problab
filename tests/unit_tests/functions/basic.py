@@ -4,7 +4,8 @@ from unittest.mock import call, patch, sentinel
 import numpy as np
 import sympy as sp
 
-from problab._operations import _ABS, _CEIL, _FLOOR, _HYPOT, _SIGN, _SQRT
+from problab.operations._arithmetic import (_ABS)
+from problab.operations._function import (_CEIL, _FLOOR, _HYPOT, _SIGN, _SQRT)
 from problab.functions import basic
 from problab.value_sets.sets import INTEGERS, NON_NEGATIVE_REALS
 

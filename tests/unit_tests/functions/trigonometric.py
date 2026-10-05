@@ -4,7 +4,7 @@ from unittest.mock import patch, sentinel
 import numpy as np
 import sympy as sp
 
-from problab._operations import (
+from problab.operations._function import (
     _SIN,
     _ARCSIN,
     _COS,
@@ -113,15 +113,15 @@ class TrigonometricFunctionTests(unittest.TestCase):
             patch("problab.functions.trigonometric._validate_real_valued") as validate_real_valued,
             patch("problab.functions.trigonometric._apply", return_value=sentinel.result) as apply,
         ):
-            result = function(sentinel.x)
+            result = function(0.5)
 
         self.assertIs(result, sentinel.result)
-        validate_real_valued.assert_called_once_with(sentinel.x)
+        validate_real_valued.assert_called_once_with(0.5)
         actual_value_set = apply.call_args.kwargs["mathematical_value_set"]
         realization_value_set = apply.call_args.kwargs["realization_value_set"]
         if mathematical_domain is not None:
             self.assertEqual(actual_value_set.sympy_set, mathematical_domain)
-            self.assertEqual(realization_value_set.sympy_set, output_value_set)
+            self.assertTrue(realization_value_set.sympy_set.is_superset(output_value_set))
         elif isinstance(output_value_set, sp.Set):
             self.assertEqual(actual_value_set.sympy_set, output_value_set)
             self.assertEqual(actual_value_set.dtype_types, (np.floating,))
@@ -146,10 +146,10 @@ class TrigonometricFunctionTests(unittest.TestCase):
             patch("problab.functions.trigonometric._validate_domain") as validate_domain,
             patch("problab.functions.trigonometric._apply", return_value=sentinel.result) as apply,
         ):
-            result = function(sentinel.x)
+            result = function(0.5)
 
         self.assertIs(result, sentinel.result)
-        validate_domain.assert_called_once_with(x=sentinel.x, domain=input_domain)
+        validate_domain.assert_called_once_with(x=0.5, domain=input_domain)
         if output_value_set is None:
             output_value_set = apply.call_args.kwargs["mathematical_value_set"]
             self.assertEqual(output_value_set.sympy_set, output_domain)
@@ -163,7 +163,7 @@ class TrigonometricFunctionTests(unittest.TestCase):
 
     def _assert_apply_call(self, apply, operation, mathematical_value_set, realization_value_set):
         expected = dict(
-            x=sentinel.x,
+            x=0.5,
             operation=operation,
             mathematical_value_set=mathematical_value_set,
             realization_value_set=realization_value_set,

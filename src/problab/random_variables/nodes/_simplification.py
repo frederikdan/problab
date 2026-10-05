@@ -1,7 +1,7 @@
 import sympy as sp
 
-from problab._operations import (
-    _Operation,
+from problab.operations._base import _Operation
+from problab.operations._arithmetic import (
     _ADD,
     _SUBTRACT,
     _MULTIPLY,
@@ -10,6 +10,9 @@ from problab._operations import (
     _REAL_POWER,
     _NEGATIVE,
     _ABS,
+)
+from problab.operations._function import (
+    _FunctionOperation,
     _EXP,
     _LOG,
     _SQRT,
@@ -22,7 +25,12 @@ from problab._operations import (
     _LOG1P,
     _EXPM1,
     _HYPOT,
-    _LOGADDEXP, _AND, _OR, _INVERT,
+    _LOGADDEXP,
+)
+from problab.operations._logical import (
+    _AND,
+    _OR,
+    _INVERT,
 )
 from problab.random_variables.nodes.base import _Node
 from problab.random_variables.nodes.constant import _ConstantNode
@@ -34,7 +42,7 @@ from problab.value_sets.sets import (
     GE_NEG_ONE_REALS,
 )
 from problab.value_sets._utils import is_known_subset
-from problab.value_sets.base import ValueSet
+from problab.value_sets.base import NumericValueSet, ValueSet
 
 
 def _simplify_or_create_node(
@@ -51,6 +59,20 @@ def _simplify_or_create_node(
 
     if simplified_node is not None:
         return simplified_node
+
+    if (
+        isinstance(operation, _FunctionOperation)
+        and operation.infer_realization_value_set is not None
+    ):
+        input_sets = tuple(node._realization_value_set for node in inputs)
+        if not isinstance(realization_value_set, NumericValueSet) or not all(
+            isinstance(value_set, NumericValueSet) for value_set in input_sets
+        ):
+            raise TypeError("Numerical function inference requires numeric value sets.")
+        realization_value_set = operation.infer_realization_value_set(
+            realization_value_set,
+            *input_sets,
+        )
 
     return _OperationNode(
         operation=operation,
@@ -232,10 +254,10 @@ def _simplify_operation(
                 return _simplify_or_create_node(
                     operation=_ABS,
                     inputs=(original_node,),
-                    mathematical_value_set=_ABS.infer_output_value_set(
+                    mathematical_value_set=_ABS.infer_mathematical_value_set(
                         original_node.value_set,
                     ),
-                    realization_value_set=_ABS.infer_output_value_set(
+                    realization_value_set=_ABS.infer_realization_value_set(
                         original_node._realization_value_set,
                     ),
                 )

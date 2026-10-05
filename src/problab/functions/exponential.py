@@ -1,6 +1,14 @@
 from numbers import Real
 
-from problab._operations import _EXP, _LOG, _LOG2, _LOG10, _LOG1P, _EXPM1, _LOGADDEXP
+from problab.operations._function import (
+    _EXP,
+    _LOG,
+    _LOG2,
+    _LOG10,
+    _LOG1P,
+    _EXPM1,
+    _LOGADDEXP,
+)
 from problab.random_variables.base import RandomVariable
 from problab.functions._utils import _apply
 from problab.value_sets.sets import (

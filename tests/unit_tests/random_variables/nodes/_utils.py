@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import sympy as sp
 
-from problab._operations import _ADD, _REAL_POWER
+from problab.operations._arithmetic import (_ADD, _REAL_POWER)
 from problab.random_variables.nodes import _ConstantNode, _OperationNode
 from problab.random_variables.nodes._utils import (
     _constant_array,

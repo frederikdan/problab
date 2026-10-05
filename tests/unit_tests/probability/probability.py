@@ -4,7 +4,7 @@ from unittest.mock import call, patch
 
 import numpy as np
 
-from problab._operations import _FunctionOperation
+from problab.operations._function import (_FunctionOperation)
 from problab._events import _Event
 from problab.probability.probability import P
 from problab.random_variables.nodes import _OperationNode

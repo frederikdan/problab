@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from problab._operations import _Operation
+from problab.operations._base import _Operation
 from problab.random_variables.nodes.base import _Node
 from problab.value_sets.base import ValueSet
 from problab.value_sets.sets import UNKNOWN_VALUE_SET
@@ -52,4 +52,11 @@ class _OperationNode(_Node):
 
     def _evaluate(self, context: _RealizationContext) -> np.ndarray:
         values = tuple(context.evaluate(node) for node in self._inputs)
-        return self._operation.operation(*values)
+
+        with np.errstate(
+                over=context.numerical_error_policy,
+                divide=context.numerical_error_policy,
+                invalid=context.numerical_error_policy,
+                under="ignore",
+        ):
+            return self._operation.operation(*values)

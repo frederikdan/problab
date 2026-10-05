@@ -2,17 +2,23 @@ from abc import ABC, abstractmethod
 from typing import TypeVar, Any
 import numpy as np
 from enum import Enum
-from collections.abc import Callable
 from numbers import Real, Complex
 from functools import partial
 
+from problab.operations._base import _Operation
+from problab.operations._statistical import (
+    _MEAN,
+    _STD,
+    _VARIANCE,
+)
+from problab.operations._function import _FunctionOperation
 from problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA, DEF_DISTRIBUTION_SYMBOL_NAME
 from problab.probability.intervals import ConfidenceInterval
 from problab.random_variables._context import _RealizationContext
 from problab.random_variables.nodes import _Node, _ConstantNode, _DistributionNode
 from problab.statistics._quantiles import _quantile_confidence_interval, QuantileMethod
 from problab.validation._common import _validate_q, _validate_alpha, _validate_num_samples, _validate_rng, \
-    _validate_enum, _validate_validate
+    _validate_enum, _validate_validate, _require_supported_operation_inputs
 from problab.validation._decorator import _validate_parameters
 from problab.validation.distributions._base import _validate_cdf_input, _validate_ppf_input, _validate_quantile_method
 from problab.value_sets._utils import is_known_subset
@@ -143,6 +149,13 @@ class Distribution(ABC):
             raise TypeError("Quantile confidence intervals require a real-valued distribution.")
 
         root_node = _DistributionNode(self, rv_name=self.name)
+
+        _require_supported_operation_inputs(
+            (root_node,),
+            operation_name=f"quantile_confidence_interval({self.name})",
+            supported_input_types=((np.integer, np.floating, np.object_),),
+        )
+
         context = _RealizationContext(
             requested_nodes=(root_node,),
             num_samples=num_samples,
@@ -156,22 +169,29 @@ class Distribution(ABC):
             alpha=alpha,
         )
 
-
     def _monte_carlo(self,
-                     operation: Callable[[np.ndarray], Complex | np.ndarray],
+                     operation: _Operation,
                      num_samples: int = DEF_NUM_SAMPLES,
                      rng: np.random.Generator | None = None
                      ) -> float | complex | np.ndarray:
 
         root_node = _DistributionNode(self, rv_name=self.name)
+
+        _require_supported_operation_inputs(
+            (root_node,),
+            operation_name=operation.name_func(root_node.name),
+            supported_input_types=operation.supported_input_types,
+        )
+
         context = _RealizationContext(
             requested_nodes=(root_node,),
             num_samples=num_samples,
             rng=rng,
         )
+
         samples = context.evaluate(root_node)
 
-        result = operation(samples)
+        result = operation.operation(samples)
 
         if np.ndim(result) == 0:
             return complex(result) if np.iscomplexobj(result) else float(result)
@@ -190,7 +210,7 @@ class Distribution(ABC):
              ) -> float | complex:
 
         if mode == Mode.MONTE_CARLO:
-            return self._monte_carlo(operation=np.mean, num_samples=num_samples, rng=rng)
+            return self._monte_carlo(operation=_MEAN, num_samples=num_samples, rng=rng)
 
         exact_mean = self._mean_exact()
 
@@ -201,7 +221,7 @@ class Distribution(ABC):
 
         assert mode is Mode.AUTO
         return exact_mean if exact_mean is not None else self._monte_carlo(
-            operation=np.mean,
+            operation=_MEAN,
             num_samples=num_samples,
             rng=rng,
         )
@@ -218,7 +238,7 @@ class Distribution(ABC):
                  ) -> float:
 
         if mode == Mode.MONTE_CARLO:
-            return self._monte_carlo(operation=np.var, num_samples=num_samples, rng=rng)
+            return self._monte_carlo(operation=_VARIANCE, num_samples=num_samples, rng=rng)
 
         exact_variance = self._variance_exact()
 
@@ -229,7 +249,7 @@ class Distribution(ABC):
 
         assert mode is Mode.AUTO
         return exact_variance if exact_variance is not None else self._monte_carlo(
-            operation=np.var,
+            operation=_VARIANCE,
             num_samples=num_samples,
             rng=rng,
         )
@@ -246,7 +266,7 @@ class Distribution(ABC):
             ) -> float:
 
         if mode == Mode.MONTE_CARLO:
-            return self._monte_carlo(operation=np.std, num_samples=num_samples, rng=rng)
+            return self._monte_carlo(operation=_STD, num_samples=num_samples, rng=rng)
 
         exact_variance = self._variance_exact()
         exact_std = (
@@ -261,7 +281,7 @@ class Distribution(ABC):
 
         assert mode is Mode.AUTO
         return exact_std if exact_std is not None else self._monte_carlo(
-            operation=np.std,
+            operation=_STD,
             num_samples=num_samples,
             rng=rng,
         )
@@ -279,18 +299,25 @@ class Distribution(ABC):
             rng: np.random.Generator | None = None
             ) -> float | np.ndarray:
 
-        def monte_carlo() -> float | np.ndarray:
+        if not is_known_subset(self.value_set, REALS):
+            raise ValueError("CDF calculation requires a real-valued distribution.")
 
-            if isinstance(x, np.ndarray): # if statement instead
-                operation =  lambda samples: (
-                        np.searchsorted(
-                            np.sort(samples),
-                            x,
-                            side="right",
-                        ) / len(samples)
-                )
-            else:
-                operation = lambda samples: np.mean(samples <= x)
+        def monte_carlo() -> float | np.ndarray:
+            def calculate(samples: np.ndarray):
+                if isinstance(x, np.ndarray):
+                    return np.searchsorted(
+                        np.sort(samples),
+                        x,
+                        side="right",
+                    ) / len(samples)
+
+                return np.mean(samples <= x)
+
+            operation = _FunctionOperation(
+                operation=calculate,
+                name_func=lambda name: f"cdf({name}, {x})",
+                supported_input_types=((np.integer, np.floating, np.object_),)
+            )
 
             return self._monte_carlo(
                 operation=operation,
@@ -326,13 +353,22 @@ class Distribution(ABC):
             quantile_method: QuantileMethod = "inverted_cdf"
             ) -> float | np.ndarray:
 
+        if not is_known_subset(self.value_set, REALS):
+            raise ValueError("PPF calculation requires a real-valued distribution.")
+
         def monte_carlo() -> float | np.ndarray:
-            return self._monte_carlo(
+            operation = _FunctionOperation(
                 operation=lambda samples: np.quantile(
                     samples,
                     q,
                     method=quantile_method,
                 ),
+                name_func=lambda name: f"ppf({name}, {q})",
+                supported_input_types=((np.integer, np.floating, np.object_),)
+            )
+
+            return self._monte_carlo(
+                operation=operation,
                 num_samples=num_samples,
                 rng=rng,
             )

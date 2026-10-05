@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING, Any, TypeGuard
 import numpy as np
 import sympy as sp
 
-from problab._operations import _Operation, _POWER, _REAL_POWER
+from problab.operations._base import _Operation
+from problab.operations._arithmetic import (
+    _POWER,
+    _REAL_POWER,
+)
 from problab.random_variables.nodes.base import _Node
 from problab.random_variables.nodes.operation import _OperationNode
 from problab.value_sets._unknown import _UnknownValueSet

@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 import numpy as np
 from numbers import Real
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from problab.random_variables.nodes.base import _Node
 
 
 def _validate_num_samples(value: int) -> None:
@@ -48,3 +54,38 @@ def _validate_max_size(value: int) -> None:
 
     if value < 1:
         raise ValueError("'max_size' must be at least 1.")
+
+
+def _require_supported_operation_inputs(input_nodes: tuple[_Node, ...],
+                                        *,
+                                        operation_name: str,
+                                        supported_input_types: tuple[tuple[type[np.generic], ...], ...] | None,
+                                        ) -> None:
+
+    if supported_input_types is None:
+        return
+
+    if len(supported_input_types) == 1:
+        supported_input_types *= len(input_nodes)
+    elif len(supported_input_types) != len(input_nodes):
+        raise ValueError("The number of input dtype rules does not match the inputs.")
+
+    for node, allowed_types in zip(input_nodes, supported_input_types):
+        dtype_types = node._realization_value_set.dtype_types
+
+        if dtype_types is None or any(
+            not any(
+                issubclass(dtype_type, allowed_type)
+                for allowed_type in allowed_types
+            )
+            for dtype_type in dtype_types
+        ):
+            raise TypeError(f"Cannot apply {operation_name}: input {node.name!r} may sample to an unsupported dtype.")
+
+
+def _validate_numerical_error_policy(value: str) -> None:
+    if not isinstance(value, str):
+        raise TypeError("'numerical_error_policy' must be a string.")
+
+    if value not in ("warn", "raise", "ignore"):
+        raise ValueError("'numerical_error_policy' must be 'warn', 'raise', or 'ignore'.")

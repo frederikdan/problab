@@ -3,7 +3,8 @@ from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
 
-from problab._operations import _FunctionOperation
+from problab.operations._function import _FunctionOperation
+from problab.operations._statistical import _MEAN, _STD, _VARIANCE
 from problab.distributions.base import (
     Distribution,
     Mode,
@@ -13,9 +14,12 @@ from problab.distributions.base import (
 from problab.random_variables.base import RandomVariable
 from problab.random_variables.nodes import _ConstantNode, _OperationNode
 from problab.value_sets.sets import REALS
+from problab.value_sets import HomogeneousNumericValueSet, ObjectValueSet
+import sympy as sp
 
 
 class _StubDistribution(Distribution):
+
 
     def __init__(
         self,
@@ -53,6 +57,51 @@ class _StubDistribution(Distribution):
 
 
 class DistributionBaseTests(unittest.TestCase):
+
+    def test_cdf_and_ppf_reject_nonreal_support_before_exact_or_sampling_paths(self):
+        class Unsupported(_StubDistribution):
+            @property
+            def value_set(self):
+                return self.support
+        for support in (ObjectValueSet(("red",)), HomogeneousNumericValueSet(sp.S.Complexes, (np.complex128,))):
+            distribution = Unsupported(exact_cdf=0.5, exact_ppf=1.0)
+            distribution.support = support
+            distribution._monte_carlo = Mock()
+            for mode in Mode:
+                for method, argument in ((distribution.cdf, 1.0), (distribution.ppf, 0.5)):
+                    with self.subTest(support=support, mode=mode, method=method.__name__):
+                        with self.assertRaisesRegex(ValueError, "real-valued distribution"):
+                            method(argument, mode=mode)
+            distribution._monte_carlo.assert_not_called()
+
+    def test_monte_carlo_statistics_forward_descriptors_sample_count_and_rng(self):
+        distribution = _StubDistribution()
+        distribution._monte_carlo = Mock(return_value=3.0)
+        rng = np.random.default_rng(2)
+        for method, operation in ((distribution.mean, _MEAN), (distribution.variance, _VARIANCE), (distribution.std, _STD)):
+            with self.subTest(method=method.__name__):
+                distribution._monte_carlo.reset_mock()
+                method(mode=Mode.MONTE_CARLO, num_samples=7, rng=rng)
+                distribution._monte_carlo.assert_called_once_with(operation=operation, num_samples=7, rng=rng)
+
+    @patch("problab.distributions.base._RealizationContext")
+    @patch("problab.distributions.base._DistributionNode")
+    def test_statistics_check_realization_dtype_before_sampling(self, distribution_node, realization_context):
+        root = Mock(name="root", _realization_value_set=Mock(dtype_types=(np.object_,)))
+        root.name = "source"
+        distribution_node.return_value = root
+        with self.assertRaisesRegex(TypeError, "std.*source"):
+            _StubDistribution().std(mode=Mode.MONTE_CARLO)
+        realization_context.assert_not_called()
+
+    @patch("problab.distributions.base._RealizationContext")
+    @patch("problab.distributions.base._DistributionNode")
+    def test_monte_carlo_preserves_complex_scalar_results(self, distribution_node, realization_context):
+        distribution_node.return_value = Mock(_realization_value_set=Mock(dtype_types=(np.complex128,)))
+        realization_context.return_value.evaluate.return_value = np.array([1 + 1j, 3 + 3j])
+        result = _StubDistribution()._monte_carlo(_MEAN)
+        self.assertIs(type(result), complex)
+        self.assertEqual(result, 2 + 2j)
 
     def test_mode_members(self):
         self.assertEqual({Mode.AUTO, Mode.EXACT, Mode.MONTE_CARLO}, set(Mode))
@@ -109,7 +158,8 @@ class DistributionBaseTests(unittest.TestCase):
         realization_context,
     ):
         distribution = _StubDistribution()
-        distribution_node.return_value = sentinel.root_node
+        distribution_node.return_value = Mock(name="root", _realization_value_set=REALS)
+        root_node = distribution_node.return_value
         realization_context.return_value.evaluate.return_value = sentinel.samples
 
         samples = Distribution.sample(distribution)
@@ -117,12 +167,12 @@ class DistributionBaseTests(unittest.TestCase):
         self.assertIs(samples, sentinel.samples)
         distribution_node.assert_called_once_with(distribution, rv_name="Stub()")
         realization_context.assert_called_once_with(
-            requested_nodes=(sentinel.root_node,),
+            requested_nodes=(root_node,),
             num_samples=1,
             rng=None,
             validate=False,
         )
-        realization_context.return_value.evaluate.assert_called_once_with(sentinel.root_node)
+        realization_context.return_value.evaluate.assert_called_once_with(root_node)
 
     @patch("problab.distributions.base._RealizationContext")
     @patch("problab.distributions.base._DistributionNode")
@@ -133,12 +183,13 @@ class DistributionBaseTests(unittest.TestCase):
     ):
         distribution = _StubDistribution()
         generator = np.random.default_rng(321)
-        distribution_node.return_value = sentinel.root_node
+        distribution_node.return_value = Mock(name="root", _realization_value_set=REALS)
+        root_node = distribution_node.return_value
 
         distribution.sample(num_samples=5, rng=generator, validate=True)
 
         realization_context.assert_called_once_with(
-            requested_nodes=(sentinel.root_node,),
+            requested_nodes=(root_node,),
             num_samples=5,
             rng=generator,
             validate=True,
@@ -231,7 +282,7 @@ class DistributionBaseTests(unittest.TestCase):
         distribution = _StubDistribution()
 
         def run_operation(operation, **kwargs):
-            return operation(np.array([1.0, 3.0, 5.0]))
+            return operation.operation(np.array([1.0, 3.0, 5.0]))
 
         distribution._monte_carlo = Mock(side_effect=run_operation)
 
@@ -245,7 +296,7 @@ class DistributionBaseTests(unittest.TestCase):
         distribution = _StubDistribution()
 
         def run_operation(operation, **kwargs):
-            return operation(np.array([1.0, 2.0, 3.0, 4.0]))
+            return operation.operation(np.array([1.0, 2.0, 3.0, 4.0]))
 
         distribution._monte_carlo = Mock(side_effect=run_operation)
 
@@ -262,15 +313,16 @@ class DistributionBaseTests(unittest.TestCase):
         realization_context,
     ):
         distribution = _StubDistribution()
-        distribution_node.return_value = sentinel.root_node
+        distribution_node.return_value = Mock(name="root", _realization_value_set=REALS)
+        root_node = distribution_node.return_value
         realization_context.return_value.evaluate.return_value = np.array([1.0, 3.0])
 
-        result = distribution._monte_carlo(np.mean, num_samples=2, rng=sentinel.rng)
+        result = distribution._monte_carlo(_MEAN, num_samples=2, rng=sentinel.rng)
 
         self.assertEqual(result, 2.0)
         self.assertIsInstance(result, float)
         realization_context.assert_called_once_with(
-            requested_nodes=(sentinel.root_node,),
+            requested_nodes=(root_node,),
             num_samples=2,
             rng=sentinel.rng,
         )
@@ -283,11 +335,12 @@ class DistributionBaseTests(unittest.TestCase):
         realization_context,
     ):
         distribution = _StubDistribution()
-        distribution_node.return_value = sentinel.root_node
+        distribution_node.return_value = Mock(name="root", _realization_value_set=REALS)
+        root_node = distribution_node.return_value
         realization_context.return_value.evaluate.return_value = np.array([1.0, 3.0])
 
         result = distribution._monte_carlo(
-            lambda samples: np.array([samples.min(), samples.max()]),
+            _FunctionOperation(operation=lambda samples: np.array([samples.min(), samples.max()]), name_func=lambda name: f"range({name})"),
         )
 
         np.testing.assert_array_equal(result, [1.0, 3.0])
@@ -302,7 +355,8 @@ class DistributionBaseTests(unittest.TestCase):
         quantile_confidence_interval,
     ):
         distribution = _StubDistribution()
-        distribution_node.return_value = sentinel.root_node
+        distribution_node.return_value = Mock(name="root", _realization_value_set=REALS)
+        root_node = distribution_node.return_value
         realization_context.return_value.evaluate.return_value = sentinel.samples
         quantile_confidence_interval.return_value = sentinel.interval
         rng = np.random.default_rng(1)
@@ -316,7 +370,7 @@ class DistributionBaseTests(unittest.TestCase):
 
         self.assertIs(interval, sentinel.interval)
         realization_context.assert_called_once_with(
-            requested_nodes=(sentinel.root_node,),
+            requested_nodes=(root_node,),
             num_samples=8,
             rng=rng,
         )

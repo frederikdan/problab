@@ -1,8 +1,19 @@
 import unittest
+from unittest.mock import Mock
+import numpy as np
+import sympy as sp
 
-from problab._operations import (
+from problab.operations._arithmetic import (
     _ABS,
     _ADD,
+    _DIVIDE,
+    _MULTIPLY,
+    _NEGATIVE,
+    _POWER,
+    _REAL_POWER,
+    _SUBTRACT,
+)
+from problab.operations._function import (
     _ARCCOS,
     _ARCSIN,
     _ARCTAN,
@@ -13,18 +24,16 @@ from problab._operations import (
     _LOG,
     _LOG1P,
     _LOGADDEXP,
-    _DIVIDE,
-    _MULTIPLY,
-    _NEGATIVE,
-    _POWER,
-    _REAL_POWER,
     _SIN,
     _SQRT,
-    _SUBTRACT,
     _TAN,
 )
 from problab.random_variables.nodes import _ConstantNode, _OperationNode
 from problab.random_variables.nodes._simplification import _simplify_or_create_node
+from problab.operations._logical import _AND, _OR, _INVERT
+from problab.operations._function import _FunctionOperation
+from problab.value_sets import HomogeneousNumericValueSet, ObjectValueSet
+from problab.value_sets.sets import BOOLEANS
 from problab.value_sets.sets import NON_NEGATIVE_REALS, POSITIVE_REALS, REALS
 
 
@@ -33,10 +42,10 @@ def _arithmetic_node(operation, inputs):
         operation=operation,
         inputs=inputs,
         name=operation.name_func(*(node.name for node in inputs)),
-        mathematical_value_set=operation.infer_output_value_set(
+        mathematical_value_set=operation.infer_mathematical_value_set(
             *(node.value_set for node in inputs),
         ),
-        realization_value_set=operation.infer_output_value_set(
+        realization_value_set=operation.infer_realization_value_set(
             *(node._realization_value_set for node in inputs),
         ),
     )
@@ -48,11 +57,64 @@ def _function_node(operation, inputs, mathematical_value_set, realization_value_
         inputs=inputs,
         name=operation.name_func(*(node.name for node in inputs)),
         mathematical_value_set=mathematical_value_set,
-        realization_value_set=realization_value_set,
+        realization_value_set=HomogeneousNumericValueSet(
+            sympy_set=realization_value_set.sympy_set, dtype_types=(np.float64,),
+        ),
     )
 
 
 class SimplificationTests(unittest.TestCase):
+
+    def test_boolean_idempotence_and_double_negation_reuse_original_node(self):
+        original = _ConstantNode(True)
+        inverted = _OperationNode(_INVERT, (original,), "~E", BOOLEANS)
+        for operation, inputs in ((_AND, (original, original)), (_OR, (original, original)), (_INVERT, (inverted,))):
+            with self.subTest(operation=operation):
+                result = _simplify_or_create_node(operation, inputs, BOOLEANS, BOOLEANS)
+                self.assertIs(result, original)
+
+    def test_boolean_complements_simplify_in_both_orders(self):
+        original = _ConstantNode(True)
+        inverted = _OperationNode(_INVERT, (original,), "~E", BOOLEANS)
+        for operation, expected in ((_AND, False), (_OR, True)):
+            for inputs in ((original, inverted), (inverted, original)):
+                with self.subTest(operation=operation, inputs=inputs):
+                    result = _simplify_or_create_node(operation, inputs, BOOLEANS, BOOLEANS)
+                    self.assertIsInstance(result, _ConstantNode)
+                    self.assertIs(result.value, expected)
+
+    def test_boolean_rules_use_node_identity_rather_than_equal_names(self):
+        first, second = _ConstantNode(True), _ConstantNode(True)
+        inverted = _OperationNode(_INVERT, (second,), "~E", BOOLEANS)
+        for operation, inputs in ((_AND, (first, second)), (_OR, (first, inverted))):
+            with self.subTest(operation=operation):
+                result = _simplify_or_create_node(operation, inputs, BOOLEANS, BOOLEANS)
+                self.assertIsInstance(result, _OperationNode)
+                self.assertEqual(result._inputs, inputs)
+
+    def test_function_factory_passes_realization_sets_to_inferer_and_keeps_math_support(self):
+        first, second = _ConstantNode(2), _ConstantNode(3)
+        output = HomogeneousNumericValueSet(sp.S.Reals, (np.float64,), allows_nan=True)
+        infer = Mock(return_value=output)
+        operation = _FunctionOperation(operation=np.hypot, name_func=lambda x, y: f"custom({x}, {y})",
+                                       infer_realization_value_set=infer)
+        result = _simplify_or_create_node(operation, (first, second), REALS, NON_NEGATIVE_REALS)
+        infer.assert_called_once_with(NON_NEGATIVE_REALS, first._realization_value_set, second._realization_value_set)
+        self.assertIs(result.value_set, REALS)
+        self.assertIs(result._realization_value_set, output)
+
+    def test_numeric_function_inference_rejects_object_input_or_output_support(self):
+        operation = _FunctionOperation(operation=np.exp, name_func=str, infer_realization_value_set=Mock())
+        for input_node, output_set in ((_ConstantNode([1, 2]), REALS), (_ConstantNode(1), ObjectValueSet((1,)))):
+            with self.subTest(input_node=input_node, output_set=output_set), self.assertRaises(TypeError):
+                _simplify_or_create_node(operation, (input_node,), REALS, output_set)
+        operation.infer_realization_value_set.assert_not_called()
+
+    def test_custom_function_without_inferer_preserves_supplied_supports(self):
+        operation = _FunctionOperation(operation=lambda x: x, name_func=lambda x: f"custom({x})")
+        result = _simplify_or_create_node(operation, (_ConstantNode(2),), POSITIVE_REALS, NON_NEGATIVE_REALS)
+        self.assertIs(result.value_set, POSITIVE_REALS)
+        self.assertIs(result._realization_value_set, NON_NEGATIVE_REALS)
 
     def test_creates_operation_node_when_no_rule_applies(self):
         left = _ConstantNode(2)
@@ -232,11 +294,11 @@ class SimplificationTests(unittest.TestCase):
         self.assertEqual(node._inputs, (original_node,))
         self.assertEqual(
             node.value_set,
-            _ABS.infer_output_value_set(original_node.value_set),
+            _ABS.infer_mathematical_value_set(original_node.value_set),
         )
         self.assertEqual(
             node._realization_value_set,
-            _ABS.infer_output_value_set(original_node._realization_value_set),
+            _ABS.infer_mathematical_value_set(original_node._realization_value_set),
         )
 
     def test_square_root_of_absolute_value_square_reuses_absolute_value_node(self):

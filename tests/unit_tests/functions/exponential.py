@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import call, patch, sentinel
 
-from problab._operations import _EXP, _EXPM1, _LOG, _LOG1P, _LOG2, _LOG10, _LOGADDEXP
+from problab.operations._function import (_EXP, _EXPM1, _LOG, _LOG1P, _LOG2, _LOG10, _LOGADDEXP)
 from problab.functions import exponential
 from problab.value_sets.sets import NON_NEGATIVE_REALS, POSITIVE_REALS, REALS
 

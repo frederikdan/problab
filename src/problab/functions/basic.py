@@ -3,7 +3,14 @@ from numbers import Real
 import numpy as np
 import sympy as sp
 
-from problab._operations import _SQRT, _ABS, _FLOOR, _CEIL, _SIGN, _HYPOT
+from problab.operations._function import (
+    _SQRT,
+    _FLOOR,
+    _CEIL,
+    _SIGN,
+    _HYPOT,
+)
+from problab.operations._arithmetic import _ABS
 from problab.random_variables.base import RandomVariable
 from problab.functions._utils import _apply
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet

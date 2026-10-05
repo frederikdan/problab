@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from problab._operations import _FunctionOperation
+from problab.operations._function import (_FunctionOperation)
 from problab._events import _Event
 from problab.random_variables.nodes import _OperationNode
 from problab.validation.probability._probability import _validate_event, _validate_given

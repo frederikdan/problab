@@ -1,7 +1,8 @@
-from typing import TypeVar
+from typing import TypeVar, Literal
 
 import numpy as np
 
+from problab._config import DEF_NUMERICAL_ERROR_POLICY
 from problab.random_variables._config import DEF_MAX_GRAPH_SIZE
 from problab.random_variables.graph import NodeGraph
 from problab.random_variables.nodes import _Node
@@ -19,6 +20,8 @@ class _RealizationContext:
         rng: np.random.Generator | None = None,
         max_graph_size: int = DEF_MAX_GRAPH_SIZE,
         validate: bool = False,
+        *,
+        numerical_error_policy: Literal["warn", "raise", "ignore"] = DEF_NUMERICAL_ERROR_POLICY,
     ) -> None:
         if not requested_nodes:
             raise ValueError("'requested_nodes' must contain at least one node.")
@@ -46,6 +49,7 @@ class _RealizationContext:
         self._rng = np.random.default_rng() if rng is None else rng
         self._realizations: dict[_Node, np.ndarray] = {}
         self._validate = validate
+        self._numerical_error_policy = numerical_error_policy
 
 
     def __contains__(self, item):
@@ -59,6 +63,9 @@ class _RealizationContext:
     def rng(self) -> np.random.Generator:
         return self._rng
 
+    @property
+    def numerical_error_policy(self) -> Literal["warn", "raise", "ignore"]:
+        return self._numerical_error_policy
 
     def evaluate(self, node: _Node) -> np.ndarray:
 
