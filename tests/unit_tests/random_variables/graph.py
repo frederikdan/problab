@@ -37,26 +37,65 @@ class _StubNode(_Node):
 
 class NodeGraphTests(unittest.TestCase):
 
+    def test_graph_unites_disconnected_roots(self):
+        leaf = _StubNode("leaf")
+        first = _StubNode("first", (leaf,))
+        second = _StubNode("second")
+        graph = NodeGraph(root_nodes=(first, second), max_size=3)
+
+        self.assertTrue(graph.is_complete)
+        self.assertEqual(graph.nodes, {first, second, leaf})
+        self.assertEqual(set(graph.nx_graph.edges), {(first, leaf)})
+
+    def test_graph_counts_shared_dependencies_once_across_roots(self):
+        leaf = _StubNode("leaf")
+        first = _StubNode("first", (leaf,))
+        second = _StubNode("second", (leaf,))
+        graph = NodeGraph((first, second, first, leaf), max_size=3)
+
+        self.assertTrue(graph.is_complete)
+        self.assertEqual(graph.size, 3)
+        self.assertEqual(set(graph.nx_graph.edges), {(first, leaf), (second, leaf)})
+        self.assertEqual(graph.num_dependants(leaf), 2)
+
+    def test_graph_limit_applies_to_union_of_roots(self):
+        first = _StubNode("first")
+        second = _StubNode("second")
+        graph = NodeGraph((first, second), max_size=1)
+
+        self.assertFalse(graph.is_complete)
+        self.assertEqual(graph.nodes, {first})
+
+    def test_constructor_rejects_boolean_and_non_integer_limits(self):
+        for limit in (True, np.bool_(False), 1.5, "3", None):
+            with self.subTest(limit=limit), self.assertRaises(TypeError):
+                NodeGraph((_StubNode("root"),), max_size=limit)
+
+    def test_constructor_accepts_numpy_integer_limit(self):
+        graph = NodeGraph((_StubNode("root"),), max_size=np.int64(1))
+        self.assertTrue(graph.is_complete)
+        self.assertEqual(graph.size, 1)
+
     def test_graph_contains_nodes_and_edges_from_root_to_dependencies(self):
         leaf = _StubNode("leaf")
         middle = _StubNode("middle", (leaf,))
         root = _StubNode("root", (middle, leaf))
 
-        graph = NodeGraph(root, max_size=3)
+        graph = NodeGraph((root,), max_size=3)
 
         self.assertTrue(graph.is_complete)
         self.assertEqual(graph.size, 3)
         self.assertEqual(graph.nodes, {root, middle, leaf})
         self.assertEqual(set(graph.nx_graph.edges), {(root, middle), (root, leaf), (middle, leaf)})
         self.assertEqual(graph.num_dependencies(root), 2)
-        self.assertEqual(graph.num_dependents(leaf), 2)
+        self.assertEqual(graph.num_dependants(leaf), 2)
 
     def test_graph_stops_when_maximum_size_is_reached(self):
         leaf = _StubNode("leaf")
         middle = _StubNode("middle", (leaf,))
         root = _StubNode("root", (middle,))
 
-        graph = NodeGraph(root, max_size=2)
+        graph = NodeGraph((root,), max_size=2)
 
         self.assertFalse(graph.is_complete)
         self.assertEqual(graph.size, 2)
@@ -65,14 +104,14 @@ class NodeGraphTests(unittest.TestCase):
 
     def test_constructor_rejects_non_positive_maximum_size(self):
         with self.assertRaises(ValueError):
-            NodeGraph(_StubNode("root"), max_size=0)
+            NodeGraph((_StubNode("root"),), max_size=0)
 
     def test_graph_handles_cycles_without_duplicate_nodes_or_recursion(self):
         first = _StubNode("first")
         second = _StubNode("second", (first,))
         first._dependencies = {second}
 
-        graph = NodeGraph(first, max_size=2)
+        graph = NodeGraph((first,), max_size=2)
 
         self.assertTrue(graph.is_complete)
         self.assertEqual(graph.nodes, {first, second})
@@ -82,7 +121,7 @@ class NodeGraphTests(unittest.TestCase):
     @patch("problab.random_variables.graph.nx.draw")
     def test_plot_uses_selected_node_labels(self, draw, show):
         node = _StubNode("root")
-        graph = NodeGraph(node, max_size=1)
+        graph = NodeGraph((node,), max_size=1)
 
         graph.plot(use_extended_names=True)
 

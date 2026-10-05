@@ -70,11 +70,11 @@ class RandomVariable:
 
     @property
     def dependency_graph(self) -> NodeGraph:
-        return NodeGraph(self._node, max_size=DEF_MAX_GRAPH_SIZE)
+        return NodeGraph((self._node,), max_size=DEF_MAX_GRAPH_SIZE)
 
     @_validate_parameters(max_size=_validate_max_size)
     def plot_dependencies(self, max_size=DEF_MAX_GRAPH_SIZE) -> None:
-        NodeGraph(self._node, max_size=max_size).plot()
+        NodeGraph((self._node,), max_size=max_size).plot()
 
     def realize(self):
         return self.sample()
@@ -95,7 +95,7 @@ class RandomVariable:
         num_samples = int(num_samples)
 
         return _RealizationContext(
-            root_node=self._node,
+            requested_nodes=(self._node,),
             num_samples=num_samples,
             rng=rng,
             max_graph_size=max_graph_size,

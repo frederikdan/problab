@@ -101,7 +101,7 @@ class RandomVariableBaseTests(unittest.TestCase):
         graph = variable.dependency_graph
 
         self.assertIs(graph, node_graph.return_value)
-        node_graph.assert_called_once_with(variable._node, max_size=100)
+        node_graph.assert_called_once_with((variable._node,), max_size=100)
 
     @patch("problab.random_variables.base.NodeGraph")
     def test_plot_dependencies_delegates_to_graph(self, node_graph):
@@ -109,7 +109,7 @@ class RandomVariableBaseTests(unittest.TestCase):
 
         variable.plot_dependencies(max_size=7)
 
-        node_graph.assert_called_once_with(variable._node, max_size=7)
+        node_graph.assert_called_once_with((variable._node,), max_size=7)
         node_graph.return_value.plot.assert_called_once_with()
 
     @patch("problab.random_variables.base._RealizationContext")
@@ -122,7 +122,7 @@ class RandomVariableBaseTests(unittest.TestCase):
 
         self.assertIs(samples, sentinel.samples)
         realization_context.assert_called_once_with(
-            root_node=variable._node,
+            requested_nodes=(variable._node,),
             num_samples=3,
             rng=rng,
             max_graph_size=100,

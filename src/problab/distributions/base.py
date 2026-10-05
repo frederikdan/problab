@@ -54,7 +54,7 @@ class Distribution(ABC):
         root = _DistributionNode(self, rv_name=self.name)
 
         context = _RealizationContext(
-            root_node=root,
+            requested_nodes=(root,),
             num_samples=num_samples,
             rng=rng,
             validate=validate
@@ -144,7 +144,7 @@ class Distribution(ABC):
 
         root_node = _DistributionNode(self, rv_name=self.name)
         context = _RealizationContext(
-            root_node=root_node,
+            requested_nodes=(root_node,),
             num_samples=num_samples,
             rng=rng,
         )
@@ -165,7 +165,7 @@ class Distribution(ABC):
 
         root_node = _DistributionNode(self, rv_name=self.name)
         context = _RealizationContext(
-            root_node=root_node,
+            requested_nodes=(root_node,),
             num_samples=num_samples,
             rng=rng,
         )

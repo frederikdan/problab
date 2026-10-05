@@ -30,7 +30,7 @@ def P(event: _Event,
 
     if given is None:
         event_values = _RealizationContext(
-            root_node=event._node,
+            requested_nodes=(event._node,),
             num_samples=num_samples,
             rng=rng,
             validate=validate,
@@ -45,7 +45,10 @@ def P(event: _Event,
     joint_event = event & given
 
     context = _RealizationContext(
-        root_node=joint_event._node,
+        requested_nodes=(
+            joint_event._node,
+            given._node,
+        ),
         num_samples=num_samples,
         rng=rng,
         validate=validate,

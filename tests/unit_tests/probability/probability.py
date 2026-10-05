@@ -43,7 +43,7 @@ class ProbabilityFunctionTests(unittest.TestCase):
         self.assertEqual(result.num_unconditioned_samples, 4)
         self.assertIsNone(result.num_conditioned_samples)
         realization_context.assert_called_once_with(
-            root_node=event._node,
+            requested_nodes=(event._node,),
             num_samples=4,
             rng=rng,
             validate=True,
@@ -69,11 +69,13 @@ class ProbabilityFunctionTests(unittest.TestCase):
         self.assertEqual(result.num_successes, 2)
         self.assertEqual(result.num_unconditioned_samples, 4)
         self.assertEqual(result.num_conditioned_samples, 3)
-        root_node = realization_context.call_args.kwargs["root_node"]
-        self.assertIsInstance(root_node, _OperationNode)
-        self.assertEqual(root_node.dependencies, {event._node, given._node})
+        requested_nodes = realization_context.call_args.kwargs["requested_nodes"]
+        joint_node, requested_given_node = requested_nodes
+        self.assertIsInstance(joint_node, _OperationNode)
+        self.assertEqual(joint_node.dependencies, {event._node, given._node})
+        self.assertIs(requested_given_node, given._node)
         realization_context.return_value.evaluate.assert_has_calls(
-            [call(given._node), call(root_node)],
+            [call(given._node), call(joint_node)],
         )
 
     @patch("problab.probability.probability._RealizationContext")

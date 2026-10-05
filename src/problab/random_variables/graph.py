@@ -3,19 +3,19 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 from problab.random_variables.nodes import _Node
+from problab.validation._common import _validate_max_size
+from problab.validation._decorator import _validate_parameters
 
 
 class NodeGraph:
 
+    @_validate_parameters(max_size=_validate_max_size)
     def __init__(self,
-                 root_node: _Node,
+                 root_nodes: tuple[_Node, ...],
                  max_size: int
                  ) -> None:
 
-        if max_size < 1:
-            raise ValueError("max_size must be at least 1")
-
-        self._root_node = root_node
+        self._root_nodes = root_nodes
         self._max_size = max_size
         self._graph = nx.DiGraph()
         self._is_complete = True
@@ -39,7 +39,7 @@ class NodeGraph:
     def nx_graph(self) -> nx.DiGraph:
         return self._graph
 
-    def num_dependents(self, node: _Node) -> int:
+    def num_dependants(self, node: _Node) -> int:
         return self._graph.in_degree(node)  # for one input node this always returns an int
 
     def num_dependencies(self, node: _Node) -> int:
@@ -61,7 +61,8 @@ class NodeGraph:
         plt.show()
 
     def _build_graph(self) -> None:
-        self._add_node_recursive(self._root_node)
+        for root_node in self._root_nodes:
+            self._add_node_recursive(root_node)
 
     def _add_node_recursive(self, node: _Node) -> None:
 

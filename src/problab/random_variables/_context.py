@@ -12,13 +12,16 @@ T = TypeVar('T')
 
 class _RealizationContext:
 
-    def __init__(self,
-                 root_node: _Node,
-                 num_samples: int = 1,
-                 rng: np.random.Generator | None = None,
-                 max_graph_size: int = DEF_MAX_GRAPH_SIZE,
-                 validate: bool = False,
-                 ) -> None:
+    def __init__(
+        self,
+        requested_nodes: tuple[_Node, ...],
+        num_samples: int = 1,
+        rng: np.random.Generator | None = None,
+        max_graph_size: int = DEF_MAX_GRAPH_SIZE,
+        validate: bool = False,
+    ) -> None:
+        if not requested_nodes:
+            raise ValueError("'requested_nodes' must contain at least one node.")
 
         if isinstance(num_samples, (bool, np.bool_)) or not isinstance(num_samples, (int, np.integer)):
             raise TypeError("'num_samples' must be an integer.")
@@ -28,14 +31,14 @@ class _RealizationContext:
 
         num_samples = int(num_samples)
 
-        self._root_node = root_node
-        self._graph = NodeGraph(root_node, max_size=max_graph_size)
+        self._requested_nodes = tuple(requested_nodes)
+        self._graph = NodeGraph(root_nodes=self._requested_nodes, max_size=max_graph_size)
 
         if not self._graph.is_complete:
             raise ValueError(f"RandomVariable dependency graph exceeds the maximum size of {max_graph_size} nodes.")
 
         self._remaining_dependants = {
-            node: self._graph.num_dependents(node)
+            node: self._graph.num_dependants(node)
             for node in self._graph.nodes
         }
 
@@ -55,6 +58,7 @@ class _RealizationContext:
     @property
     def rng(self) -> np.random.Generator:
         return self._rng
+
 
     def evaluate(self, node: _Node) -> np.ndarray:
 
@@ -87,7 +91,11 @@ class _RealizationContext:
 
             for dependency in node.dependencies:
                 self._remaining_dependants[dependency] -= 1
-                if self._remaining_dependants[dependency] == 0:
+
+                if (
+                        self._remaining_dependants[dependency] == 0
+                        and dependency not in self._requested_nodes
+                ):
                     self._realizations.pop(dependency)
 
         return self._realizations[node]

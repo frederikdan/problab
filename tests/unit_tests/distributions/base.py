@@ -117,7 +117,7 @@ class DistributionBaseTests(unittest.TestCase):
         self.assertIs(samples, sentinel.samples)
         distribution_node.assert_called_once_with(distribution, rv_name="Stub()")
         realization_context.assert_called_once_with(
-            root_node=sentinel.root_node,
+            requested_nodes=(sentinel.root_node,),
             num_samples=1,
             rng=None,
             validate=False,
@@ -138,7 +138,7 @@ class DistributionBaseTests(unittest.TestCase):
         distribution.sample(num_samples=5, rng=generator, validate=True)
 
         realization_context.assert_called_once_with(
-            root_node=sentinel.root_node,
+            requested_nodes=(sentinel.root_node,),
             num_samples=5,
             rng=generator,
             validate=True,
@@ -270,7 +270,7 @@ class DistributionBaseTests(unittest.TestCase):
         self.assertEqual(result, 2.0)
         self.assertIsInstance(result, float)
         realization_context.assert_called_once_with(
-            root_node=sentinel.root_node,
+            requested_nodes=(sentinel.root_node,),
             num_samples=2,
             rng=sentinel.rng,
         )
@@ -316,7 +316,7 @@ class DistributionBaseTests(unittest.TestCase):
 
         self.assertIs(interval, sentinel.interval)
         realization_context.assert_called_once_with(
-            root_node=sentinel.root_node,
+            requested_nodes=(sentinel.root_node,),
             num_samples=8,
             rng=rng,
         )
