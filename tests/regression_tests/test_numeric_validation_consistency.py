@@ -2,7 +2,12 @@ import unittest
 
 import numpy as np
 
-from problab import BinomialDistribution, CategoricalDistribution, NormalDistribution, PoissonDistribution
+from problab import (
+    BinomialDistribution,
+    CategoricalDistribution,
+    NormalDistribution,
+    PoissonDistribution,
+)
 
 
 class NumericValidationConsistencyRegressionTests(unittest.TestCase):
