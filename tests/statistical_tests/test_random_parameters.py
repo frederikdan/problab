@@ -11,6 +11,8 @@ from problab import (
     PoissonDistribution,
     RandomVariable,
 )
+from problab.value_sets import HomogeneousNumericValueSet
+from problab.value_sets.sets import NON_NEGATIVE_REALS, POSITIVE_REALS, REALS, UNIT_INTERVAL
 
 
 NUM_SAMPLES = 100_000
@@ -28,6 +30,33 @@ def normal_cdf(value: float, mean: float, standard_deviation: float) -> float:
 
 
 class RandomParameterStatisticalTests(unittest.TestCase):
+
+    def test_masked_batches_preserve_the_analytical_law_at_valid_positions(self):
+        cases = (
+            (POSITIVE_REALS, [1., -1., 2.], lambda p: NormalDistribution(0, p, parameter_risk_policy="ignore"),
+             lambda x: x <= 1, 0.5 * normal_cdf(1, 0, 1) + 0.5 * normal_cdf(1, 0, 2)),
+            (UNIT_INTERVAL, [0.2, -1., 0.8], lambda p: BinomialDistribution(4, p, parameter_risk_policy="ignore"),
+             lambda x: x >= 3, 0.5 * binomial_tail(4, 0.2, 3) + 0.5 * binomial_tail(4, 0.8, 3)),
+            (NON_NEGATIVE_REALS, [1., -1., 4.], lambda p: PoissonDistribution(p, parameter_risk_policy="ignore"),
+             lambda x: x == 0, 0.5 * math.exp(-1) + 0.5 * math.exp(-4)),
+        )
+        for mathematical_set, values, constructor, event, expected in cases:
+            realized = np.tile(values, 20_000)
+            source = RandomVariable(CategoricalDistribution([1.], [1.]))
+            parameter = source.apply(
+                lambda x: realized.copy(), vectorized=True,
+                mathematical_value_set=mathematical_set,
+                realization_value_set=HomogeneousNumericValueSet(REALS.sympy_set, (np.float64,)),
+            )
+            distribution = constructor(parameter)
+            with self.subTest(distribution=distribution.symbol):
+                samples = RandomVariable(distribution).sample(
+                    len(realized), rng=np.random.default_rng(842), numerical_error_policy="ignore",
+                )
+                invalid = np.tile([False, True, False], 20_000)
+                np.testing.assert_array_equal(np.isnan(samples), invalid)
+                observed = np.mean(event(samples[~invalid]))
+                self.assert_probability_matches(observed, expected, np.count_nonzero(~invalid))
 
     def test_mixed_integer_float_normal_mean_matches_analytical_mixture(self):
         mean = RandomVariable(CategoricalDistribution([0, 2.0], [0.4, 0.6]))

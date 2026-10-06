@@ -1,6 +1,6 @@
 # ProbLab test inventory
 
-Updated 2026-10-05. This inventory lists all 607 test methods: 600 in the
+Updated 2026-10-06. This inventory lists all 653 test methods: 646 in the
 library test suite and 7 in the library explorer. Each entry gives the test
 class and function name, followed by what it checks. A method using `subTest`
 counts once here even when it exercises many cases.
@@ -43,6 +43,16 @@ Known failing tests remain in this list. See
 
 ### `tests/unit_tests/distributions/base.py`
 
+- `DistributionBaseTests.test_parameterless_defaults_have_no_masks_and_guarantee_validity` — Checks empty parameter validation and guarantee behavior for parameterless distributions.
+- `DistributionBaseTests.test_parameter_guarantee_requires_known_numeric_domain_membership` — Checks valid, invalid, unknown, and object support without guessing validity.
+- `DistributionBaseTests.test_parameter_guarantee_checks_each_exceptional_permission_independently` — Checks that each possible infinity/NaN requires its corresponding permission in the valid set.
+- `DistributionBaseTests.test_parameter_guarantee_uses_mapping_order_and_rejects_missing_entries` — Checks positional domain pairing and an incomplete metadata mapping.
+- `DistributionBaseTests.test_evaluate_all_valid_masks_preserve_arrays_and_backend_result_identity` — Checks that all-valid masks preserve input arrays, backend output identity, count, and RNG.
+- `DistributionBaseTests.test_evaluate_combines_masks_without_mutating_shared_parameters_or_masks` — Checks combined masks, warning details, aligned backend inputs, float precisions, and read-only input preservation.
+- `DistributionBaseTests.test_evaluate_raise_reports_parameter_names_and_count_before_backend` — Checks informative raise-policy errors before sampling.
+- `DistributionBaseTests.test_evaluate_all_invalid_returns_float64_nan_without_backend` — Checks all-invalid warn/ignore paths and their output storage.
+- `DistributionBaseTests.test_evaluate_integer_nan_storage_preserves_exact_boundary_values` — Checks signed/unsigned integer storage at both sides of the float64 exact-integer range and machine limits.
+- `DistributionBaseTests.test_evaluate_does_not_hide_unrelated_backend_errors` — Checks that backend exceptions propagate for all-valid and mixed batches.
 - `DistributionBaseTests.test_cdf_and_ppf_reject_nonreal_support_before_exact_or_sampling_paths` — Checks that object and complex distribution supports are rejected by CDF and PPF in every mode before Monte Carlo sampling, even when an exact hook supplies a value.
 - `DistributionBaseTests.test_monte_carlo_statistics_forward_descriptors_sample_count_and_rng` — Checks that monte carlo statistics forward descriptors sample count and rng.
 - `DistributionBaseTests.test_statistics_check_realization_dtype_before_sampling` — Checks that statistics check realization dtype before sampling.
@@ -73,12 +83,19 @@ Known failing tests remain in this list. See
 
 ### `tests/unit_tests/distributions/continuous/normal.py`
 
+- `NormalDistributionTests.test_class_parameter_domains_match_constructor_order` — Checks Normal's class metadata names, order, and shared domains.
+- `NormalDistributionTests.test_realization_support_is_cached_and_tracks_parameter_risk` — Checks cached float support, exceptional flags, and unchanged mathematical support under both guarantee outcomes.
+- `NormalDistributionTests.test_runtime_validation_delegates_each_parameter_to_its_validator` — Checks mean/std array forwarding and named mask identity.
 - `NormalDistributionTests.test_configuration_and_public_properties` — Checks normal-distribution parameters, symbol, name, and real-valued support.
 - `NormalDistributionTests.test_sample_delegates_to_scipy_with_parameters` — Checks that normal `_sample()` passes mean, standard deviation, sample count, and generator to SciPy.
 - `NormalDistributionTests.test_invalid_mean_and_standard_deviation_are_rejected` — Checks normal constructor validation for invalid means and standard deviations.
 
 ### `tests/unit_tests/distributions/discrete/binomial.py`
 
+- `BinomialDistributionTests.test_class_parameter_domains_match_constructor_order` — Checks Binomial's class metadata names, order, and shared domains.
+- `BinomialDistributionTests.test_realization_support_uses_trial_realizations_without_changing_math` — Checks a machine trial-count bound differing from mathematical support, caching, dtype, and exceptional flags.
+- `BinomialDistributionTests.test_risky_support_declares_object_fallback_only_for_possible_large_counts` — Checks NaN storage declarations around 2**53 and with unknown count support.
+- `BinomialDistributionTests.test_runtime_validation_delegates_each_parameter_to_its_validator` — Checks trial-count/probability arrays and named masks are correctly connected.
 - `BinomialDistributionTests.test_configuration_and_symbolic_finite_support` — Checks binomial parameters, name, and symbolic finite support for a fixed trial count.
 - `BinomialDistributionTests.test_zero_n_has_single_value_support` — Checks that a binomial distribution with zero trials has only zero in its support.
 - `BinomialDistributionTests.test_sample_delegates_to_scipy_with_parameters` — Checks that binomial `_sample()` forwards parameters, sample count, and generator to SciPy.
@@ -117,6 +134,9 @@ Known failing tests remain in this list. See
 
 ### `tests/unit_tests/distributions/discrete/poisson.py`
 
+- `PoissonDistributionTests.test_class_parameter_domain_matches_constructor` — Checks Poisson's class metadata and domain.
+- `PoissonDistributionTests.test_cached_realization_support_distinguishes_safe_and_unknown_rates` — Checks safe versus uncertain rate support, cached dtype declarations, and exceptional permissions.
+- `PoissonDistributionTests.test_runtime_validation_delegates_to_rate_validator` — Checks the rate array and mask are forwarded unchanged.
 - `PoissonDistributionTests.test_configuration_and_support` — Checks Poisson parameters, name, and natural-number support.
 - `PoissonDistributionTests.test_sample_delegates_to_scipy_with_parameters` — Checks that Poisson `_sample()` forwards rate, sample count, and generator to SciPy.
 - `PoissonDistributionTests.test_invalid_rate_is_rejected` — Checks Poisson constructor validation for invalid rates.
@@ -452,6 +472,10 @@ Known failing tests remain in this list. See
 
 ### `tests/unit_tests/validation/distributions/continuous/_normal.py`
 
+- `NormalDistributionValidationTests.test_mean_realizations_reject_nonfinite_values_across_float_precisions` — Checks finite-mean masks, Boolean output, shape, and read-only arrays at every tested float precision.
+- `NormalDistributionValidationTests.test_std_realizations_reject_zero_negative_and_nonfinite_values` — Checks standard-deviation boundaries, positive subnormals, non-finite values, and input preservation.
+- `NormalDistributionValidationTests.test_runtime_masks_accept_integer_arrays_and_preserve_empty_shape` — Checks signed/unsigned integer limits and empty arrays.
+- `NormalDistributionValidationTests.test_construction_validators_read_domains_from_instance_metadata` — Checks construction uses the instance's declared domain rather than a hard-coded global set.
 - `NormalDistributionValidationTests.test_mean_delegates_dtype_and_risk_validation_with_instance_symbol` — Checks that mean delegates dtype and risk validation with instance symbol.
 - `NormalDistributionValidationTests.test_std_delegates_dtype_and_risk_validation_with_instance_symbol` — Checks that std delegates dtype and risk validation with instance symbol.
 - `NormalDistributionValidationTests.test_numeric_parameters_reject_object_realizations_with_symbol_and_node_name` — Checks that numeric parameters reject object realizations with symbol and node name.
@@ -460,6 +484,9 @@ Known failing tests remain in this list. See
 
 ### `tests/unit_tests/validation/distributions/discrete/_binomial.py`
 
+- `BinomialDistributionValidationTests.test_realized_trial_counts_require_finite_nonnegative_integers` — Checks masks for negative, fractional, NaN, and infinite trial counts across floating precisions without numerical warnings.
+- `BinomialDistributionValidationTests.test_realized_trial_count_backend_boundary_preserves_integer_precision` — Checks signed, unsigned, and floating inputs at the backend's integer limit, including float64 rounding at the boundary.
+- `BinomialDistributionValidationTests.test_realized_probabilities_require_finite_closed_unit_interval` — Checks probability masks at zero and one and for out-of-range and non-finite values.
 - `BinomialDistributionValidationTests.test_n_delegates_dtype_and_risk_validation_with_instance_symbol` — Checks that n delegates dtype and risk validation with instance symbol.
 - `BinomialDistributionValidationTests.test_p_delegates_dtype_and_risk_validation_with_instance_symbol` — Checks that p delegates dtype and risk validation with instance symbol.
 - `BinomialDistributionValidationTests.test_numeric_parameters_reject_object_realizations_with_symbol_and_node_name` — Checks that numeric parameters reject object realizations with symbol and node name.
@@ -476,6 +503,8 @@ Known failing tests remain in this list. See
 
 ### `tests/unit_tests/validation/distributions/discrete/_poisson.py`
 
+- `PoissonDistributionValidationTests.test_realized_rates_require_finite_nonnegative_values` — Checks masks for negative and non-finite rates across floating precisions without numerical warnings.
+- `PoissonDistributionValidationTests.test_realized_rate_backend_boundary_does_not_round_large_integers` — Checks the maximum supported rate and the next floating or integer value without losing integer precision.
 - `PoissonDistributionValidationTests.test_mu_delegates_dtype_and_risk_validation_with_instance_symbol` — Checks that mu delegates dtype and risk validation with instance symbol.
 - `PoissonDistributionValidationTests.test_mu_rejects_object_realizations_with_symbol_and_node_name` — Checks that mu rejects object realizations with symbol and node name.
 - `PoissonDistributionValidationTests.test_mu_accepts_non_negative_real_and_rejects_invalid_values` — Checks Poisson rate validation accepts non-negative real values and rejects invalid values.
@@ -687,6 +716,15 @@ Known failing tests remain in this list. See
 - `RandomVariablePowerIntegrationTests.test_real_power_uses_real_samples` — Checks that a power expression inferred as real produces real-valued samples.
 - `RandomVariablePowerIntegrationTests.test_complex_power_keeps_complex_samples` — Checks that a power expression requiring complex values preserves a complex sample representation.
 
+### `tests/integration_tests/parameter_sampling.py`
+
+- `ParameterSamplingIntegrationTests.test_shared_parameter_is_evaluated_once_and_retained_without_filtering` — Checks one parameter shared by Normal and Poisson across evaluation orders, retained original arrays, and aligned NaN markers.
+- `ParameterSamplingIntegrationTests.test_nan_markers_propagate_through_a_dependent_normal_parameter` — Checks a downstream Normal distribution masks an upstream sampling failure.
+- `ParameterSamplingIntegrationTests.test_runtime_policy_is_independent_of_construction_policy_and_output_validation` — Checks construction and runtime policies independently with output validation enabled and disabled.
+- `ParameterSamplingIntegrationTests.test_single_invalid_sample_and_public_distribution_default_policy` — Checks scalar broadcasting, a one-position invalid batch, and direct sampling's default warning policy.
+- `ParameterSamplingIntegrationTests.test_valid_batches_under_risky_declarations_remain_integer_and_reproducible` — Checks conservative NaN permission does not force conversion or warnings when every realized parameter is valid.
+- `ParameterSamplingIntegrationTests.test_output_validation_does_not_excuse_a_parameter_lying_about_support` — Checks parameter-node membership failures occur before distribution backend sampling.
+
 ### `tests/integration_tests/realization_support.py`
 
 - `PromotedSupportIntegrationTests.test_context_accepts_promoted_outputs` — Checks that support inference and the realization context agree on floating and complex promotions in division, addition, and powers.
@@ -712,6 +750,8 @@ Known failing tests remain in this list. See
 
 ### `tests/api_tests/parameter_policies.py`
 
+- `DistributionParameterPolicyTests.test_parameter_metadata_is_private_and_does_not_add_constructor_arguments` — Checks metadata order, unchanged public signatures, and private export status.
+- `DistributionParameterPolicyTests.test_subclass_parameter_domains_are_read_before_constructor_initialization` — Checks subclass domain lookup during construction without mutating the parent metadata.
 - `DistributionParameterPolicyTests.test_parameter_risk_policy_is_keyword_only_with_warn_default` — Checks that parameter risk policy is keyword only with warn default.
 - `DistributionParameterPolicyTests.test_risky_parameters_warn_by_default_raise_or_allow_silently_when_requested` — Checks all five numeric distribution parameters follow the construction risk policy and preserve the original RandomVariable inputs.
 - `DistributionParameterPolicyTests.test_risk_policy_never_bypasses_mathematically_invalid_parameters` — Checks that risk policy never bypasses mathematically invalid parameters.
@@ -731,6 +771,10 @@ Known failing tests remain in this list. See
 - `PublicContractTests.test_random_variable_can_raise_its_graph_size_limit` — Checks that a deep, valid random-variable expression can request a larger graph limit for sampling.
 
 ## Property tests
+
+### `tests/property_tests/test_parameter_masks.py`
+
+- `ParameterMaskPropertyTests.test_runtime_masks_agree_with_value_sets_away_from_backend_limits` — Checks all five NumPy parameter masks against symbolic membership over seeded generated values, boundaries, and non-finite inputs across precisions.
 
 ### `tests/property_tests/test_categorical_and_arithmetic.py`
 
@@ -825,9 +869,16 @@ Known failing tests remain in this list. See
 
 ### `tests/regression_tests/test_parameter_realization_policy.py`
 
-- `ParameterRealizationPolicyRegressionTests.test_raise_policy_rejects_invalid_realized_parameters_with_informative_error` — Requires invalid realized Normal mean/std, Binomial n/p, and Poisson mu to raise an informative ValueError under the sampling raise policy. This specifies behavior still missing from the implementation.
-- `ParameterRealizationPolicyRegressionTests.test_warn_policy_warns_and_marks_only_invalid_positions_nan` — Requires the sampling warn policy to emit a RuntimeWarning and return NaN only for invalid parameter positions, while valid positions remain finite and validate=True succeeds. This behavior is not implemented yet.
-- `ParameterRealizationPolicyRegressionTests.test_ignore_policy_marks_only_invalid_positions_nan_without_warning` — Requires the sampling ignore policy to return NaN only at invalid parameter positions, silently and with validate=True enabled. This behavior is not implemented yet.
+- `ParameterRealizationPolicyRegressionTests.test_raise_policy_rejects_invalid_realized_parameters_with_informative_error` — Checks that invalid realized Normal mean/std, Binomial n/p, and Poisson mu raise an informative ValueError under the sampling raise policy.
+- `ParameterRealizationPolicyRegressionTests.test_warn_policy_warns_and_marks_only_invalid_positions_nan` — Checks that warn emits a RuntimeWarning and returns NaN only at invalid positions, while valid positions remain finite and validate=True succeeds.
+- `ParameterRealizationPolicyRegressionTests.test_ignore_policy_marks_only_invalid_positions_nan_without_warning` — Checks that ignore returns NaN only at invalid positions, silently and with validate=True enabled.
+- `ParameterRealizationPolicyRegressionTests.test_all_invalid_batches_skip_the_backend_under_every_policy` — Checks that fully invalid Normal, Binomial, and Poisson batches raise or return validated NaNs without invoking SciPy.
+- `ParameterRealizationPolicyRegressionTests.test_combined_masks_filter_every_parameter_and_preserve_sample_order` — Checks that invalid values in different parameters produce one combined mask and that valid arrays, sample count, generator, and output positions stay aligned.
+- `ParameterRealizationPolicyRegressionTests.test_raise_stops_mixed_batches_before_backend_sampling` — Checks that every numeric distribution parameter rejects invalid batches before its sampler is called under raise.
+- `ParameterRealizationPolicyRegressionTests.test_large_integer_samples_remain_exact_beside_nan` — Checks Binomial and Poisson object fallback preserves integers above 2**53 alongside NaN and passes realization validation.
+- `ParameterRealizationPolicyRegressionTests.test_valid_integer_batches_preserve_backend_dtype_and_generator_sequence` — Checks all-valid Binomial and Poisson samples keep integer storage and agree with the backend using the same seeded generator.
+- `ParameterRealizationPolicyRegressionTests.test_backend_limits_are_checked_before_sampling` — Checks out-of-range finite trial counts and Poisson rates become NaN without preventing valid positions from sampling.
+- `ParameterRealizationPolicyRegressionTests.test_construction_policy_detects_finite_backend_limit_risks` — Checks construction risk policies and declared NaN support for mathematically valid parameters beyond the backend limits.
 
 ### `tests/regression_tests/test_probability_result_confidence_interval.py`
 
@@ -910,6 +961,7 @@ Known failing tests remain in this list. See
 
 ### `tests/statistical_tests/test_random_parameters.py`
 
+- `RandomParameterStatisticalTests.test_masked_batches_preserve_the_analytical_law_at_valid_positions` — Checks successful Normal, Binomial, and Poisson draws in mixed-validity batches against analytical mixture probabilities using six-standard-error bounds.
 - `RandomParameterStatisticalTests.test_mixed_integer_float_normal_mean_matches_analytical_mixture` — Checks that mixed integer float normal mean matches analytical mixture.
 - `RandomParameterStatisticalTests.test_mixed_integer_float_poisson_rate_matches_weighted_zero_probability` — Checks that mixed integer float poisson rate matches weighted zero probability.
 - `RandomParameterStatisticalTests.test_random_binomial_probability_matches_weighted_analytical_tails` — Checks a binomial with random probability against the weighted mixture of analytical tails.

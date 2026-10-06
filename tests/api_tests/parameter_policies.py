@@ -23,6 +23,29 @@ from problab.value_sets.sets import (
 
 
 class DistributionParameterPolicyTests(unittest.TestCase):
+
+    def test_parameter_metadata_is_private_and_does_not_add_constructor_arguments(self):
+        import problab
+
+        for cls, expected in (
+            (NormalDistribution, ["mean", "std"]),
+            (BinomialDistribution, ["n", "p"]),
+            (PoissonDistribution, ["mu"]),
+        ):
+            with self.subTest(distribution=cls.__name__):
+                self.assertEqual(list(cls._valid_parameter_sets), expected)
+                self.assertEqual(list(signature(cls).parameters), [*expected, "parameter_risk_policy"])
+        self.assertNotIn("_valid_parameter_sets", problab.__all__)
+
+    def test_subclass_parameter_domains_are_read_before_constructor_initialization(self):
+        class PositiveMeanNormal(NormalDistribution):
+            _valid_parameter_sets = {"mean": POSITIVE_REALS, "std": POSITIVE_REALS}
+
+        with self.assertRaises(ValueError):
+            PositiveMeanNormal(-1., 1.)
+        distribution = PositiveMeanNormal(1., 2.)
+        self.assertEqual(distribution.parameters, (1., 2.))
+        self.assertIs(NormalDistribution._valid_parameter_sets["mean"], REALS)
     def parameter(self, mathematical_set, realization_set, name="parameter"):
         source = RandomVariable(CategoricalDistribution([1.0], [1.0]), name=name)
         return source.apply(lambda x: x, mathematical_value_set=mathematical_set,

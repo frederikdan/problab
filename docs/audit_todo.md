@@ -157,13 +157,21 @@ and claiming an unsupported Python version.
   Define a separate contract for random parameters before extending exact
   methods to those distributions. Existing exact-method tests remain active.
 
-- [ ] **F02 — Apply the sampling policy to invalid distribution parameters.**
-  Construction risk checks are implemented, but `_evaluate()` still passes
-  invalid realized parameter arrays directly to SciPy. Under `raise`, reject
-  them with an informative ValueError; under `warn`/`ignore`, return NaN only
-  at invalid positions and sample valid positions. Update sampled dtypes and
-  realization support so `validate=True` accepts these declared outputs.
+- [x] **F02 — Apply the sampling policy to invalid distribution parameters.**
+  Completed 2026-10-06 for Normal, Binomial, and Poisson. Per-parameter NumPy
+  masks exclude invalid realized values before SciPy sampling. `raise` reports
+  invalid parameters; `warn`/`ignore` sample valid positions and insert NaN at
+  invalid positions. All-invalid batches skip the backend. Realization support
+  declares these outputs, including finite backend limits and integer/NaN
+  storage. Mixed batches use float64 for integers within +/-2**53 and exact
+  object storage otherwise; all-valid batches retain their backend dtype.
   Active tests: `tests/regression_tests/test_parameter_realization_policy.py`.
+  Design agreed 2026-10-06: add a runtime mask function per parameter alongside
+  construction validators in the corresponding distribution validation module.
+  Prefer vectorized NumPy checks, with alternatives when needed; shared
+  evaluation combines masks and applies the policy before backend sampling.
+  See [the runtime-validation design](adding_distributions.md#agreed-runtime-validation-design-2026-10-06).
+  Categorical has no graph parameters and uses the default empty masks.
 
 ## Additional defects reproduced by the test update
 
@@ -196,8 +204,8 @@ and claiming an unsupported Python version.
   Operations now honor `numerical_error_policy`; underflow is allowed, and
   declared machine support covers permitted infinity, NaN, and rounding.
   Tests for `log2(exp(X))` at X=-1000 pass under all three policies. Runtime
-  distribution-parameter handling (F02) and broad dtype inference (B21) remain
-  unfinished. Sources: `operations/_arithmetic.py`, function wrappers,
+  distribution-parameter handling (F02) is complete as of 2026-10-06; broad
+  dtype inference (B21) remains unfinished. Sources: `operations/_arithmetic.py`, function wrappers,
   distribution evaluation, and `value_sets/_realization_inference.py`.
 - [ ] **D04 — Expose sampling configuration consistently.** Consider the same
   keyword controls across `P`, distribution sampling/statistics, and
@@ -225,10 +233,23 @@ and claiming an unsupported Python version.
   particular, B06, B08, B10–B12, and B15–B18 do not yet have complete
   persistent regression coverage. Keep the systematic test inventory current.
 
-Latest full library run (2026-10-05): **600 test methods; 578 pass and 22
-fail or error**, producing **14 failure reports and 37 error reports** when
+Latest full library run (2026-10-06): **646 test methods; 630 pass and 16
+fail or error**, producing **10 failure reports and 26 error reports** when
 subtests are counted. The explorer's **7 extractor tests pass**. See
 `docs/test_gap_inventory.md` for every failing method and its issue.
+
+Previous full run (2026-10-05): 600 methods; 578 passed and 22 failed or errored.
+The F02 update adds 12 tests and resolves the three parameter-policy methods.
+Normal's floating-only realization dtype also makes its previously failing
+power and two exponential/logarithm workflows pass; B21 itself remains open.
+The follow-up coverage adds 34 more tests for class parameter metadata,
+guarantee checks, mask delegation and agreement, shared graph evaluation,
+policy independence, integer/NaN boundaries, and analytical masked sampling.
+The 16 remaining failing methods match the pre-expansion list exactly; none
+are skipped or marked as expected failures. The distribution-development guide
+now includes complete worked code, the `_valid_parameter_sets` contract, and
+specific tests and commands. Its Gamma examples were verified in memory only;
+Gamma remains an unimplemented placeholder in the library.
 
 Recent verification confirms the covered native mixed numeric scenarios (B02),
 arithmetic underflow (B03), large integer category preservation (B07), CDF/PPF

@@ -1,4 +1,6 @@
 import unittest
+import warnings
+from types import SimpleNamespace
 from unittest.mock import Mock, patch, sentinel
 
 import numpy as np
@@ -13,7 +15,7 @@ from problab.distributions.base import (
 )
 from problab.random_variables.base import RandomVariable
 from problab.random_variables.nodes import _ConstantNode, _OperationNode
-from problab.value_sets.sets import REALS
+from problab.value_sets.sets import REALS, POSITIVE_REALS, UNKNOWN_VALUE_SET
 from problab.value_sets import HomogeneousNumericValueSet, ObjectValueSet
 import sympy as sp
 
@@ -58,6 +60,147 @@ class _StubDistribution(Distribution):
 
 
 class DistributionBaseTests(unittest.TestCase):
+
+    def test_parameterless_defaults_have_no_masks_and_guarantee_validity(self):
+        distribution = _StubDistribution()
+        self.assertEqual(distribution._validate_parameter_realizations(), {})
+        self.assertTrue(distribution._parameter_realizations_guaranteed_valid())
+
+    def test_parameter_guarantee_requires_known_numeric_domain_membership(self):
+        distribution = _StubDistribution()
+        distribution._valid_parameter_sets = {"scale": POSITIVE_REALS}
+        for support, expected in (
+            (HomogeneousNumericValueSet(sp.Interval(1, 2), (np.float64,)), True),
+            (HomogeneousNumericValueSet(sp.Interval(0, 2), (np.float64,)), False),
+            (UNKNOWN_VALUE_SET, False),
+            (ObjectValueSet((1,)), False),
+        ):
+            with self.subTest(support=support):
+                distribution._parameter_nodes = (SimpleNamespace(_realization_value_set=support),)
+                self.assertIs(distribution._parameter_realizations_guaranteed_valid(), expected)
+
+    def test_parameter_guarantee_checks_each_exceptional_permission_independently(self):
+        flags = ("allows_positive_infinity", "allows_negative_infinity", "allows_nan")
+        distribution = _StubDistribution()
+        for emitted in flags:
+            support = HomogeneousNumericValueSet(sp.S.Reals, (np.float64,), **{emitted: True})
+            distribution._parameter_nodes = (SimpleNamespace(_realization_value_set=support),)
+            for allowed in (None, *flags):
+                permission = {} if allowed is None else {allowed: True}
+                distribution._valid_parameter_sets = {
+                    "value": HomogeneousNumericValueSet(sp.S.Reals, (np.float64,), **permission),
+                }
+                with self.subTest(emitted=emitted, allowed=allowed):
+                    self.assertIs(distribution._parameter_realizations_guaranteed_valid(), emitted == allowed)
+
+    def test_parameter_guarantee_uses_mapping_order_and_rejects_missing_entries(self):
+        distribution = _StubDistribution(parameters=(-1., 2.))
+        distribution._valid_parameter_sets = {"mean": REALS, "scale": POSITIVE_REALS}
+        self.assertTrue(distribution._parameter_realizations_guaranteed_valid())
+        distribution._valid_parameter_sets = {"scale": POSITIVE_REALS, "mean": REALS}
+        self.assertFalse(distribution._parameter_realizations_guaranteed_valid())
+        distribution._valid_parameter_sets = {"mean": REALS}
+        with self.assertRaises(ValueError):
+            distribution._parameter_realizations_guaranteed_valid()
+
+    def masked_distribution(self, policy, masks, output):
+        count = len(next(iter(masks.values())))
+        distribution = _StubDistribution(parameters=(1., 2.))
+        arrays = (np.arange(count, dtype=float), np.arange(count, dtype=float) + 10)
+        for values in arrays:
+            values.flags.writeable = False
+        context = Mock(num_samples=count, rng=sentinel.rng, numerical_error_policy=policy)
+        context.evaluate.side_effect = arrays
+        distribution._validate_parameter_realizations = Mock(return_value=masks)
+        distribution._sample_delegate.return_value = output
+        return distribution, context, arrays
+
+    def test_evaluate_all_valid_masks_preserve_arrays_and_backend_result_identity(self):
+        expected = np.array([1, 2, 3], dtype=np.int16)
+        distribution, context, arrays = self.masked_distribution(
+            "raise", {"a": np.ones(3, dtype=bool), "b": np.ones(3, dtype=bool)}, expected,
+        )
+        result = distribution._evaluate(context)
+        self.assertIs(result, expected)
+        for actual, original in zip(distribution._sample_delegate.call_args.args, arrays):
+            self.assertIs(actual, original)
+        self.assertEqual(distribution._sample_delegate.call_args.kwargs, {"num_samples": 3, "rng": sentinel.rng})
+
+    def test_evaluate_combines_masks_without_mutating_shared_parameters_or_masks(self):
+        masks = {"a": np.array([True, False, True, True]), "b": np.array([True, True, False, True])}
+        for mask in masks.values():
+            mask.flags.writeable = False
+        for policy in ("warn", "ignore"):
+            for dtype in (np.float16, np.float32, np.float64):
+                with self.subTest(policy=policy, dtype=dtype):
+                    output = np.array([7, 8], dtype=dtype)
+                    distribution, context, arrays = self.masked_distribution(policy, masks, output)
+                    originals = tuple(array.copy() for array in arrays)
+                    with warnings.catch_warnings(record=True) as caught:
+                        warnings.simplefilter("always")
+                        result = distribution._evaluate(context)
+                    self.assertEqual(result.dtype, output.dtype)
+                    np.testing.assert_array_equal(result, [7, np.nan, np.nan, 8])
+                    self.assertEqual(len(caught), int(policy == "warn"))
+                    if caught:
+                        self.assertIs(caught[0].category, RuntimeWarning)
+                        self.assertIn("a, b", str(caught[0].message))
+                        self.assertIn("2 of 4", str(caught[0].message))
+                    distribution._sample_delegate.assert_called_once()
+                    for actual, original, before in zip(distribution._sample_delegate.call_args.args, arrays, originals):
+                        np.testing.assert_array_equal(actual, before[[0, 3]])
+                        np.testing.assert_array_equal(original, before)
+                    self.assertEqual(distribution._sample_delegate.call_args.kwargs, {"num_samples": 2, "rng": sentinel.rng})
+        np.testing.assert_array_equal(masks["a"], [True, False, True, True])
+        np.testing.assert_array_equal(masks["b"], [True, True, False, True])
+
+    def test_evaluate_raise_reports_parameter_names_and_count_before_backend(self):
+        distribution, context, _ = self.masked_distribution(
+            "raise", {"first": np.array([False, True]), "second": np.array([True, False])}, None,
+        )
+        with self.assertRaisesRegex(ValueError, "Stub.*first, second.*2 of 2"):
+            distribution._evaluate(context)
+        distribution._sample_delegate.assert_not_called()
+
+    def test_evaluate_all_invalid_returns_float64_nan_without_backend(self):
+        for policy in ("warn", "ignore"):
+            with self.subTest(policy=policy):
+                distribution, context, _ = self.masked_distribution(policy, {"a": np.zeros(2, dtype=bool)}, None)
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    samples = distribution._evaluate(context)
+                self.assertEqual(samples.dtype, np.dtype(np.float64))
+                np.testing.assert_array_equal(samples, [np.nan, np.nan])
+                self.assertEqual(len(caught), int(policy == "warn"))
+                distribution._sample_delegate.assert_not_called()
+
+    def test_evaluate_integer_nan_storage_preserves_exact_boundary_values(self):
+        cases = (
+            (np.array([0, 127], dtype=np.int8), np.float64),
+            (np.array([-(2**53), 2**53], dtype=np.int64), np.float64),
+            (np.array([0, 2**53], dtype=np.uint64), np.float64),
+            (np.array([-(2**53) - 1, 1], dtype=np.int64), object),
+            (np.array([2**53 + 1, np.iinfo(np.int64).max], dtype=np.int64), object),
+            (np.array([2**53 + 1, np.iinfo(np.uint64).max], dtype=np.uint64), object),
+        )
+        for output, expected_dtype in cases:
+            with self.subTest(output=output):
+                distribution, context, _ = self.masked_distribution("ignore", {"a": np.array([True, False, True])}, output)
+                result = distribution._evaluate(context)
+                self.assertEqual(result.dtype, np.dtype(expected_dtype))
+                self.assertEqual(int(result[0]), int(output[0]))
+                self.assertEqual(int(result[2]), int(output[1]))
+                self.assertTrue(np.isnan(result[1]))
+
+    def test_evaluate_does_not_hide_unrelated_backend_errors(self):
+        for mask in (np.array([True, True]), np.array([True, False])):
+            with self.subTest(mask=mask):
+                distribution, context, _ = self.masked_distribution("ignore", {"a": mask}, None)
+                error = RuntimeError("unrelated backend failure")
+                distribution._sample_delegate.side_effect = error
+                with self.assertRaises(RuntimeError) as caught:
+                    distribution._evaluate(context)
+                self.assertIs(caught.exception, error)
 
     def test_cdf_and_ppf_reject_nonreal_support_before_exact_or_sampling_paths(self):
         class Unsupported(_StubDistribution):

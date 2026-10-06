@@ -1,22 +1,22 @@
 # Test gap inventory
 
-Updated 2026-10-05 after reviewing all changes since commit `8de9839`.
+Updated 2026-10-06 after completing runtime distribution-parameter handling (F02).
 
 ## Latest verification
 
-The library suite runs **600 test methods: 578 pass and 22 fail or error**.
-Unittest reports **14 failures and 37 errors**, because several methods report
+The library suite runs **646 test methods: 630 pass and 16 fail or error**.
+Unittest reports **10 failures and 26 errors**, because several methods report
 more than one failing subtest. No tests are skipped or marked as expected
 failures. The library explorer has **7 additional passing extractor tests**.
 
 | Test category | Methods | Passing | Failing methods |
 | --- | ---: | ---: | ---: |
-| `api_tests` | 25 | 20 | 5 |
-| `integration_tests` | 19 | 18 | 1 |
-| `property_tests` | 10 | 10 | 0 |
-| `regression_tests` | 48 | 40 | 8 |
-| `statistical_tests` | 39 | 35 | 4 |
-| `unit_tests` | 459 | 455 | 4 |
+| `api_tests` | 27 | 22 | 5 |
+| `integration_tests` | 25 | 25 | 0 |
+| `property_tests` | 11 | 11 | 0 |
+| `regression_tests` | 55 | 50 | 5 |
+| `statistical_tests` | 40 | 38 | 2 |
+| `unit_tests` | 488 | 484 | 4 |
 
 ## Remaining failures
 
@@ -26,14 +26,22 @@ failures. The library explorer has **7 additional passing extractor tests**.
 | **B04:** the former third positional sampling argument is interpreted as graph size instead of validation | `tests/regression_tests/test_audit_edge_cases.py` |
 | **B05:** Normal parameters reject Python and NumPy booleans with different exception types | `tests/regression_tests/test_audit_edge_cases.py` |
 | **B13:** integer-valued categorical floats still use raw SymPy Float support, blocking integer count parameters and real-power inference | `tests/regression_tests/test_categorical_numeric_support.py` |
-| **B21:** numeric dtype candidates include timedeltas, fail on some valid numeric loops, and omit longdouble on this Windows environment | `tests/unit_tests/value_sets/_inference.py`, `tests/unit_tests/value_sets/_mathematical_inference.py`, `tests/integration_tests/power.py`, affected statistical workflows |
+| **B21:** numeric dtype candidates include timedeltas, fail on some valid numeric loops, and omit longdouble on this Windows environment | `tests/unit_tests/value_sets/_inference.py`, `tests/unit_tests/value_sets/_mathematical_inference.py`, affected Binomial statistical workflows |
 | **B22:** exceptional-value flags are not validated when `dtype_types=None` | `tests/unit_tests/value_sets/homogeneous_numeric_value_set.py` |
-| **F02:** sampling does not yet consistently reject invalid parameter realizations under raise or warn/return NaN under warn/ignore, and distribution realization support does not describe those NaN outputs | `tests/regression_tests/test_parameter_realization_policy.py` |
 
-These tests express intended behavior. They remain active; the library source
-was not changed during this test update. The parameter-realization tests cover
-Normal mean/std, Binomial n/p, and Poisson mu, with invalid values in only one
-sample position so valid positions must still be sampled.
+These remaining tests express intended behavior and remain active.
+
+The 2026-10-05 baseline was 600 methods, with 578 passing and 22 failing.
+F02 now passes for Normal mean/std, Binomial n/p, and Poisson mu. New checks
+cover all-invalid batches, backend filtering, combined masks, exact integer
+storage, finite backend limits, and unchanged all-valid sampling. Normal's
+floating-only realization dtype also resolves its power integration test and
+two exponential/logarithm workflows; the general B21 inference defect remains.
+The follow-up suite adds 34 passing tests, including direct tests of class
+parameter domains and guarantee checks, numeric mask/value-set agreement,
+shared-node sampling, independent policy controls, storage boundaries, and
+analytical probabilities at valid positions. Every failing method below is
+unchanged by that coverage expansion.
 
 ### Every failing test method
 
@@ -42,19 +50,13 @@ sample position so valid positions must still be sampled.
 - `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_ppf_matches_analytical_median`
 - `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_standard_deviation_matches_square_root_of_variance`
 - `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_variance_matches_analytical_variance`
-- `integration_tests.power.RandomVariablePowerIntegrationTests.test_real_power_uses_real_samples`
 - `regression_tests.test_audit_edge_cases.AuditEdgeCaseTests.test_normal_rejects_python_and_numpy_booleans_with_type_error`
 - `regression_tests.test_audit_edge_cases.AuditEdgeCaseTests.test_sample_third_positional_argument_still_means_validate`
 - `regression_tests.test_categorical_numeric_support.CategoricalNumericSupportRegressionTests.test_integer_valued_categorical_exponent_keeps_real_square_support`
 - `regression_tests.test_categorical_numeric_support.CategoricalNumericSupportRegressionTests.test_integer_valued_float_categories_declare_integer_mathematical_support`
 - `regression_tests.test_categorical_numeric_support.CategoricalNumericSupportRegressionTests.test_integer_valued_float_category_can_be_a_binomial_trial_count`
-- `regression_tests.test_parameter_realization_policy.ParameterRealizationPolicyRegressionTests.test_ignore_policy_marks_only_invalid_positions_nan_without_warning`
-- `regression_tests.test_parameter_realization_policy.ParameterRealizationPolicyRegressionTests.test_raise_policy_rejects_invalid_realized_parameters_with_informative_error`
-- `regression_tests.test_parameter_realization_policy.ParameterRealizationPolicyRegressionTests.test_warn_policy_warns_and_marks_only_invalid_positions_nan`
 - `statistical_tests.test_analytical_workflows.AnalyticalWorkflowStatisticalTests.test_affine_transform_of_binomial_matches_original_tail_probability`
-- `statistical_tests.test_analytical_workflows.AnalyticalWorkflowStatisticalTests.test_exponential_transform_of_normal_matches_analytical_cdf`
 - `statistical_tests.test_analytical_workflows.AnalyticalWorkflowStatisticalTests.test_sum_of_independent_binomials_matches_finite_convolution`
-- `statistical_tests.test_derived_functions.DerivedFunctionStatisticalTests.test_log_of_exponential_normal_matches_original_normal_tail`
 - `unit_tests.value_sets._inference.SharedInferenceTests.test_numeric_families_exclude_datetime_and_timedelta_storage`
 - `unit_tests.value_sets._inference.SharedInferenceTests.test_real_numeric_families_can_resolve_exponential_output_dtypes`
 - `unit_tests.value_sets._mathematical_inference.MathematicalValueSetInferenceTests.test_float_families_include_extended_precision`

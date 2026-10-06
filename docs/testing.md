@@ -148,7 +148,7 @@ Run all currently registered test folders:
 .\.venv\Scripts\python.exe -B -m unittest discover -s tests -v
 ```
 
-The 2026-10-05 run contains 600 test methods: 578 pass and 22 fail or error.
+The 2026-10-06 run contains 646 test methods: 630 pass and 16 fail or error.
 Several methods report multiple failing subtests. This command currently exits
 with failures from known, unfixed bugs. See
 `docs/audit_todo.md` for the current count and `docs/test_gap_inventory.md` for

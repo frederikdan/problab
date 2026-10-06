@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import TypeVar, Any, ClassVar
 import numpy as np
@@ -22,7 +23,7 @@ from problab.validation._common import _validate_q, _validate_alpha, _validate_n
 from problab.validation._decorator import _validate_parameters
 from problab.validation.distributions._base import _validate_cdf_input, _validate_ppf_input, _validate_quantile_method
 from problab.value_sets._utils import is_known_subset
-from problab.value_sets.base import ValueSet
+from problab.value_sets.base import ValueSet, NumericValueSet
 from problab.value_sets.sets import REALS
 
 T = TypeVar('T')
@@ -37,6 +38,7 @@ class Mode(Enum):
 class Distribution(ABC):
 
     symbol: ClassVar[str] = DEF_DISTRIBUTION_SYMBOL_NAME
+    _valid_parameter_sets: ClassVar[dict[str, NumericValueSet]] = {}
 
     @property
     @abstractmethod
@@ -69,14 +71,104 @@ class Distribution(ABC):
 
         return context.evaluate(root)
 
-    def _evaluate(self, context: _RealizationContext) -> np.ndarray:
-        parameter_values = tuple(context.evaluate(parameter) for parameter in self._parameter_nodes)
 
-        return self._sample(
-            *parameter_values,
-            num_samples=context.num_samples,
+    def _parameter_realizations_guaranteed_valid(self) -> bool:
+        for node, valid_set in zip(
+                self._parameter_nodes,
+                self._valid_parameter_sets.values(),
+                strict=True,
+        ):
+            realization_set = node._realization_value_set
+
+            if (
+                    not isinstance(realization_set, NumericValueSet)
+                    or not is_known_subset(realization_set, valid_set)
+                    or (
+                    realization_set.allows_positive_infinity
+                    and not valid_set.allows_positive_infinity
+            )
+                    or (
+                    realization_set.allows_negative_infinity
+                    and not valid_set.allows_negative_infinity
+            )
+                    or (
+                    realization_set.allows_nan
+                    and not valid_set.allows_nan
+            )
+            ):
+                return False
+
+        return True
+
+
+    def _evaluate(self, context: _RealizationContext) -> np.ndarray:
+        # Realize parameters together through the existing context.
+        parameter_values = tuple(
+            context.evaluate(parameter)
+            for parameter in self._parameter_nodes
+        )
+
+        parameter_masks = self._validate_parameter_realizations(
+            *parameter_values
+        )
+
+        # A sample position is valid only if every parameter is valid.
+        valid = np.ones(context.num_samples, dtype=bool)
+        invalid_parameters = []
+
+        for name, mask in parameter_masks.items():
+            valid &= mask
+
+            if not np.all(mask):
+                invalid_parameters.append(name)
+
+        # Preserve the ordinary sampling path when everything is valid.
+        if np.all(valid):
+            return self._sample(
+                *parameter_values,
+                num_samples=context.num_samples,
+                rng=context.rng,
+            )
+
+        num_invalid = int(np.count_nonzero(~valid))
+
+        message = (
+            f"{self.symbol}: invalid realized values for parameter(s) "
+            f"{', '.join(invalid_parameters)} "
+            f"at {num_invalid} of {context.num_samples} sample positions."
+        )
+
+        # Under raise, stop before calling the sampling backend.
+        if context.numerical_error_policy == "raise":
+            raise ValueError(message)
+
+        if context.numerical_error_policy == "warn":
+            warnings.warn(message, RuntimeWarning, stacklevel=3)
+
+        # No backend call is needed if every position is invalid.
+        if not np.any(valid):
+            return np.full(context.num_samples, np.nan)
+
+        # Filter every parameter with the same mask.
+        valid_samples = self._sample(
+            *(values[valid] for values in parameter_values),
+            num_samples=context.num_samples - num_invalid,
             rng=context.rng,
         )
+
+        # Restore original positions, filling invalid positions with NaN.
+        dtype = valid_samples.dtype
+        if dtype.kind in "iu":
+            dtype = np.float64
+            if np.any(valid_samples > 2**53) or (
+                valid_samples.dtype.kind == "i" and np.any(valid_samples < -(2**53))
+            ):
+                dtype = object
+
+        samples = np.full(valid.shape, np.nan, dtype=dtype)
+        samples[valid] = valid_samples
+
+        return samples
 
     @abstractmethod
     def _sample(self,
@@ -163,6 +255,12 @@ class Distribution(ABC):
             q=q,
             alpha=alpha,
         )
+
+    def _validate_parameter_realizations(
+            self,
+            *parameters: np.ndarray,
+    ) -> dict[str, np.ndarray]:
+        return {}
 
     def _monte_carlo(self,
                      operation: _Operation,
@@ -411,4 +509,3 @@ class _DiscreteDistribution(Distribution):
     @abstractmethod
     def pmf(self, x: Real | np.ndarray) -> float | np.ndarray:
         ...
-
