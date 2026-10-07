@@ -19,6 +19,9 @@ def _validate_normal_mean(
 ) -> None:
     from problab.random_variables.base import RandomVariable
 
+    if isinstance(value, (bool, np.bool_)):
+        raise TypeError("'mean' must be a RandomVariable or a real number, not a boolean.")
+
     valid_set = instance._valid_parameter_sets["mean"]
 
     if isinstance(value, RandomVariable):
@@ -53,6 +56,9 @@ def _validate_normal_std(
     parameter_risk_policy: Literal["warn", "raise", "ignore"],
 ) -> None:
     from problab.random_variables.base import RandomVariable
+
+    if isinstance(value, (bool, np.bool_)):
+        raise TypeError("'std' must be a RandomVariable or a real number, not a boolean.")
 
     valid_set = instance._valid_parameter_sets["std"]
 

@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from numbers import Real
 
+import numpy as np
 import sympy as sp
 
 from problab.distributions.base import Distribution
@@ -18,6 +19,9 @@ def _validate_name(value: str | None) -> None:
 
 
 def _validate_interval_bound(value: Real) -> None:
+    if isinstance(value, (bool, np.bool_)):
+        raise TypeError("Interval bounds must be real numbers, not booleans.")
+
     if not isinstance(value, Real):
         raise TypeError("Interval bounds must be real numbers.")
 
