@@ -5,8 +5,8 @@ from typing import Any
 import numpy as np
 import sympy as sp
 from numpy.typing import NDArray
-from fractions import Fraction
 
+from problab._utils import _conversion_preserves_values
 from problab.value_sets._utils import _to_sympy_value
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets.mixed_numeric_value_set import MixedNumericValueSet
@@ -114,61 +114,6 @@ def _merge_equal_categories(
         tuple(merged_categories),
         tuple(merged_probabilities),
     )
-
-
-def _conversion_preserves_values(
-    categories: tuple[Any, ...],
-    converted: NDArray[Any],
-) -> bool:
-
-    def _exact_real_value(value) -> Fraction:
-        if isinstance(value, (int, np.integer)):
-            return Fraction(int(value))
-
-        if isinstance(value, (float, np.floating)):
-            return Fraction(*value.as_integer_ratio())
-
-        return Fraction(value)
-
-    def _real_values_equal(original, result) -> bool:
-        if isinstance(original, (float, np.floating)):
-            if np.isnan(original):
-                return (
-                    isinstance(result, (float, np.floating))
-                    and bool(np.isnan(result))
-                )
-
-            if np.isinf(original):
-                return bool(original == result)
-
-        return _exact_real_value(original) == _exact_real_value(result)
-
-    def _numeric_values_equal(original, result) -> bool:
-        if isinstance(original, (complex, np.complexfloating)):
-            original_real, original_imag = original.real, original.imag
-        else:
-            original_real, original_imag = original, 0
-
-        if isinstance(result, (complex, np.complexfloating)):
-            result_real, result_imag = result.real, result.imag
-        else:
-            result_real, result_imag = result, 0
-
-        return (
-            _real_values_equal(original_real, result_real)
-            and _real_values_equal(original_imag, result_imag)
-        )
-
-    if converted.shape != (len(categories),):
-        return False
-
-    try:
-        return all(
-            _numeric_values_equal(original, result)
-            for original, result in zip(categories, converted)
-        )
-    except (TypeError, ValueError, OverflowError):
-        return False
 
 
 def _attempt_make_categories_numeric(categories: tuple[Any, ...],
