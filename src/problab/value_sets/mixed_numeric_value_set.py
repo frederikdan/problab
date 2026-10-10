@@ -1,4 +1,6 @@
 import dataclasses
+from decimal import Decimal
+from numbers import Number
 from typing import Any
 
 import numpy as np
@@ -19,6 +21,12 @@ class MixedNumericValueSet(NumericValueSet):
 
         if not self.values:
             raise ValueError("'values' must contain at least one value.")
+
+        if not all(
+                isinstance(value, (bool, np.bool_, Number, Decimal))
+                for value in self.values
+        ):
+            raise TypeError("'values' must contain only numeric or Boolean values.")
 
     @property
     def dtype_types(self) -> None:

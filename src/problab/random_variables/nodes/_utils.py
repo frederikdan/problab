@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal
+from numbers import Number
 from typing import TYPE_CHECKING, Any, TypeGuard
 
 import numpy as np
@@ -23,10 +25,8 @@ if TYPE_CHECKING:
 
 
 def _constant_array(value: Any) -> np.ndarray:
-    array = np.asarray(value)
-
-    if array.ndim == 0:
-        return array
+    if isinstance(value, (bool, np.bool_, Number, Decimal)):
+        return np.asarray(value)
 
     atomic_array = np.empty((), dtype=object)
     atomic_array[()] = value
@@ -34,6 +34,9 @@ def _constant_array(value: Any) -> np.ndarray:
 
 
 def _constant_value_set(value: Any, array: np.ndarray) -> ValueSet:
+    if not isinstance(value, (bool, np.bool_, Number, Decimal)):
+        return ObjectValueSet(objects=(value,))
+
     try:
         sympy_set = sp.FiniteSet(_to_sympy_value(value))
     except (AttributeError, TypeError, ValueError, NotImplementedError):

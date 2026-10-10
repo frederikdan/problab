@@ -1,3 +1,5 @@
+from decimal import Decimal
+from numbers import Number
 from typing import Any
 
 import numpy as np
@@ -10,6 +12,9 @@ from problab.value_sets._unknown import _UnknownValueSet
 
 
 def _to_sympy_value(value: Any) -> sp.Basic:
+    if not isinstance(value, (bool, np.bool_, Number, Decimal)):
+        raise TypeError("Only numeric and Boolean values can be converted.")
+
     try:
         if (
             isinstance(value, (float, np.floating))
