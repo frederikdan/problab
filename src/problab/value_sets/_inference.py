@@ -18,19 +18,34 @@ def _input_dtype_candidates(
     inputs: tuple[ValueSet, ...],
 ) -> tuple[tuple[np.dtype, ...], ...] | None:
     input_dtypes = []
+
     for value_set in inputs:
         if value_set.dtype_types is None:
             return None
 
         candidates = []
+
         for allowed in value_set.dtype_types:
-            matches = [dtype for dtype in _BUILTIN_DTYPES if np.issubdtype(dtype, allowed)]
+            matches = [
+                dtype
+                for dtype in _BUILTIN_DTYPES
+                if dtype.kind in "biufcO"
+                and np.issubdtype(dtype, allowed)
+            ]
+
             if not matches:
                 return None
+
             candidates.extend(matches)
+
         if not candidates:
             return None
-        input_dtypes.append(tuple(dict.fromkeys(candidates)))
+
+        unique_candidates = {
+            dtype.type: dtype
+            for dtype in candidates
+        }
+        input_dtypes.append(tuple(unique_candidates.values()))
 
     return tuple(input_dtypes)
 
