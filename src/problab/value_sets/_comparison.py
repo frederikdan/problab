@@ -8,6 +8,9 @@ def _objects_equal(left: Any, right: Any) -> bool:
     # to be aware that the broad exception handling here is intentional.
 
     try:
+        if isinstance(left, np.ndarray) or isinstance(right, np.ndarray):
+            return bool(np.array_equal(left, right))
+
         result = left == right
     except Exception:
         return False
