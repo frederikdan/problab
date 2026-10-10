@@ -114,9 +114,26 @@ def _multiply(x, y):
 
 
 def _modulo(x, y):
-    result = np.mod(x, y)
+    result = np.asarray(np.mod(x, y))
+    zero_divisors = np.broadcast_to(np.equal(y, 0), result.shape)
 
-    return np.where(y == 0, np.nan, result)
+    if not np.any(zero_divisors):
+        return result
+
+    if result.dtype.kind in "iu":
+        dtype = np.float64
+
+        if np.any(result > 2**53) or (
+            result.dtype.kind == "i"
+            and np.any(result < -(2**53))
+        ):
+            dtype = object
+
+        result = result.astype(dtype)
+
+    result[zero_divisors] = np.nan
+    return result
+
 
 def _power(x, y, allow_complex: bool = True):
     x = np.asarray(x)

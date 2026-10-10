@@ -334,24 +334,80 @@ def _infer_floor_divide_value_set(numerator_set: NumericValueSet, denominator_se
     return mathematical._infer_floor_divide_value_set(numerator_set, denominator_set)
 
 
-def _infer_modulo_value_set(dividend_set: NumericValueSet, divisor_set: NumericValueSet) -> NumericValueSet:
+def _infer_modulo_value_set(
+    dividend_set: NumericValueSet,
+    divisor_set: NumericValueSet,
+) -> NumericValueSet:
     result = mathematical._infer_modulo_value_set(dividend_set, divisor_set)
-    dtype_types = _infer_dtype_types(np.remainder, (dividend_set, divisor_set))
-    if dtype_types is not None:
-        dtype_types = tuple(dict.fromkeys(
-            np.result_type(np.empty(0, dtype=dtype_type), np.nan).type
-            for dtype_type in dtype_types
-        ))
+    sympy_set = result.sympy_set
+    zero_divisor_possible = _may_contain_zero(divisor_set)
+
+    if (
+        isinstance(sympy_set, _UnknownValueSet)
+        and is_known_subset(dividend_set, REALS)
+        and is_known_subset(divisor_set, REALS)
+    ):
+        if (
+            is_known_subset(dividend_set, INTEGERS)
+            and is_known_subset(divisor_set, INTEGERS)
+        ):
+            sympy_set = INTEGERS.sympy_set
+        else:
+            sympy_set = REALS.sympy_set
+
+    dtype_types = _infer_dtype_types(
+        np.remainder,
+        (dividend_set, divisor_set),
+    )
+
+    if dtype_types is not None and zero_divisor_possible:
+        integer_types = [
+            dtype
+            for dtype in dtype_types
+            if np.dtype(dtype).kind in "iu"
+        ]
+
+        if integer_types:
+            dtype_types = tuple(
+                dict.fromkeys((*dtype_types, np.float64))
+            )
+
+            can_store_large_integers = any(
+                np.iinfo(dtype).min < -(2**53)
+                or np.iinfo(dtype).max > 2**53
+                for dtype in integer_types
+            )
+
+            safe_divisors = sp.Interval(
+                -(2**53 + 1),
+                2**53 + 1,
+            )
+
+            if (
+                can_store_large_integers
+                and not is_known_subset(divisor_set, safe_divisors)
+            ):
+                dtype_types = tuple(
+                    dict.fromkeys((*dtype_types, np.object_))
+                )
 
     return HomogeneousNumericValueSet(
-        sympy_set=result.sympy_set,
+        sympy_set=sympy_set,
         dtype_types=dtype_types,
-        allows_positive_infinity=divisor_set.allows_positive_infinity and _may_be_negative(dividend_set),
-        allows_negative_infinity=divisor_set.allows_negative_infinity and _may_be_positive(dividend_set),
+        allows_positive_infinity=(
+            divisor_set.allows_positive_infinity
+            and _may_be_negative(dividend_set)
+        ),
+        allows_negative_infinity=(
+            divisor_set.allows_negative_infinity
+            and _may_be_positive(dividend_set)
+        ),
         allows_nan=(
-            dividend_set.allows_nan or divisor_set.allows_nan
-            or dividend_set.allows_positive_infinity or dividend_set.allows_negative_infinity
-            or _may_contain_zero(divisor_set)
+            zero_divisor_possible
+            or dividend_set.allows_nan
+            or divisor_set.allows_nan
+            or dividend_set.allows_positive_infinity
+            or dividend_set.allows_negative_infinity
         ),
     )
 
