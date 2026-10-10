@@ -1,8 +1,52 @@
 # Test gap inventory
 
-Updated 2026-10-06 after completing runtime distribution-parameter handling (F02).
+Updated 2026-10-10 after the numeric, object, sampling, and partial Fraction work.
 
-## Latest verification
+## Latest full verification (2026-10-10)
+
+The library suite runs **659 test methods: 654 pass and 5 error**. The five
+methods are the exact-distribution tests listed below; their four distribution
+subtests produce **20 error reports**, all from the unimplemented F01 hooks.
+There are no failure reports, skipped tests, or expected failures. The library
+explorer's **7 extractor tests pass** when run with normal temporary-directory
+access; the sandbox-only attempt was blocked by filesystem permissions.
+
+| Test category | Methods | Passing | Failing methods |
+| --- | ---: | ---: | ---: |
+| `api_tests` | 27 | 22 | 5 |
+| `integration_tests` | 25 | 25 | 0 |
+| `property_tests` | 11 | 11 | 0 |
+| `regression_tests` | 63 | 63 | 0 |
+| `statistical_tests` | 40 | 40 | 0 |
+| `unit_tests` | 493 | 493 | 0 |
+
+The currently failing methods are:
+
+- `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_cdf_matches_analytical_probability`
+- `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_mean_matches_analytical_mean`
+- `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_ppf_matches_analytical_median`
+- `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_standard_deviation_matches_square_root_of_variance`
+- `api_tests.exact_distribution_methods.ExactDistributionMethodTests.test_exact_variance_matches_analytical_variance`
+
+The previously failing B04, B05, B13, B21, and B22 methods now pass. Their
+historical entries below are retained. B16 remains open: scalar Fraction inputs
+are supported, while the reviewed array helper is not yet integrated into
+numerical entry points or Fraction-valued random-input support inference.
+
+## Focused follow-up: Fraction scalar inputs (2026-10-10)
+
+B16 now has eight public regression tests in
+`tests/regression_tests/test_fraction_scalar_inputs.py`. All eight pass, along
+with the affected unit suites: **139 focused methods passed**. This verifies
+categorical probabilities, scalar CDF/PPF inputs, q/alpha conversions, interval
+calculations, and ProbabilityResult consistency checks. Fraction arrays and
+Fraction-valued random inputs remain unfinished. A subsequent helper-only step
+adds five array-conversion unit tests; all 44 focused utility/categorical methods
+pass. The array helper preserves shape, source arrays, and other large integers,
+but is not yet integrated into numerical entry points. The library now contains
+659 test methods. The full run above subsequently verified the combined changes.
+
+## Previous full verification (2026-10-06)
 
 The library suite runs **646 test methods: 630 pass and 16 fail or error**.
 Unittest reports **10 failures and 26 errors**, because several methods report
@@ -18,7 +62,7 @@ failures. The library explorer has **7 additional passing extractor tests**.
 | `statistical_tests` | 40 | 38 | 2 |
 | `unit_tests` | 488 | 484 | 4 |
 
-## Remaining failures
+## Failures recorded on 2026-10-06
 
 | Issue | Test location |
 | --- | --- |

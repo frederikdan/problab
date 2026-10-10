@@ -148,13 +148,14 @@ Run all currently registered test folders:
 .\.venv\Scripts\python.exe -B -m unittest discover -s tests -v
 ```
 
-The 2026-10-06 run contains 646 test methods: 630 pass and 16 fail or error.
-Several methods report multiple failing subtests. This command currently exits
-with failures from known, unfixed bugs. See
+The 2026-10-10 run contains 659 test methods: 654 pass and 5 error. All five
+erroring methods exercise the unimplemented exact-distribution hooks (F01),
+producing 20 error reports across their distribution subtests. This command
+currently exits with those known errors. See
 `docs/audit_todo.md` for the current count and `docs/test_gap_inventory.md` for
-the issues those tests expose. Tests for deferred exact calculations and the
-confirmed follow-up defects remain deliberately active until those behaviors
-are corrected. Public sampling-control tests now pass.
+the issues those tests expose. Tests for deferred exact calculations remain
+active until those behaviors are implemented. Fraction scalar regressions and
+array-helper unit tests pass; Fraction-array integration remains incomplete.
 
 Run all unit tests:
 

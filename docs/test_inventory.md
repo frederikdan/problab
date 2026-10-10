@@ -1,6 +1,6 @@
 # ProbLab test inventory
 
-Updated 2026-10-06. This inventory lists all 653 test methods: 646 in the
+Updated 2026-10-10. This inventory lists all 666 test methods: 659 in the
 library test suite and 7 in the library explorer. Each entry gives the test
 class and function name, followed by what it checks. A method using `subTest`
 counts once here even when it exercises many cases.
@@ -34,6 +34,11 @@ Known failing tests remain in this list. See
 
 ### `tests/unit_tests/_utils.py`
 
+- `NumericalUtilityTests.test_fraction_array_conversion_reuses_arrays_without_fractions` — Checks native arrays and object arrays without fractions return unchanged, including empty arrays.
+- `NumericalUtilityTests.test_fraction_array_conversion_preserves_shape_and_readonly_source` — Checks rounded Fraction arrays preserve scalar/vector/matrix shape and never modify read-only inputs.
+- `NumericalUtilityTests.test_fraction_array_conversion_retains_large_integers_in_object_storage` — Checks Fraction conversion does not round other large integer entries.
+- `NumericalUtilityTests.test_fraction_array_conversion_preserves_nonnumeric_objects` — Checks nonnumeric elements retain their identity alongside converted Fraction elements.
+- `NumericalUtilityTests.test_fraction_array_conversion_matches_scalar_underflow_and_overflow` — Checks tiny fractions round to zero and excessive fractions raise without changing source arrays.
 - `NumericalUtilityTests.test_is_close_accepts_exact_and_within_tolerance_values` — Checks that the shared numeric comparison accepts exact and configured-close values.
 - `NumericalUtilityTests.test_is_close_rejects_nan_and_values_outside_tolerance` — Checks that the shared numeric comparison rejects NaN and materially different values.
 
@@ -841,6 +846,17 @@ Known failing tests remain in this list. See
 
 - `FloatBoundaryValidationRegressionTests.test_tanh_rounding_to_one_remains_valid` — Checks that `tanh` rounding to exactly one does not contradict its declared support during validation.
 - `FloatBoundaryValidationRegressionTests.test_exponential_underflow_to_zero_remains_valid` — Checks that exponential underflow to exactly zero does not contradict its declared support during validation.
+
+### `tests/regression_tests/test_fraction_scalar_inputs.py`
+
+- `FractionScalarInputRegressionTests.test_categorical_fraction_probabilities_merge_and_sample_as_floats` — Checks fraction probabilities are converted before merging and produce the same seeded samples as float probabilities.
+- `FractionScalarInputRegressionTests.test_categorical_rejects_negative_fraction_even_when_it_rounds_to_zero` — Checks tiny negative probabilities and incorrect fractional totals remain invalid.
+- `FractionScalarInputRegressionTests.test_scalar_fraction_cdf_and_ppf_match_float_arguments` — Checks scalar Fraction CDF/PPF inputs match their floating approximations, including valid endpoints.
+- `FractionScalarInputRegressionTests.test_ppf_rejects_out_of_range_fractions_that_round_to_valid_endpoints` — Checks conversion cannot hide originally invalid PPF probabilities.
+- `FractionScalarInputRegressionTests.test_random_variable_interval_accepts_fraction_alpha` — Checks interval calculations accept Fraction alpha and match float calculations.
+- `FractionScalarInputRegressionTests.test_quantile_intervals_accept_fraction_q_and_alpha_through_both_public_paths` — Checks distribution and random-variable quantile intervals accept Fraction q/alpha.
+- `FractionScalarInputRegressionTests.test_probability_result_accepts_fraction_value_and_confidence_level` — Checks Fraction result values retain count consistency checks and Fraction alpha works in confidence intervals.
+- `FractionScalarInputRegressionTests.test_open_probability_parameters_reject_fractions_rounding_to_endpoints` — Checks strict probability arguments reject fractions whose float approximations are zero or one.
 
 ### `tests/regression_tests/test_graph_labels.py`
 

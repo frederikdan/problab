@@ -29,16 +29,25 @@ not exhaustively exercised in a browser.
   power two, returns zero but fails `validate=True`. Give machine-support
   inference its own boundary rules for multiplication, division, and powers.
   Source: `value_sets/_inference.py`, used by `random_variables/base.py`.
-- [ ] **B04 — Preserve the former positional sampling argument.**
+- [x] **B04 — Preserve the former positional sampling argument.**
   `sample(1, rng, True)` currently interprets `True` as `max_graph_size`.
   Restore the former `validate` position or explicitly decide to change that
   contract and update its regression test. Source: `RandomVariable.sample()`.
-- [ ] **B05 — Reject boolean numeric parameters consistently.**
+  Completed 2026-10-07: `validate` is again the third positional argument;
+  `max_graph_size` and `numerical_error_policy` are keyword-only. All 45
+  RandomVariable unit, public-contract, and focused sampling regression tests
+  pass. A scan of Python callers found no calls with more than three positional
+  sample arguments. The full suite was not rerun.
+- [x] **B05 — Reject boolean numeric parameters consistently.**
   Normal parameters reject Python booleans with `ValueError` and NumPy booleans
   with `TypeError`. Interval-bound validation also accepts Python booleans but
   rejects NumPy booleans. Apply explicit boolean rejection consistently in
   `validation/distributions/continuous/_normal.py` and
   `validation/random_variables/_base.py`.
+  Completed 2026-10-07: added explicit Python/NumPy Boolean rejection to
+  Normal mean/std and interval-bound validation. All 52 focused existing tests
+  and 28 direct Boolean-rejection checks pass. No other validation behavior
+  was changed; the full suite was not rerun.
 
 ## Additional confirmed defects
 
@@ -46,7 +55,7 @@ The most urgent new findings are B06–B09 and B19: executing labels, silently
 changing values/results, returning probabilities outside the intended domain,
 and claiming an unsupported Python version.
 
-- [ ] **B06 — Never evaluate string labels as Python/SymPy expressions.**
+- [x] **B06 — Never evaluate string labels as Python/SymPy expressions.**
   `_constant_value_set()` sends arbitrary equality operands through
   `_to_sympy_value()` and `sp.sympify()`. Constructing `X == label` can execute
   code contained in that label; a harmless probe appended a marker to a list
@@ -54,35 +63,57 @@ and claiming an unsupported Python version.
   and validate inputs to public numeric value sets before sympifying them.
   Sources: `random_variables/nodes/_utils.py`, `value_sets/_utils.py`, and
   `value_sets/mixed_numeric_value_set.py`.
+  Completed 2026-10-10: nonnumeric constants bypass symbolic conversion;
+  the shared converter and mixed numeric constructor reject nonnumeric inputs.
+  All 38 focused existing tests pass. Direct checks for six text/byte labels
+  confirm that symbolic conversion is never called on those paths. Text-label
+  array storage remains a separate issue (B10). The full suite was not rerun.
 - [ ] **B07 — Preserve large integer category values exactly.**
   `CategoricalDistribution([2**63 - 1, 2**63], [1.0, 0.0]).sample()` returns
   the second value after both categories are converted to `float64`; even
   realization validation passes. Check that dtype selection is lossless and
   fall back to mixed numeric storage when necessary. Source:
   `distributions/discrete/helpers/_categorical.py::_infer_categorical_configuration`.
-- [ ] **B08 — Avoid unconditional float conversion in integer modulo.**
+- [x] **B08 — Avoid unconditional float conversion in integer modulo.**
   For deterministic `X = 2**60 + 1`, `X % (2**61)` returns a float representing
   `2**60`, losing one. `_modulo()` uses `np.where(..., np.nan, result)` even
   when no divisor is zero. Preserve exact integer results in that case and
   define a representation for batches containing zero divisors. Source: `_operations.py`.
+  Completed 2026-10-10 in `operations/_arithmetic.py` and
+  `value_sets/_realization_inference.py`: modulo preserves native storage when
+  no divisor is zero. Integer batches needing NaN use float64 within +/-2**53
+  and object storage otherwise. Realization inference declares matching types
+  and conservative finite support for zero-containing or mixed-sign domains.
+  All 49 arithmetic-operation and realization-inference tests pass, along with
+  six validated public precision/storage cases and warn/raise policy checks.
+  The full suite was not rerun.
 - [ ] **B09 — Require real-valued support for CDF and quantile methods.**
   `CategoricalDistribution([1j], [1.0]).cdf(1.0, num_samples=3)` returns `1.0`
   using NumPy's complex ordering. A tuple category's `ppf()` can even return
   a tuple, outside its declared result contract. Reject unsupported support
   before sorting/comparing samples, consistently with existing interval methods.
   Source: `distributions/base.py::cdf` and `ppf`.
-- [ ] **B10 — Align nonnumeric constant storage with ObjectValueSet.**
+- [x] **B10 — Align nonnumeric constant storage with ObjectValueSet.**
   Comparing a categorical variable to `"N"`, `"None"`, or `"hello world"`
   raises a dtype error: the constant has a Unicode dtype while its support
   requires object dtype. Choose the array representation and value set together;
   these labels should compare as ordinary objects. Source:
   `random_variables/nodes/_utils.py::_constant_array` and `_constant_value_set`.
-- [ ] **B11 — Preserve ragged compound constants as atomic objects.**
+  Completed 2026-10-10: nonnumeric constants now use scalar object arrays.
+  All 15 node-utility, constant-node, and categorical integration tests pass.
+  Direct checks cover equality/inequality with realization validation for eight
+  text/byte and compound values, plus unchanged numeric/Boolean storage.
+  The full suite was not rerun.
+- [x] **B11 — Preserve ragged compound constants as atomic objects.**
   A categorical value `[1, [2, 3]]` samples successfully, but constructing
   comparison with that same value raises from the initial `np.asarray(value)`.
   Build a scalar object array for compound values without first attempting a
   rectangular array conversion. Source: `random_variables/nodes/_utils.py::_constant_array`.
-- [ ] **B12 — Make compound-category equality and merging agree.**
+  Completed by the same storage change as B10 on 2026-10-10: compound values
+  are assigned directly into scalar object arrays. Direct checks confirm
+  preserved object identity and validated comparisons for `[1, [2, 3]]`
+  and `(1, [2, 3])`.
+- [x] **B12 — Make compound-category equality and merging agree.**
   Array categories can be sampled and merged, but comparing a sampled
   `np.array([1, 2])` category to the same array raises an ambiguous-truth error.
   Also, `[1]` and `[1, 1]` NumPy arrays merge because equality broadcasts before
@@ -90,22 +121,37 @@ and claiming an unsupported Python version.
   and use that policy for merging, containment, and event comparisons.
   Sources: `value_sets/_comparison.py`, categorical `_merge_equal_categories`,
   `random_variables/base.py::_equality_comparison`, and `_operations.py::_EQ/_NEQ`.
-- [ ] **B13 — Normalize numeric support construction consistently.**
+  Completed 2026-10-10: array comparisons use `np.array_equal`, and object-valued
+  equality/inequality operations compare each sample through the shared helper;
+  native nonobject comparisons retain the NumPy path. All 23 focused existing
+  tests pass. Direct public checks cover distinct/duplicate array categories,
+  their merged probabilities, validated per-sample equality/inequality, and
+  deterministic probabilities. Scalar/empty comparisons also pass. The full
+  suite was not rerun.
+- [x] **B13 — Normalize numeric support construction consistently.**
   A categorical variable with category `2.0` satisfies `is_in(Integers)` but
   is rejected as a Binomial count parameter. A categorical exponent `2.0`
   also prevents the real-power inference needed for `sqrt(X ** exponent)`.
   Use the shared numeric-to-SymPy conversion when constructing categorical
   support and `MixedNumericValueSet.sympy_set`, which still use raw `sp.sympify`.
+  Completed 2026-10-10: both construction paths now use `_to_sympy_value`,
+  preserving category inputs while normalizing integral floats in symbolic
+  support. All 24 categorical-support regression, helper, mixed-value-set,
+  and categorical integration tests pass, including all three B13 regressions.
+  The full suite was not rerun.
 - [ ] **B14 — Allow correctly rounded inverse-trigonometric endpoints.**
   `arcsin(X)` for deterministic `X = np.float32(1)` fails realization validation
   because its rounded result exceeds exact `pi/2`. The same occurs for
   `arccos(np.float32(-1))` and large positive float32 inputs to `arctan`.
   Derive conservative machine bounds for the supported dtypes while retaining
   exact mathematical bounds. Source: `functions/trigonometric.py`.
-- [ ] **B15 — Validate that MixedNumericValueSet actually contains numbers.**
+- [x] **B15 — Validate that MixedNumericValueSet actually contains numbers.**
   `MixedNumericValueSet(values=("2",))` is accepted and reported as a subset
   of the reals while containing a string. Reject nonnumeric members before
   building symbolic support. Source: `value_sets/mixed_numeric_value_set.py`.
+  Completed alongside B06 on 2026-10-10: constructor validation now rejects
+  nonnumeric members before symbolic conversion, while preserving the existing
+  Boolean category support. Covered by the focused tests and direct checks above.
 - [ ] **B16 — Make accepted Real inputs match numerical backend support.**
   `Fraction(1, 2)` passes the numeric type checks but fails in categorical
   probability validation (`np.isfinite`), Normal sampling, and `log()`.
@@ -113,6 +159,39 @@ and claiming an unsupported Python version.
   contract and reject unsupported types at entry. Sources:
   `validation/distributions/discrete/_categorical.py`, Normal sampling, and
   `validation/functions/_common.py`/`functions/_utils.py`.
+  Design decision agreed on 2026-10-10: accept `Fraction` inputs consistently
+  across implemented real-valued APIs and convert them to supported numerical
+  approximations for numerical calculations. Exact rational arithmetic is not
+  guaranteed. Implementation must cover both direct inputs and Fraction-valued
+  random inputs, keep mathematical and realization support accurate, and retain
+  fast paths for native NumPy inputs. This item remains open pending implementation
+  and verification.
+  Partial progress on 2026-10-10: `_float_if_fraction` now converts Fraction
+  constants when building their numerical arrays. Constant nodes retain exact
+  mathematical support and describe the converted scalar in realization support.
+  All 10 constant-node/helper tests passed, alongside five direct Fraction checks
+  (including underflow) and validated Normal sampling with Fraction parameters.
+  Scalar function evaluation in `_apply` now uses the same helper before calling
+  the numerical operation. All 31 function unit tests and five public Fraction
+  checks (`log`, `sqrt`, `sin`, `hypot`, and `logaddexp`) passed.
+  Further scalar integration on 2026-10-10: the helper now covers categorical
+  probability validation/storage, scalar CDF/PPF validation/evaluation, strict
+  q/alpha validation, probability and quantile interval calculations, and
+  `_is_close` (including ProbabilityResult consistency validation). Original
+  negative categorical probabilities and out-of-range PPF inputs are still
+  rejected even when conversion rounds them to valid endpoints. Strict q/alpha
+  inputs that round to zero or one are rejected by their existing range checks.
+  All 139 focused tests passed, including eight new public regression tests in
+  `tests/regression_tests/test_fraction_scalar_inputs.py`. No full-suite rerun
+  was performed for this step. Fraction arrays and Fraction-valued random inputs,
+  their dtype checks, and matching realization inference remain open for review.
+  Shared array helper added on 2026-10-10: `_convert_fractions_in_array` preserves
+  native-array fast paths and source arrays, converts Fraction elements, and
+  retains object storage when native conversion would change other values.
+  `_conversion_preserves_values` moved unchanged to `problab._utils`; existing
+  categorical code imports it there. All 44 focused utility/categorical tests
+  passed, including five new array-helper tests. Integration of the array helper
+  at numerical entry points remains pending individual review.
 - [ ] **B17 — Handle deep graphs within the allowed size.**
   A chain of 600 additions to a deterministic variable raises `RecursionError`
   with `max_graph_size=1500`, although its 1201 nodes fit the limit. Graph
@@ -175,17 +254,25 @@ and claiming an unsupported Python version.
 
 ## Additional defects reproduced by the test update
 
-- [ ] **B21 — Enumerate numeric dtype candidates correctly.** Shared inference
+- [x] **B21 — Enumerate numeric dtype candidates correctly.** Shared inference
   includes timedelta storage in `np.integer`/`np.number`, then fails integer
   bounds or power-loop resolution. It can also return unknown dtypes for
   `exp(NormalVariable)` and omits `np.longdouble` on this Windows environment.
   These failures now have unit, integration, and statistical tests. Sources:
   `value_sets/_inference.py` and callers in `_realization_inference.py`.
-- [ ] **B22 — Validate non-finite permissions when dtype information is unknown.**
+  Completed 2026-10-07: candidate matching now excludes nonnumeric storage
+  other than explicitly supported Boolean/object types, and deduplication uses
+  scalar types so Windows `longdouble` is retained. All 80 tests in shared,
+  mathematical, and realization inference plus analytical workflows pass,
+  including the previously failing B21 cases. The full suite was not rerun.
+- [x] **B22 — Validate non-finite permissions when dtype information is unknown.**
   `HomogeneousNumericValueSet(..., dtype_types=None, allows_nan="yes")` is
   accepted because configuration validation returns before checking its flags.
-  Validate all three Boolean settings regardless of dtype information. The
-  focused constructor test remains failing.
+  Validate all three Boolean settings regardless of dtype information.
+  Completed 2026-10-07: the Boolean checks now run before the early return for
+  unknown dtype information. All 10 configuration-validation and homogeneous
+  numeric value-set tests pass, including the previously failing constructor
+  test. The full suite was not rerun.
 
 ## Design recommendations — decisions needed before implementation
 
@@ -205,7 +292,7 @@ and claiming an unsupported Python version.
   declared machine support covers permitted infinity, NaN, and rounding.
   Tests for `log2(exp(X))` at X=-1000 pass under all three policies. Runtime
   distribution-parameter handling (F02) is complete as of 2026-10-06; broad
-  dtype inference (B21) remains unfinished. Sources: `operations/_arithmetic.py`, function wrappers,
+  dtype inference (B21) is complete as of 2026-10-07. Sources: `operations/_arithmetic.py`, function wrappers,
   distribution evaluation, and `value_sets/_realization_inference.py`.
 - [ ] **D04 — Expose sampling configuration consistently.** Consider the same
   keyword controls across `P`, distribution sampling/statistics, and
@@ -233,19 +320,26 @@ and claiming an unsupported Python version.
   particular, B06, B08, B10–B12, and B15–B18 do not yet have complete
   persistent regression coverage. Keep the systematic test inventory current.
 
-Latest full library run (2026-10-06): **646 test methods; 630 pass and 16
-fail or error**, producing **10 failure reports and 26 error reports** when
-subtests are counted. The explorer's **7 extractor tests pass**. See
+Latest full library run (2026-10-10): **659 test methods; 654 pass and 5
+error**, producing **20 error reports** when subtests are counted. All five
+erroring methods concern the unimplemented F01 exact-distribution hooks. The
+explorer's **7 extractor tests pass** with normal temporary-directory access.
+No tests are skipped or marked as expected failures. B16 remains open pending
+array and Fraction-valued random-input integration. See
 `docs/test_gap_inventory.md` for every failing method and its issue.
+
+Previous full run (2026-10-06): 646 methods; 630 passed and 16 failed or errored,
+producing 10 failure reports and 26 error reports across subtests.
 
 Previous full run (2026-10-05): 600 methods; 578 passed and 22 failed or errored.
 The F02 update adds 12 tests and resolves the three parameter-policy methods.
 Normal's floating-only realization dtype also makes its previously failing
-power and two exponential/logarithm workflows pass; B21 itself remains open.
+power and two exponential/logarithm workflows pass; at that stage B21 itself
+remained open.
 The follow-up coverage adds 34 more tests for class parameter metadata,
 guarantee checks, mask delegation and agreement, shared graph evaluation,
 policy independence, integer/NaN boundaries, and analytical masked sampling.
-The 16 remaining failing methods match the pre-expansion list exactly; none
+The 16 failing methods in the 2026-10-06 run match the pre-expansion list exactly; none
 are skipped or marked as expected failures. The distribution-development guide
 now includes complete worked code, the `_valid_parameter_sets` contract, and
 specific tests and commands. Its Gamma examples were verified in memory only;
