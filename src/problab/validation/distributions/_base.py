@@ -6,6 +6,7 @@ from numbers import Real
 from collections.abc import Mapping
 import numpy as np
 
+from problab._utils import _float_if_fraction
 from problab.random_variables.nodes import _Node
 from problab.statistics._quantiles import QuantileMethod
 from problab.value_sets._utils import is_known_subset
@@ -29,7 +30,7 @@ def _validate_real_input(value: Real | np.ndarray, name: str) -> None:
 def _validate_cdf_input(value: Real | np.ndarray) -> None:
     _validate_real_input(value, "x")
 
-    values = np.asarray(value)
+    values = np.asarray(_float_if_fraction(value))
 
     if np.any(np.isnan(values)):
         raise ValueError("'x' must not be NaN.")
@@ -39,7 +40,10 @@ def _validate_ppf_input(value: Real | np.ndarray) -> None:
 
     values = np.asarray(value)
 
-    if np.any(np.isnan(values)) or np.any((values < 0) | (values > 1)):
+    if (
+        np.any(np.isnan(np.asarray(_float_if_fraction(value))))
+        or np.any((values < 0) | (values > 1))
+    ):
         raise ValueError("'q' must be between 0 and 1.")
 
 

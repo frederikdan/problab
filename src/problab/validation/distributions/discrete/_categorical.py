@@ -3,7 +3,7 @@ from numbers import Real
 from typing import Any
 import numpy as np
 
-from problab._utils import _is_close
+from problab._utils import _float_if_fraction, _is_close
 
 
 def _validate_categories(value) -> None:
@@ -35,11 +35,16 @@ def _validate_categorical_configuration(
     if not all(isinstance(probability, Real) for probability in probabilities):
         raise TypeError("'probabilities' must contain only real numbers.")
 
-    if not all(np.isfinite(probability) for probability in probabilities):
+    numeric_probabilities = tuple(
+        _float_if_fraction(probability)
+        for probability in probabilities
+    )
+
+    if not all(np.isfinite(probability) for probability in numeric_probabilities):
         raise ValueError("'probabilities' must be finite.")
 
     if any(probability < 0 for probability in probabilities):
         raise ValueError("'probabilities' cannot contain negative values.")
 
-    if not _is_close(sum(probabilities), 1.0):
+    if not _is_close(sum(numeric_probabilities), 1.0):
         raise ValueError("'probabilities' must sum to 1.")

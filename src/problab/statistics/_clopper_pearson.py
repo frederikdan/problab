@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import beta
 
+from problab._utils import _float_if_fraction
 from problab.probability.intervals import ConfidenceInterval
 from problab.validation._common import _validate_alpha
 from problab.validation._decorator import _validate_parameters
@@ -23,6 +24,8 @@ def _confidence_interval(
         num_samples=num_samples,
         num_successes=num_successes,
     )
+
+    alpha = _float_if_fraction(alpha)
 
     n = num_samples
     k = num_successes

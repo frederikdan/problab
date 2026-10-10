@@ -6,6 +6,7 @@ from enum import Enum
 from numbers import Real, Complex
 from functools import partial
 
+from problab._utils import _float_if_fraction
 from problab.operations._base import _Operation
 from problab.operations._statistical import (
     _MEAN,
@@ -392,6 +393,8 @@ class Distribution(ABC):
             rng: np.random.Generator | None = None
             ) -> float | np.ndarray:
 
+        x = _float_if_fraction(x)
+
         if not is_known_subset(self.value_set, REALS):
             raise ValueError("CDF calculation requires a real-valued distribution.")
 
@@ -445,6 +448,8 @@ class Distribution(ABC):
             rng: np.random.Generator | None = None,
             quantile_method: QuantileMethod = "inverted_cdf"
             ) -> float | np.ndarray:
+
+        q = _float_if_fraction(q)
 
         if not is_known_subset(self.value_set, REALS):
             raise ValueError("PPF calculation requires a real-valued distribution.")

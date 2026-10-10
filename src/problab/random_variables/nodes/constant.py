@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from fractions import Fraction
 from functools import cached_property
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
+import sympy as sp
 
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
-from problab.value_sets._utils import _detect_non_finite_values
+from problab.value_sets._utils import _detect_non_finite_values, _to_sympy_value
 from problab.value_sets.base import ValueSet, NumericValueSet
 from problab.random_variables.nodes.base import _Node
 from problab.random_variables.nodes._utils import _constant_array, _constant_value_set
@@ -48,8 +50,13 @@ class _ConstantNode(_Node, Generic[T]):
             _detect_non_finite_values(self._array)
         )
 
+        sympy_set = self._mathematical_value_set.sympy_set
+
+        if isinstance(self._value, Fraction):
+            sympy_set = sp.FiniteSet(_to_sympy_value(self._array[()]))
+
         return HomogeneousNumericValueSet(
-            sympy_set=self._mathematical_value_set.sympy_set,
+            sympy_set=sympy_set,
             dtype_types=(self._array.dtype.type,),
             allows_positive_infinity=positive_infinity,
             allows_negative_infinity=negative_infinity,

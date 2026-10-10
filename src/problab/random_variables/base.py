@@ -7,6 +7,7 @@ import numpy as np
 import sympy as sp
 
 from problab._config import DEF_NUMERICAL_ERROR_POLICY
+from problab._utils import _float_if_fraction
 from problab.distributions._config import DEF_NUM_SAMPLES, DEF_ALPHA
 from problab.distributions.base import Distribution
 from problab._events import _Event
@@ -234,6 +235,8 @@ class RandomVariable:
                  num_samples: int = DEF_NUM_SAMPLES,
                  rng: np.random.Generator | None = None
                  ) -> ProbabilityInterval:
+
+        alpha = _float_if_fraction(alpha)
 
         if not is_known_subset(self._node.value_set, REALS):
             raise TypeError("Probability intervals are only defined for real-valued random variables." )

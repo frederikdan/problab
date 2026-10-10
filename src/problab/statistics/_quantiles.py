@@ -2,6 +2,7 @@ import numpy as np
 from scipy.stats import binom
 from typing import Literal, TypeAlias
 
+from problab._utils import _float_if_fraction
 from problab.distributions._config import DEF_ALPHA
 from problab.probability.intervals import ConfidenceInterval
 
@@ -26,6 +27,9 @@ def _quantile_confidence_interval(samples: np.ndarray,
                                   q: float,
                                   alpha: float = DEF_ALPHA
                                   ) -> ConfidenceInterval:
+
+    q = _float_if_fraction(q)
+    alpha = _float_if_fraction(alpha)
 
     if not 0 < q < 1:
         raise ValueError("'q' must be between 0 and 1.")

@@ -5,6 +5,8 @@ from numbers import Real
 from enum import Enum
 from typing import TYPE_CHECKING
 
+from problab._utils import _float_if_fraction
+
 if TYPE_CHECKING:
     from problab.random_variables.nodes.base import _Node
 
@@ -31,7 +33,7 @@ def _validate_alpha(value: Real) -> None:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
         raise TypeError("'alpha' must be a real number.")
 
-    if not 0 < value < 1:
+    if not 0 < _float_if_fraction(value) < 1:
         raise ValueError("'alpha' must be between 0 and 1.")
 
 
@@ -39,7 +41,7 @@ def _validate_q(value: Real) -> None:
     if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
         raise TypeError("'q' must be a real number.")
 
-    if not 0 < value < 1:
+    if not 0 < _float_if_fraction(value) < 1:
         raise ValueError("'q' must be between 0 and 1.")
 
 

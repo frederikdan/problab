@@ -1,5 +1,6 @@
 from numbers import Real
 
+from problab._utils import _float_if_fraction
 from problab.operations._base import _Operation
 from problab.operations._arithmetic import _ArithmeticOperation
 from problab.random_variables.base import RandomVariable
@@ -34,7 +35,9 @@ def _apply(
     )
 
     if not any(isinstance(argument, RandomVariable) for argument in arguments):
-        return float(operation.operation(*arguments))
+        return float(operation.operation(
+            *(_float_if_fraction(argument) for argument in arguments)
+        ))
 
     if isinstance(operation, _ArithmeticOperation):
         inferred_set = operation.infer_realization_value_set(

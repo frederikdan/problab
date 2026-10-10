@@ -4,6 +4,7 @@ from typing import Iterable, Any, ClassVar
 import numpy as np
 from numpy._typing import NDArray
 
+from problab._utils import _float_if_fraction
 from problab.value_sets._utils import _detect_non_finite_values
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.distributions.base import Distribution
@@ -32,6 +33,11 @@ class CategoricalDistribution(Distribution):
         probabilities = tuple(probabilities)
 
         _validate_categorical_configuration(categories, probabilities)
+
+        probabilities = tuple(
+            _float_if_fraction(probability)
+            for probability in probabilities
+        )
 
         categories, probabilities = _merge_equal_categories(categories,probabilities)
 

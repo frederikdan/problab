@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, TypeGuard
 import numpy as np
 import sympy as sp
 
+from problab._utils import _float_if_fraction
 from problab.operations._base import _Operation
 from problab.operations._arithmetic import (
     _POWER,
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 def _constant_array(value: Any) -> np.ndarray:
     if isinstance(value, (bool, np.bool_, Number, Decimal)):
-        return np.asarray(value)
+        return np.asarray(_float_if_fraction(value))
 
     atomic_array = np.empty((), dtype=object)
     atomic_array[()] = value
