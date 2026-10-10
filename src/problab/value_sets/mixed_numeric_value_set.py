@@ -7,6 +7,7 @@ import numpy as np
 import sympy as sp
 
 from ._unknown import _UnknownValueSet
+from ._utils import _to_sympy_value
 from .base import NumericValueSet
 
 
@@ -35,7 +36,7 @@ class MixedNumericValueSet(NumericValueSet):
     @property
     def sympy_set(self) -> sp.Set | _UnknownValueSet:
         try:
-            return sp.FiniteSet(*(sp.sympify(value) for value in self.values))
+            return sp.FiniteSet(*(_to_sympy_value(value) for value in self.values))
         except (AttributeError, TypeError, ValueError, sp.SympifyError):
             return _UnknownValueSet()
 

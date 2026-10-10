@@ -7,6 +7,7 @@ import sympy as sp
 from numpy.typing import NDArray
 from fractions import Fraction
 
+from problab.value_sets._utils import _to_sympy_value
 from problab.value_sets.homogeneous_numeric_value_set import HomogeneousNumericValueSet
 from problab.value_sets.mixed_numeric_value_set import MixedNumericValueSet
 from problab.value_sets.object_value_set import ObjectValueSet
@@ -68,7 +69,7 @@ def _prepare_categories_and_mathematical_value_set(
             return _prepare_mixed_numeric_categories_and_mathematical_value_set(categories)
 
         symbolic_categories = tuple(
-            sp.sympify(category)
+            _to_sympy_value(category)
             for category in categories
         )
 
