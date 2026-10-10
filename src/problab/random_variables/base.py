@@ -111,8 +111,9 @@ class RandomVariable:
     def sample(self,
                num_samples: int = 1,
                rng: np.random.Generator | None = None,
-               max_graph_size: int = DEF_MAX_GRAPH_SIZE,
                validate: bool = False,
+               *,
+               max_graph_size: int = DEF_MAX_GRAPH_SIZE,
                numerical_error_policy: Literal["warn", "raise", "ignore"] = DEF_NUMERICAL_ERROR_POLICY,
                ) -> np.ndarray:
 
